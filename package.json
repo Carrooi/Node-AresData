@@ -1,0 +1,36 @@
+{
+	"name": "ares-data",
+	"description": "Load information about employers from Czech ares service.",
+	"version": "1.0.0",
+	"author": {
+		"name": "David Kudera",
+		"email": "sakren@gmail.com"
+	},
+	"keywords": [
+		"ares",
+		"employer",
+		"company",
+		"czech"
+	],
+	"repository": {
+		"type": "git",
+		"url": "git@github.com:sakren/ares-data.git"
+	},
+	"license": "MIT",
+	"engines": {
+		"node": "*"
+	},
+	"main": "./lib/Ares.js",
+	"dependencies": {
+		"q": "0.9.6",
+		"xml-simple": "0.0.1",
+		"moment": "2.1.0",
+		"browser-http": "latest"
+	},
+	"devDependencies": {
+		"should": "1.2.2"
+	},
+	"scripts": {
+		"test": "cd ./test; mocha ./index.js --reporter spec --timeout 120000;"
+	}
+}
