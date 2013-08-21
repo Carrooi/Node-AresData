@@ -1,7 +1,7 @@
 Validators = require './Validators'
 Url = require './Url'
 Q = require 'q'
-xml = require 'xml-simple'
+xml = require 'xml2js'
 moment = require 'moment'
 
 class Ares
@@ -78,7 +78,7 @@ class Ares
 		deferred = Q.defer()
 		data = @simplifyXml(data)
 
-		xml.parse(data, (err, data) =>
+		xml.parseString(data, (err, data) =>
 			if err
 				@lastOriginalData = null
 				deferred.reject(err)
@@ -91,37 +91,34 @@ class Ares
 
 
 	prepare: (data) =>
-		if typeof data.Odpoved.Error != 'undefined'
-			return Q.reject(new Error data.Odpoved.Error.Error_text)
+		data = data.Ares_odpovedi.Odpoved[0]
+
+		if typeof data.Error != 'undefined'
+			return Q.reject(new Error data.Error[0].Error_text[0])
 
 		result =
-			length: parseInt(data.Odpoved.Pocet_zaznamu)
+			length: parseInt(data.Pocet_zaznamu[0])
 			data: []
 
-		if result.length > 1
-			for item in data.Odpoved.Zaznam
-				result.data.push(@prepareItem(item))
-		else
-			result.data.push(@prepareItem(data.Odpoved.Zaznam))
+		for item in data.Zaznam
+			result.data.push(@prepareItem(item))
 
 		Q.resolve(result)
 
 
 	prepareItem: (item) ->
 		result =
-			created: moment(item.Datum_vzniku, 'YYYY-MM-DD').toDate()
-			validity: moment(item.Datum_platnosti, 'YYYY-MM-DD').toDate()
-			name: item.Obchodni_firma
-			identification: parseInt(item.ICO)
+			created: moment(item.Datum_vzniku[0], 'YYYY-MM-DD').toDate()
+			validity: moment(item.Datum_platnosti[0], 'YYYY-MM-DD').toDate()
+			name: item.Obchodni_firma[0]
+			identification: parseInt(item.ICO[0])
 			address:
-				district: item.Identifikace.Adresa_ARES.Nazev_okresu
-				village: item.Identifikace.Adresa_ARES.Nazev_obce
-				villagePart: item.Identifikace.Adresa_ARES.Nazev_casti_obce
-				cityDistrict: item.Identifikace.Adresa_ARES.Nazev_mestske_casti
-				street: item.Identifikace.Adresa_ARES.Nazev_ulice
-				descriptionNumber: parseInt(item.Identifikace.Adresa_ARES.Cislo_domovni)
-				orientationNumber: parseInt(item.Identifikace.Adresa_ARES.Cislo_orientacni)
-				zipCode: parseInt(item.Identifikace.Adresa_ARES.PSC)
+				district: item.Identifikace[0].Adresa_ARES[0].Nazev_okresu[0]
+				city: item.Identifikace[0].Adresa_ARES[0].Nazev_obce[0]
+				street: item.Identifikace[0].Adresa_ARES[0].Nazev_ulice[0]
+				descriptionNumber: parseInt(item.Identifikace[0].Adresa_ARES[0].Cislo_domovni[0])
+				orientationNumber: parseInt(item.Identifikace[0].Adresa_ARES[0].Cislo_orientacni[0])
+				zipCode: parseInt(item.Identifikace[0].Adresa_ARES[0].PSC[0])
 
 		return result
 

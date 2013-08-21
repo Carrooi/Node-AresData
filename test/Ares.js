@@ -13,6 +13,7 @@
       it('should load old information about author', function(done) {
         return ares.findByIdentification(88241653).then(function(data) {
           data.length.should.be.equal(1);
+          data.data[0].name.should.be.equal('David Kudera');
           ares.lastOriginalData.should.not.be["null"];
           return done();
         }).done();
@@ -24,8 +25,14 @@
           return done();
         }).done();
       });
-      return it('should return an error', function(done) {
+      it('should return an error', function(done) {
         return ares.findByIdentification(12345678).fail(function(err) {
+          err.should.be.an.instanceOf(Error);
+          return done();
+        }).done();
+      });
+      return it.skip('should return an error from ares', function(done) {
+        return ares.findByCompanyName('europa').fail(function(err) {
           err.should.be.an.instanceOf(Error);
           return done();
         }).done();

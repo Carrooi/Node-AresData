@@ -45,5 +45,8 @@ ares.findByCompanyName('some company name').then(function(data) {
 
 ## Changelog
 
+* 1.0.1
+	+ Moved to xml2js module
+
 * 1.0.0
 	+ Initial version

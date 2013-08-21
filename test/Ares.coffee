@@ -11,6 +11,7 @@ describe 'Ares', ->
 		it 'should load old information about author', (done) ->
 			ares.findByIdentification(88241653).then( (data) ->
 				data.length.should.be.equal(1)
+				data.data[0].name.should.be.equal('David Kudera')
 				ares.lastOriginalData.should.not.be.null
 				done()
 			).done()
@@ -24,6 +25,13 @@ describe 'Ares', ->
 
 		it 'should return an error', (done) ->
 			ares.findByIdentification(12345678).fail( (err) ->
+				err.should.be.an.instanceOf(Error)
+				done()
+			).done()
+
+		# Be carefull with this one. Your IP address can be baned
+		it.skip 'should return an error from ares', (done) ->
+			ares.findByCompanyName('europa').fail( (err) ->
 				err.should.be.an.instanceOf(Error)
 				done()
 			).done()
