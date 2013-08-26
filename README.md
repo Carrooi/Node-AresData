@@ -45,6 +45,9 @@ ares.findByCompanyName('some company name').then(function(data) {
 
 ## Changelog
 
+* 1.0.3
+	+ Building url query with [browser-http](https://npmjs.org/package/browser-http) package
+
 * 1.0.2
 	+ Removed preparations for support in browser (Origin is not allowed by Access-Control-Allow-Origin)
 
