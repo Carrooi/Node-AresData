@@ -1,8 +1,8 @@
 Validators = require './Validators'
-Url = require './Url'
 Q = require 'q'
 xml = require 'xml2js'
 http = require 'http'
+browserHttp = require 'browser-http'
 moment = require 'moment'
 
 class Ares
@@ -42,7 +42,7 @@ class Ares
 
 
 	getUrl: (options) ->
-		options = Url.buildQuery(options)
+		options = browserHttp.buildQuery(options)
 		return Ares.URL + '?' + options
 
 
