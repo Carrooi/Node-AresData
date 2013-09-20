@@ -31,6 +31,6 @@
 		"should": "1.2.2"
 	},
 	"scripts": {
-		"test": "cd ./test; mocha ./index.js --reporter spec --timeout 120000;"
+		"test": "cd ./test; mocha ./node/index.js --reporter spec --timeout 120000;"
 	}
 }

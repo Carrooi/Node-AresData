@@ -4,7 +4,7 @@
 
   should = require('should');
 
-  Validators = require('../lib/Validators');
+  Validators = require('../../lib/Validators');
 
   describe('Validators', function() {
     return describe('#companyIdentification()', function() {

@@ -1,6 +1,6 @@
 should = require 'should'
 
-Ares = require '../lib/Ares'
+Ares = require '../../lib/Ares'
 
 ares = new Ares
 
