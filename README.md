@@ -45,6 +45,9 @@ ares.findByCompanyName('some company name').then(function(data) {
 
 ## Changelog
 
+* 1.1.0
+	+ Ability to change source url
+
 * 1.0.3
 	+ Building url query with [browser-http](https://npmjs.org/package/browser-http) package
 

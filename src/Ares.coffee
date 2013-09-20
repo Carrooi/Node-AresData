@@ -11,11 +11,16 @@ class Ares
 	@URL: 'http://wwwinfo.mfcr.cz/cgi-bin/ares/darv_std.cgi'
 
 
+	url: null
+
 	onlyActive: true
 
 	encoding: 'utf'
 
 	lastOriginalData: null
+
+
+	constructor: (@url = Ares.URL) ->
 
 
 	find: (name, value, limit = 10, type = 'free') ->
@@ -43,7 +48,7 @@ class Ares
 
 	getUrl: (options) ->
 		options = browserHttp.buildQuery(options)
-		return Ares.URL + '?' + options
+		return @url + '?' + options
 
 
 	load: (options) ->
