@@ -1,0 +1,26 @@
+{
+	"packages": {
+		"tests": {
+			"base": "../../",
+			"application": "./test/browser/tests.js",
+			"modules": [
+				"./src/*.coffee",
+				"./test/browser/*.coffee",
+				"./node_modules/moment/moment.js",
+				"./node_modules/moment/lang/en-gb.js",
+				"./node_modules/q/q.js"
+			],
+			"aliases": {
+				"ares-data": "src/Ares",
+				"ares-data/lib/Validators": "src/Validator"
+			},
+			"run": [
+				"test/browser/Validator",
+				"test/browser/Ares"
+			]
+		}
+	},
+	"debugger": {
+		"scripts": true
+	}
+}
