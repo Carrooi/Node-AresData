@@ -70,6 +70,18 @@ ares.findByCompanyName('some company name').then(function(data) {
 });
 ```
 
+## Tests
+
+```
+$ cd tests/browser
+$ node bridge.js
+```
+
+in another terminal:
+```
+$ npm test
+```
+
 ## Changelog
 
 * 1.1.0
