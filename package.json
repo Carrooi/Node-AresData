@@ -1,7 +1,7 @@
 {
 	"name": "ares-data",
 	"description": "Load information about employers from Czech ares service.",
-	"version": "1.0.3",
+	"version": "1.1.0",
 	"author": {
 		"name": "David Kudera",
 		"email": "sakren@gmail.com"
@@ -22,15 +22,17 @@
 	},
 	"main": "./lib/Ares.js",
 	"dependencies": {
-		"q": "0.9.6",
-		"xml2js": "0.2.8",
-		"moment": "2.1.0",
-		"browser-http": "latest"
+		"q": "*",
+		"xml2js": "*",
+		"moment": "*",
+		"browser-http": "*"
 	},
 	"devDependencies": {
-		"should": "1.2.2"
+		"mocha": "*",
+		"chai": "*",
+		"express": "*"
 	},
 	"scripts": {
-		"test": "cd ./test; mocha ./node/index.js --reporter spec --timeout 120000;"
+		"test": "cd ./test; echo \"Testing in node:\"; mocha ./node/index.js --reporter spec --timeout 120000; echo \"Testing in browser:\"; mocha-phantomjs ./browser/index.html;"
 	}
 }

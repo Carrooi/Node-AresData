@@ -8,14 +8,19 @@
 				"./test/browser/*.coffee",
 				"./node_modules/moment/moment.js",
 				"./node_modules/moment/lang/en-gb.js",
-				"./node_modules/q/q.js"
+				"./node_modules/q/q.js",
+				"./node_modules/xml2js/*.js",
+				"./node_modules/browser-http/*.js"
+			],
+			"coreModules": [
+				"events"
 			],
 			"aliases": {
 				"ares-data": "src/Ares",
-				"ares-data/lib/Validators": "src/Validator"
+				"ares-data/Validators": "src/Validators"
 			},
 			"run": [
-				"test/browser/Validator",
+				"test/browser/Validators",
 				"test/browser/Ares"
 			]
 		}

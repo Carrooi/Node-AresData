@@ -134,939 +134,316 @@
   return this.require.define;
 
 }).call(this)({
-'src/Cache.coffee': function(exports, __require, module) {
-var require = function(name) {return __require(name, 'src/Cache.coffee');};
-var __filename = 'src/Cache.coffee';
+'src/Ares.coffee': function(exports, __require, module) {
+var require = function(name) {return __require(name, 'src/Ares.coffee');};
+var __filename = 'src/Ares.coffee';
 var __dirname = 'src';
-var process = {cwd: function() {return '/';}, argv: ['node', 'src/Cache.coffee'], env: {}};
+var process = {cwd: function() {return '/';}, argv: ['node', 'src/Ares.coffee'], env: {}};
 (function() {
-  var Cache;
+  var Ares, Q, Validators, browserHttp, http, isWindow, moment, xml,
+    _this = this;
 
-  Cache = (function() {
+  Validators = require('./Validators');
 
-    Cache.FILES = 'files';
+  Q = require('q');
 
-    Cache.TAGS = 'tags';
-
-    Cache.EXPIRE = 'expire';
-
-    Cache.ITEMS = 'items';
-
-    Cache.PRIORITY = 'priority';
-
-    Cache.ALL = 'all';
-
-    Cache.TIME_FORMAT = 'YYYY-MM-DD HH:mm';
-
-    Cache.prototype.storage = null;
-
-    Cache.prototype.namespace = null;
-
-    function Cache(storage, namespace) {
-      this.storage = storage;
-      this.namespace = namespace;
-      if (!(this.storage instanceof require('./Storage/Storage'))) {
-        throw new Error('Cache: storage must be instance of cache-storage/Storage/Storage');
-      }
-      this.storage.cache = this;
-    }
-
-    Cache.prototype.generateKey = function(key) {
-      var char, hash, i, max, _i;
-      hash = 0;
-      if (key.length === 0) {
-        return hash;
-      }
-      max = key.length - 1;
-      for (i = _i = 0; 0 <= max ? _i <= max : _i >= max; i = 0 <= max ? ++_i : --_i) {
-        char = key.charCodeAt(i);
-        hash = ((hash << 5) - hash) + char;
-        hash |= 0;
-      }
-      return hash;
-    };
-
-    Cache.prototype.load = function(key, fallback) {
-      var data;
-      if (fallback == null) {
-        fallback = null;
-      }
-      data = this.storage.read(this.generateKey(key));
-      if (data === null && fallback !== null) {
-        return this.save(key, fallback);
-      }
-      return data;
-    };
-
-    Cache.prototype.save = function(key, data, dependencies) {
-      if (dependencies == null) {
-        dependencies = {};
-      }
-      key = this.generateKey(key);
-      if (Object.prototype.toString.call(data) === '[object Function]') {
-        data = data();
-      }
-      if (data === null) {
-        this.storage.remove(key);
-      } else {
-        this.storage.write(key, data, this.storage.parseDependencies(dependencies));
-      }
-      return data;
-    };
-
-    Cache.prototype.remove = function(key) {
-      return this.save(key, null);
-    };
-
-    Cache.prototype.clean = function(conditions) {
-      this.storage.clean(conditions);
-      return this;
-    };
-
-    return Cache;
-
-  })();
-
-  module.exports = Cache;
-
-}).call(this);
-
-},
-'src/Storage/BrowserLocalStorage.coffee': function(exports, __require, module) {
-var require = function(name) {return __require(name, 'src/Storage/BrowserLocalStorage.coffee');};
-var __filename = 'src/Storage/BrowserLocalStorage.coffee';
-var __dirname = 'src/Storage';
-var process = {cwd: function() {return '/';}, argv: ['node', 'src/Storage/BrowserLocalStorage.coffee'], env: {}};
-(function() {
-  var BrowserLocalStorage, Cache, Storage,
-    __hasProp = {}.hasOwnProperty,
-    __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
-
-  Storage = require('./Storage');
-
-  Cache = require('../Cache');
-
-  BrowserLocalStorage = (function(_super) {
-
-    __extends(BrowserLocalStorage, _super);
-
-    BrowserLocalStorage.TEST_VALUE = '__--cache-storage--__';
-
-    BrowserLocalStorage.prototype.allData = null;
-
-    BrowserLocalStorage.prototype.data = null;
-
-    BrowserLocalStorage.prototype.meta = null;
-
-    function BrowserLocalStorage() {
-      if (!BrowserLocalStorage.isSupported()) {
-        throw new Error('Cache storage: Local storage is not supported');
-      }
-    }
-
-    BrowserLocalStorage.isSupported = function() {
-      try {
-        localStorage.setItem(BrowserLocalStorage.TEST_VALUE, BrowserLocalStorage.TEST_VALUE);
-        localStorage.getItem(BrowserLocalStorage.TEST_VALUE);
-        return true;
-      } catch (e) {
-        return false;
-      }
-    };
-
-    BrowserLocalStorage.prototype.getName = function() {
-      return '__' + this.cache.namespace;
-    };
-
-    BrowserLocalStorage.prototype.loadData = function() {
-      var data;
-      if (this.allData === null) {
-        data = localStorage.getItem(this.getName());
-        if (data === null) {
-          this.allData = {
-            data: {},
-            meta: {}
-          };
-        } else {
-          this.allData = JSON.parse(data);
-        }
-      }
-      return this.allData;
-    };
-
-    BrowserLocalStorage.prototype.getData = function() {
-      if (this.data === null) {
-        this.data = this.loadData().data;
-      }
-      return this.data;
-    };
-
-    BrowserLocalStorage.prototype.getMeta = function() {
-      if (this.meta === null) {
-        this.meta = this.loadData().meta;
-      }
-      return this.meta;
-    };
-
-    BrowserLocalStorage.prototype.writeData = function(data, meta) {
-      this.data = data;
-      this.meta = meta;
-      localStorage.setItem(this.getName(), JSON.stringify({
-        data: this.data,
-        meta: this.meta
-      }));
-      return this;
-    };
-
-    return BrowserLocalStorage;
-
-  })(Storage);
-
-  module.exports = BrowserLocalStorage;
-
-}).call(this);
-
-},
-'src/Storage/DevNullStorage.coffee': function(exports, __require, module) {
-var require = function(name) {return __require(name, 'src/Storage/DevNullStorage.coffee');};
-var __filename = 'src/Storage/DevNullStorage.coffee';
-var __dirname = 'src/Storage';
-var process = {cwd: function() {return '/';}, argv: ['node', 'src/Storage/DevNullStorage.coffee'], env: {}};
-(function() {
-  var DevNullStorage, Storage,
-    __hasProp = {}.hasOwnProperty,
-    __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
-
-  Storage = require('./Storage');
-
-  DevNullStorage = (function(_super) {
-
-    __extends(DevNullStorage, _super);
-
-    function DevNullStorage() {
-      return DevNullStorage.__super__.constructor.apply(this, arguments);
-    }
-
-    DevNullStorage.prototype.getData = function() {
-      return {};
-    };
-
-    DevNullStorage.prototype.getMeta = function() {
-      return {};
-    };
-
-    DevNullStorage.prototype.writeData = function(data, meta) {
-      return this;
-    };
-
-    DevNullStorage.prototype.read = function(key) {
-      return null;
-    };
-
-    DevNullStorage.prototype.write = function(key, data, dependencies) {
-      if (dependencies == null) {
-        dependencies = {};
-      }
-      return this;
-    };
-
-    DevNullStorage.prototype.remove = function(key) {
-      return this;
-    };
-
-    return DevNullStorage;
-
-  })(Storage);
-
-  module.exports = DevNullStorage;
-
-}).call(this);
-
-},
-'src/Storage/FileStorage.coffee': function(exports, __require, module) {
-var require = function(name) {return __require(name, 'src/Storage/FileStorage.coffee');};
-var __filename = 'src/Storage/FileStorage.coffee';
-var __dirname = 'src/Storage';
-var process = {cwd: function() {return '/';}, argv: ['node', 'src/Storage/FileStorage.coffee'], env: {}};
-(function() {
-  var Cache, FileStorage, Storage, fs, path,
-    __hasProp = {}.hasOwnProperty,
-    __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
-
-  Storage = require('./Storage');
-
-  Cache = require('../Cache');
-
-  fs = null;
-
-  path = null;
-
-  FileStorage = (function(_super) {
-
-    __extends(FileStorage, _super);
-
-    FileStorage.prototype.directory = null;
-
-    FileStorage.prototype.allData = null;
-
-    FileStorage.prototype.data = null;
-
-    FileStorage.prototype.meta = null;
-
-    function FileStorage(directory) {
-      this.directory = directory;
-      if (typeof window !== 'undefined') {
-        throw new Error('FileStorage: Can not use this storage in browser');
-      }
-      fs = require('fs');
-      path = require('path');
-      this.directory = path.resolve(this.directory);
-      if (!fs.existsSync(this.directory)) {
-        throw new Error('FileStorage: directory ' + this.directory + ' does not exists');
-      }
-      if (!fs.statSync(this.directory).isDirectory()) {
-        throw new Error('FileStorage: path ' + this.directory + ' must be directory');
-      }
-    }
-
-    FileStorage.prototype.getFileName = function() {
-      return this.directory + '/__' + this.cache.namespace + '.json';
-    };
-
-    FileStorage.prototype.loadData = function() {
-      var file;
-      if (this.allData === null) {
-        file = this.getFileName();
-        if (fs.existsSync(file)) {
-          this.allData = JSON.parse(fs.readFileSync(file, {
-            encoding: 'utf8'
-          }));
-        } else {
-          this.allData = {
-            data: {},
-            meta: {}
-          };
-        }
-      }
-      return this.allData;
-    };
-
-    FileStorage.prototype.getData = function() {
-      if (this.data === null) {
-        this.data = this.loadData().data;
-      }
-      return this.data;
-    };
-
-    FileStorage.prototype.getMeta = function() {
-      if (this.meta === null) {
-        this.meta = this.loadData().meta;
-      }
-      return this.meta;
-    };
-
-    FileStorage.prototype.writeData = function(data, meta) {
-      var file;
-      this.data = data;
-      this.meta = meta;
-      file = this.getFileName();
-      fs.writeFileSync(file, JSON.stringify({
-        data: this.data,
-        meta: this.meta
-      }));
-      return this;
-    };
-
-    return FileStorage;
-
-  })(Storage);
-
-  module.exports = FileStorage;
-
-}).call(this);
-
-},
-'src/Storage/MemoryStorage.coffee': function(exports, __require, module) {
-var require = function(name) {return __require(name, 'src/Storage/MemoryStorage.coffee');};
-var __filename = 'src/Storage/MemoryStorage.coffee';
-var __dirname = 'src/Storage';
-var process = {cwd: function() {return '/';}, argv: ['node', 'src/Storage/MemoryStorage.coffee'], env: {}};
-(function() {
-  var MemoryStorage, Storage,
-    __hasProp = {}.hasOwnProperty,
-    __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
-
-  Storage = require('./Storage');
-
-  MemoryStorage = (function(_super) {
-
-    __extends(MemoryStorage, _super);
-
-    function MemoryStorage() {
-      return MemoryStorage.__super__.constructor.apply(this, arguments);
-    }
-
-    MemoryStorage.prototype.data = null;
-
-    MemoryStorage.prototype.meta = null;
-
-    MemoryStorage.prototype.getData = function() {
-      if (this.data === null) {
-        this.data = {};
-      }
-      return this.data;
-    };
-
-    MemoryStorage.prototype.getMeta = function() {
-      if (this.meta === null) {
-        this.meta = {};
-      }
-      return this.meta;
-    };
-
-    MemoryStorage.prototype.writeData = function(data, meta) {
-      this.data = data;
-      this.meta = meta;
-      return this;
-    };
-
-    return MemoryStorage;
-
-  })(Storage);
-
-  module.exports = MemoryStorage;
-
-}).call(this);
-
-},
-'src/Storage/Storage.coffee': function(exports, __require, module) {
-var require = function(name) {return __require(name, 'src/Storage/Storage.coffee');};
-var __filename = 'src/Storage/Storage.coffee';
-var __dirname = 'src/Storage';
-var process = {cwd: function() {return '/';}, argv: ['node', 'src/Storage/Storage.coffee'], env: {}};
-(function() {
-  var Cache, Storage, fs, isWindow, moment, path;
-
-  isWindow = typeof window === 'undefined' ? false : true;
-
-  if (!isWindow) {
-    fs = require('fs');
-    path = require('path');
-  }
+  xml = require('xml2js');
 
   moment = require('moment');
 
-  Cache = require('../Cache');
+  browserHttp = require('browser-http');
 
-  Storage = (function() {
+  isWindow = typeof window !== 'undefined';
 
-    Storage.prototype.cache = null;
+  if (!isWindow) {
+    http = require('http');
+  }
 
-    function Storage() {
-      if (typeof this.getData === 'undefined' || typeof this.getMeta === 'undefined' || typeof this.writeData === 'undefined') {
-        throw new Error('Cache storage: you have to implement methods getData, getMeta and writeData.');
-      }
+  Ares = (function() {
+
+    Ares.URL = 'http://wwwinfo.mfcr.cz/cgi-bin/ares/darv_std.cgi';
+
+    Ares.prototype.url = null;
+
+    Ares.prototype.onlyActive = true;
+
+    Ares.prototype.encoding = 'utf';
+
+    Ares.prototype.lastOriginalData = null;
+
+    function Ares(url) {
+      var _this = this;
+      this.url = url != null ? url : Ares.URL;
+      this.prepare = function(data) {
+        return Ares.prototype.prepare.apply(_this, arguments);
+      };
+      this.parse = function(data) {
+        return Ares.prototype.parse.apply(_this, arguments);
+      };
     }
 
-    Storage.prototype.read = function(key) {
-      var data;
-      data = this.getData();
-      if (typeof data[key] === 'undefined') {
-        return null;
+    Ares.prototype.find = function(name, value, limit, type) {
+      var options;
+      if (limit == null) {
+        limit = 10;
+      }
+      if (type == null) {
+        type = 'free';
+      }
+      options = {
+        czk: this.encoding,
+        aktivni: this.onlyActive,
+        max_pocet: limit,
+        typ_vyhledani: type
+      };
+      options[name] = value;
+      return this.load(options).then(this.parse).then(this.prepare);
+    };
+
+    Ares.prototype.findByIdentification = function(identification, limit) {
+      if (limit == null) {
+        limit = 10;
+      }
+      if (Validators.companyIdentification(identification) === false) {
+        return Q.reject(new Error('Company identification is not valid'));
+      }
+      return this.find('ico', identification, limit, 'ico');
+    };
+
+    Ares.prototype.findByCompanyName = function(name, limit) {
+      if (limit == null) {
+        limit = 10;
+      }
+      return this.find('obchodni_firma', name, limit, 'of');
+    };
+
+    Ares.prototype.getUrl = function(options) {
+      options = browserHttp.buildQuery(options);
+      return this.url + '?' + options;
+    };
+
+    Ares.prototype.load = function(options) {
+      var deferred, url;
+      url = this.getUrl(options);
+      deferred = Q.defer();
+      if (isWindow) {
+        browserHttp.get(url).then(function(res) {
+          return deferred.resolve(res.data);
+        }).fail(function(err) {
+          return deferred.reject(err);
+        });
       } else {
-        if (this.verify(this.findMeta(key))) {
-          return data[key];
+        http.get(url, function(res) {
+          var data;
+          data = [];
+          res.setEncoding('utf8');
+          res.on('data', function(chunk) {
+            return data.push(chunk);
+          });
+          return res.on('end', function() {
+            return deferred.resolve(data.join(''));
+          });
+        }).on('error', function(err) {
+          return deferred.reject(err);
+        });
+      }
+      return deferred.promise;
+    };
+
+    Ares.prototype.parse = function(data) {
+      var deferred,
+        _this = this;
+      deferred = Q.defer();
+      data = this.simplifyXml(data);
+      xml.parseString(data, function(err, data) {
+        if (err) {
+          _this.lastOriginalData = null;
+          return deferred.reject(err);
         } else {
-          this.remove(key);
-          return null;
+          _this.lastOriginalData = data;
+          return deferred.resolve(data);
         }
-      }
+      });
+      return deferred.promise;
     };
 
-    Storage.prototype.write = function(key, data, dependencies) {
-      var all, meta;
-      if (dependencies == null) {
-        dependencies = {};
+    Ares.prototype.prepare = function(data) {
+      var item, result, _i, _len, _ref;
+      data = data.Ares_odpovedi.Odpoved[0];
+      if (typeof data.Error !== 'undefined') {
+        return Q.reject(new Error(data.Error[0].Error_text[0]));
       }
-      all = this.getData();
-      all[key] = data;
-      meta = this.getMeta();
-      meta[key] = dependencies;
-      this.writeData(all, meta);
-      return this;
+      result = {
+        length: parseInt(data.Pocet_zaznamu[0]),
+        data: []
+      };
+      _ref = data.Zaznam;
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        item = _ref[_i];
+        result.data.push(this.prepareItem(item));
+      }
+      return Q.resolve(result);
     };
 
-    Storage.prototype.remove = function(key) {
-      var data, meta;
-      data = this.getData();
-      meta = this.getMeta();
-      if (typeof data[key] !== 'undefined') {
-        delete data[key];
-        delete meta[key];
-      }
-      this.writeData(data, meta);
-      return this;
-    };
-
-    Storage.prototype.clean = function(conditions) {
-      var key, tag, type, typeFn, _i, _j, _k, _len, _len1, _len2, _ref, _ref1, _ref2;
-      typeFn = Object.prototype.toString;
-      type = typeFn.call(conditions);
-      if (conditions === Cache.ALL) {
-        this.writeData({}, {});
-      } else if (type === '[object Object]') {
-        if (typeof conditions[Cache.TAGS] !== 'undefined') {
-          if (typeFn(conditions[Cache.TAGS]) === '[object String]') {
-            conditions[Cache.TAGS] = [conditions[Cache.TAGS]];
-          }
-          _ref = conditions[Cache.TAGS];
-          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-            tag = _ref[_i];
-            _ref1 = this.findKeysByTag(tag);
-            for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
-              key = _ref1[_j];
-              this.remove(key);
-            }
-          }
+    Ares.prototype.prepareItem = function(item) {
+      var result;
+      result = {
+        created: moment(item.Datum_vzniku[0], 'YYYY-MM-DD').toDate(),
+        validity: moment(item.Datum_platnosti[0], 'YYYY-MM-DD').toDate(),
+        name: item.Obchodni_firma[0],
+        identification: parseInt(item.ICO[0]),
+        address: {
+          district: item.Identifikace[0].Adresa_ARES[0].Nazev_okresu[0],
+          city: item.Identifikace[0].Adresa_ARES[0].Nazev_obce[0],
+          street: item.Identifikace[0].Adresa_ARES[0].Nazev_ulice[0],
+          descriptionNumber: parseInt(item.Identifikace[0].Adresa_ARES[0].Cislo_domovni[0]),
+          orientationNumber: parseInt(item.Identifikace[0].Adresa_ARES[0].Cislo_orientacni[0]),
+          zipCode: parseInt(item.Identifikace[0].Adresa_ARES[0].PSC[0])
         }
-        if (typeof conditions[Cache.PRIORITY] !== 'undefined') {
-          _ref2 = this.findKeysByPriority(conditions[Cache.PRIORITY]);
-          for (_k = 0, _len2 = _ref2.length; _k < _len2; _k++) {
-            key = _ref2[_k];
-            this.remove(key);
-          }
-        }
-      }
-      return this;
-    };
-
-    Storage.prototype.findMeta = function(key) {
-      var meta;
-      meta = this.getMeta();
-      if (typeof meta[key] !== 'undefined') {
-        return meta[key];
-      } else {
-        return null;
-      }
-    };
-
-    Storage.prototype.findKeysByTag = function(tag) {
-      var key, meta, metas, result;
-      metas = this.getMeta();
-      result = [];
-      for (key in metas) {
-        meta = metas[key];
-        if (typeof meta[Cache.TAGS] !== 'undefined' && meta[Cache.TAGS].indexOf(tag) !== -1) {
-          result.push(key);
-        }
-      }
+      };
       return result;
     };
 
-    Storage.prototype.findKeysByPriority = function(priority) {
-      var key, meta, metas, result;
-      metas = this.getMeta();
-      result = [];
-      for (key in metas) {
-        meta = metas[key];
-        if (typeof meta[Cache.PRIORITY] !== 'undefined' && meta[Cache.PRIORITY] <= priority) {
-          result.push(key);
-        }
-      }
-      return result;
+    Ares.prototype.simplifyXml = function(data) {
+      return data.replace('<?xml version="1.0" encoding="UTF-8"?>', '').replace(/(are|dtt|udt)\:/g, '').replace(' xmlns:are="http://wwwinfo.mfcr.cz/ares/xml_doc/schemas/ares/ares_answer/v_1.0.1"', '').replace(' xmlns:dtt="http://wwwinfo.mfcr.cz/ares/xml_doc/schemas/ares/ares_datatypes/v_1.0.4"', '').replace(' xmlns:udt="http://wwwinfo.mfcr.cz/ares/xml_doc/schemas/uvis_datatypes/v_1.0.1"', '').replace(' xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"', '').replace(' validation_XSLT="/ares/xml_doc/schemas/ares/ares_answer/v_1.0.0/ares_answer.xsl"', '').replace(' xsi:schemaLocation="http://wwwinfo.mfcr.cz/ares/xml_doc/schemas/ares/ares_answer/v_1.0.1 http://wwwinfo.mfcr.cz/ares/xml_doc/schemas/ares/ares_answer/v_1.0.1/ares_answer_v_1.0.1.xsd"', '').replace(/^\s*/, '').replace(/\s*$/, '');
     };
 
-    Storage.prototype.verify = function(meta) {
-      var file, item, time, typefn, _i, _len, _ref, _ref1;
-      typefn = Object.prototype.toString;
-      if (typefn.call(meta) === '[object Object]') {
-        if (typeof meta[Cache.FILES] !== 'undefined') {
-          if (isWindow) {
-            throw new Error('Files meta information is not supported in browser');
-          }
-          _ref = meta[Cache.FILES];
-          for (file in _ref) {
-            time = _ref[file];
-            if ((new Date(fs.statSync(file).mtime)).getTime() !== time) {
-              return false;
-            }
-          }
-        }
-        if (typeof meta[Cache.EXPIRE] !== 'undefined') {
-          if (moment().valueOf() >= meta[Cache.EXPIRE]) {
-            return false;
-          }
-        }
-        if (typeof meta[Cache.ITEMS] !== 'undefined') {
-          _ref1 = meta[Cache.ITEMS];
-          for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
-            item = _ref1[_i];
-            item = this.findMeta(item);
-            if ((item === null) || (item !== null && this.verify(item) === false)) {
-              return false;
-            }
-          }
-        }
-      }
-      return true;
-    };
-
-    Storage.prototype.parseDependencies = function(dependencies) {
-      var file, files, i, item, result, time, typefn, _i, _j, _len, _len1, _ref, _ref1;
-      typefn = Object.prototype.toString;
-      result = {};
-      if (typefn.call(dependencies) === '[object Object]') {
-        if (typeof dependencies[Cache.FILES] !== 'undefined') {
-          if (isWindow) {
-            throw new Error('Files meta information is not supported in browser');
-          }
-          files = {};
-          _ref = dependencies[Cache.FILES];
-          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-            file = _ref[_i];
-            file = path.resolve(file);
-            files[file] = (new Date(fs.statSync(file).mtime)).getTime();
-          }
-          result[Cache.FILES] = files;
-        }
-        if (typeof dependencies[Cache.EXPIRE] !== 'undefined') {
-          switch (typefn.call(dependencies[Cache.EXPIRE])) {
-            case '[object String]':
-              time = moment(dependencies[Cache.EXPIRE], Cache.TIME_FORMAT);
-              break;
-            case '[object Object]':
-              time = moment().add(dependencies[Cache.EXPIRE]);
-              break;
-            default:
-              throw new Error('Expire format is not valid');
-          }
-          result[Cache.EXPIRE] = time.valueOf();
-        }
-        if (typeof dependencies[Cache.ITEMS] !== 'undefined') {
-          result[Cache.ITEMS] = [];
-          _ref1 = dependencies[Cache.ITEMS];
-          for (i = _j = 0, _len1 = _ref1.length; _j < _len1; i = ++_j) {
-            item = _ref1[i];
-            result[Cache.ITEMS].push(this.cache.generateKey(item));
-          }
-        }
-        if (typeof dependencies[Cache.PRIORITY] !== 'undefined') {
-          result[Cache.PRIORITY] = dependencies[Cache.PRIORITY];
-        }
-        if (typeof dependencies[Cache.TAGS] !== 'undefined') {
-          result[Cache.TAGS] = dependencies[Cache.TAGS];
-        }
-      }
-      return result;
-    };
-
-    return Storage;
+    return Ares;
 
   })();
 
-  module.exports = Storage;
+  module.exports = Ares;
 
 }).call(this);
 
 },
-'test/browser/BrowserLocalStorage.coffee': function(exports, __require, module) {
-var require = function(name) {return __require(name, 'test/browser/BrowserLocalStorage.coffee');};
-var __filename = 'test/browser/BrowserLocalStorage.coffee';
-var __dirname = 'test/browser';
-var process = {cwd: function() {return '/';}, argv: ['node', 'test/browser/BrowserLocalStorage.coffee'], env: {}};
+'src/Validators.coffee': function(exports, __require, module) {
+var require = function(name) {return __require(name, 'src/Validators.coffee');};
+var __filename = 'src/Validators.coffee';
+var __dirname = 'src';
+var process = {cwd: function() {return '/';}, argv: ['node', 'src/Validators.coffee'], env: {}};
 (function() {
-  var BrowserLocalStorage, Cache, cache;
+  var Validators;
 
-  Cache = require('cache-storage');
+  Validators = (function() {
 
-  BrowserLocalStorage = require('cache-storage/Storage/BrowserLocalStorage');
+    function Validators() {}
 
-  cache = null;
+    /*
+       Coffeescript implementation of PHP version from David Grudl
+       http://latrine.dgx.cz/jak-overit-platne-ic-a-rodne-cislo
+    */
 
-  describe('BrowserLocalStorage', function() {
-    beforeEach(function() {
-      return cache = new Cache(new BrowserLocalStorage);
-    });
-    afterEach(function() {
-      return localStorage.clear();
-    });
-    describe('saving/loading', function() {
-      it('should save true and load it', function() {
-        cache.save('true', true);
-        return expect(cache.load('true')).to.be["true"];
-      });
-      it('should return null if item not exists', function() {
-        return expect(cache.load('true')).to.be["null"];
-      });
-      it('should save true and delete it', function() {
-        cache.save('true', true);
-        cache.remove('true');
-        return expect(cache.load('true')).to.be["null"];
-      });
-      return it('should save true to cache from fallback function in load', function() {
-        var val;
-        val = cache.load('true', function() {
-          return true;
-        });
-        return expect(val).to.be["true"];
-      });
-    });
-    return describe('expiration', function() {
-      it('should throw an error if file dependency is required', function() {
-        return expect(function() {
-          return cache.save('true', true, {
-            files: []
-          });
-        }).to["throw"](Error);
-      });
-      it('should remove all items with tag "article"', function() {
-        cache.save('one', 'one', {
-          tags: ['article']
-        });
-        cache.save('two', 'two', {
-          tags: ['category']
-        });
-        cache.save('three', 'three', {
-          tags: ['article']
-        });
-        cache.clean({
-          tags: ['article']
-        });
-        expect(cache.load('one')).to.be["null"];
-        expect(cache.load('two')).to.be.equal('two');
-        return expect(cache.load('three')).to.be["null"];
-      });
-      it('should expire "true" value after 1 second"', function(done) {
-        cache.save('true', true, {
-          expire: {
-            seconds: 1
-          }
-        });
-        return setTimeout(function() {
-          expect(cache.load('true')).to.be["null"];
+
+    Validators.companyIdentification = function(identification) {
+      var a, c, i, _i;
+      identification += '';
+      identification = identification.replace(/\s+/g, '');
+      if (identification.match(/^\d{8}$/) === null) {
+        return false;
+      }
+      a = 0;
+      for (i = _i = 0; _i <= 6; i = ++_i) {
+        a += identification.charAt(i) * (8 - i);
+      }
+      a = a % 11;
+      switch (a) {
+        case 0:
+        case 10:
+          c = 1;
+          break;
+        case 1:
+          c = 0;
+          break;
+        default:
+          c = 11 - a;
+      }
+      return parseInt(identification.charAt(7)) === c;
+    };
+
+    return Validators;
+
+  })();
+
+  module.exports = Validators;
+
+}).call(this);
+
+},
+'test/browser/Ares.coffee': function(exports, __require, module) {
+var require = function(name) {return __require(name, 'test/browser/Ares.coffee');};
+var __filename = 'test/browser/Ares.coffee';
+var __dirname = 'test/browser';
+var process = {cwd: function() {return '/';}, argv: ['node', 'test/browser/Ares.coffee'], env: {}};
+(function() {
+  var Ares, Q, ares, http;
+
+  Ares = require('ares-data');
+
+  http = require('browser-http');
+
+  Q = require('q');
+
+  Q.stopUnhandledRejectionTracking();
+
+  ares = new Ares('http://localhost:3000/');
+
+  describe('Ares', function() {
+    return describe('#findByIdentification()', function() {
+      it('should load old information about author', function(done) {
+        return ares.findByIdentification(88241653).then(function(data) {
+          expect(data.length).to.equal(1);
+          expect(data.data[0].name).to.equal('David Kudera');
+          expect(ares.lastOriginalData).not.to.be["null"];
           return done();
-        }, 1100);
+        }).done();
       });
-      it('should expire "true" value after "first" value expire', function() {
-        cache.save('first', 'first');
-        cache.save('true', true, {
-          items: ['first']
-        });
-        cache.remove('first');
-        return expect(cache.load('true')).to.be["null"];
-      });
-      it('should expire all items with priority bellow 50', function() {
-        cache.save('one', 'one', {
-          priority: 100
-        });
-        cache.save('two', 'two', {
-          priority: 10
-        });
-        cache.clean({
-          priority: 50
-        });
-        expect(cache.load('one')).to.be.equal('one');
-        return expect(cache.load('two')).to.be["null"];
-      });
-      return it('should remove all items from cache', function() {
-        cache.save('one', 'one');
-        cache.save('two', 'two');
-        cache.clean('all');
-        expect(cache.load('one')).to.be["null"];
-        return expect(cache.load('two')).to.be["null"];
-      });
-    });
-  });
-
-}).call(this);
-
-},
-'test/browser/Cache.coffee': function(exports, __require, module) {
-var require = function(name) {return __require(name, 'test/browser/Cache.coffee');};
-var __filename = 'test/browser/Cache.coffee';
-var __dirname = 'test/browser';
-var process = {cwd: function() {return '/';}, argv: ['node', 'test/browser/Cache.coffee'], env: {}};
-(function() {
-  var Cache;
-
-  Cache = require('cache-storage');
-
-  describe('Cache', function() {
-    return describe('#constructor()', function() {
-      return it('should throw an error if storage is not an instance of Cache Storage', function() {
-        return expect(function() {
-          return new Cache(new Array);
-        }).to["throw"](Error);
-      });
-    });
-  });
-
-}).call(this);
-
-},
-'test/browser/DevNullStorage.coffee': function(exports, __require, module) {
-var require = function(name) {return __require(name, 'test/browser/DevNullStorage.coffee');};
-var __filename = 'test/browser/DevNullStorage.coffee';
-var __dirname = 'test/browser';
-var process = {cwd: function() {return '/';}, argv: ['node', 'test/browser/DevNullStorage.coffee'], env: {}};
-(function() {
-  var Cache, DevNullStorage, cache;
-
-  Cache = require('cache-storage');
-
-  DevNullStorage = require('cache-storage/Storage/DevNullStorage');
-
-  cache = null;
-
-  describe('DevNullStorage', function() {
-    beforeEach(function() {
-      return cache = new Cache(new DevNullStorage);
-    });
-    return describe('saving/loading', function() {
-      it('should not save true', function() {
-        cache.save('true', true);
-        return expect(cache.load('true')).to.be["null"];
-      });
-      it('should always return null', function() {
-        return expect(cache.load('true')).to.be["null"];
-      });
-      it('should not save true and try to delete it', function() {
-        cache.save('true', true);
-        cache.remove('true');
-        return expect(cache.load('true')).to.be["null"];
-      });
-      return it('should not save true to cache from fallback function in load', function() {
-        var val;
-        val = cache.load('true', function() {
-          return true;
-        });
-        expect(val).to.be["true"];
-        return expect(cache.load('true')).to.be["null"];
-      });
-    });
-  });
-
-}).call(this);
-
-},
-'test/browser/FileStorage.coffee': function(exports, __require, module) {
-var require = function(name) {return __require(name, 'test/browser/FileStorage.coffee');};
-var __filename = 'test/browser/FileStorage.coffee';
-var __dirname = 'test/browser';
-var process = {cwd: function() {return '/';}, argv: ['node', 'test/browser/FileStorage.coffee'], env: {}};
-(function() {
-  var FileStorage;
-
-  FileStorage = require('cache-storage/Storage/FileStorage');
-
-  describe('FileStorage', function() {
-    return describe('#constructor()', function() {
-      return it('should throw an error on browser', function() {
-        return expect(function() {
-          return new FileStorage;
-        }).to["throw"](Error);
-      });
-    });
-  });
-
-}).call(this);
-
-},
-'test/browser/MemoryStorage.coffee': function(exports, __require, module) {
-var require = function(name) {return __require(name, 'test/browser/MemoryStorage.coffee');};
-var __filename = 'test/browser/MemoryStorage.coffee';
-var __dirname = 'test/browser';
-var process = {cwd: function() {return '/';}, argv: ['node', 'test/browser/MemoryStorage.coffee'], env: {}};
-(function() {
-  var Cache, MemoryStorage, cache;
-
-  Cache = require('cache-storage');
-
-  MemoryStorage = require('cache-storage/Storage/MemoryStorage');
-
-  cache = null;
-
-  describe('MemoryStorage', function() {
-    beforeEach(function() {
-      return cache = new Cache(new MemoryStorage, 'test');
-    });
-    describe('saving/loading', function() {
-      it('should save true and load it', function() {
-        cache.save('true', true);
-        return expect(cache.load('true')).to.be["true"];
-      });
-      it('should return null if item not exists', function() {
-        return expect(cache.load('true')).to.be["null"];
-      });
-      it('should save true and delete it', function() {
-        cache.save('true', true);
-        cache.remove('true');
-        return expect(cache.load('true')).to.be["null"];
-      });
-      return it('should save true to cache from fallback function in load', function() {
-        var val;
-        val = cache.load('true', function() {
-          return true;
-        });
-        return expect(val).to.be["true"];
-      });
-    });
-    return describe('expiration', function() {
-      it('should remove all items with tag "article"', function() {
-        cache.save('one', 'one', {
-          tags: ['article']
-        });
-        cache.save('two', 'two', {
-          tags: ['category']
-        });
-        cache.save('three', 'three', {
-          tags: ['article']
-        });
-        cache.clean({
-          tags: ['article']
-        });
-        expect(cache.load('one')).to.be["null"];
-        expect(cache.load('two')).to.be.equal('two');
-        return expect(cache.load('three')).to.be["null"];
-      });
-      it('should expire "true" value after 1 second"', function(done) {
-        cache.save('true', true, {
-          expire: {
-            seconds: 1
-          }
-        });
-        return setTimeout(function() {
-          expect(cache.load('true')).to.be["null"];
+      it('should load informations about some random companies', function(done) {
+        return ares.findByCompanyName('IBM').then(function(data) {
+          expect(data.length).to.be.above(1);
+          expect(ares.lastOriginalData).not.to.be["null"];
           return done();
-        }, 1100);
+        }).done();
       });
-      it('should expire "true" value after "first" value expire', function() {
-        cache.save('first', 'first');
-        cache.save('true', true, {
-          items: ['first']
-        });
-        cache.remove('first');
-        return expect(cache.load('true')).to.be["null"];
+      it('should return an error', function(done) {
+        return ares.findByIdentification(12345678).fail(function(err) {
+          expect(err).to.be.an["instanceof"](Error);
+          return done();
+        }).done();
       });
-      it('should expire all items with priority bellow 50', function() {
-        cache.save('one', 'one', {
-          priority: 100
-        });
-        cache.save('two', 'two', {
-          priority: 10
-        });
-        cache.clean({
-          priority: 50
-        });
-        expect(cache.load('one')).to.be.equal('one');
-        return expect(cache.load('two')).to.be["null"];
+      return it.skip('should return an error from ares', function(done) {
+        return ares.findByCompanyName('europa').fail(function(err) {
+          expect(err).to.be.an["instanceof"](Error);
+          return done();
+        }).done();
       });
-      return it('should remove all items from cache', function() {
-        cache.save('one', 'one');
-        cache.save('two', 'two');
-        cache.clean('all');
-        expect(cache.load('one')).to.be["null"];
-        return expect(cache.load('two')).to.be["null"];
+    });
+  });
+
+}).call(this);
+
+},
+'test/browser/Validators.coffee': function(exports, __require, module) {
+var require = function(name) {return __require(name, 'test/browser/Validators.coffee');};
+var __filename = 'test/browser/Validators.coffee';
+var __dirname = 'test/browser';
+var process = {cwd: function() {return '/';}, argv: ['node', 'test/browser/Validators.coffee'], env: {}};
+(function() {
+  var Validators;
+
+  Validators = require('ares-data/Validators');
+
+  describe('Validators', function() {
+    return describe('#companyIdentification()', function() {
+      it('should return true', function() {
+        expect(Validators.companyIdentification('69663963')).to.be["true"];
+        expect(Validators.companyIdentification('   69663963   ')).to.be["true"];
+        expect(Validators.companyIdentification(69663963)).to.be["true"];
+        return expect(Validators.companyIdentification(25596641)).to.be["true"];
+      });
+      return it('should return false', function() {
+        expect(Validators.companyIdentification('---')).to.be["false"];
+        return expect(Validators.companyIdentification('12345678')).to.be["false"];
       });
     });
   });
@@ -1079,11 +456,11 @@ var require = function(name) {return __require(name, 'node_modules/moment/moment
 var __filename = 'node_modules/moment/moment.js';
 var __dirname = 'node_modules/moment';
 var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/moment/moment.js'], env: {}};
-//! moment.js
-//! version : 2.2.1
-//! authors : Tim Wood, Iskren Chernev, Moment.js contributors
-//! license : MIT
-//! momentjs.com
+// moment.js
+// version : 2.1.0
+// author : Tim Wood
+// license : MIT
+// momentjs.com
 
 (function (undefined) {
 
@@ -1092,7 +469,7 @@ var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/momen
     ************************************/
 
     var moment,
-        VERSION = "2.2.1",
+        VERSION = "2.1.0",
         round = Math.round, i,
         // internal storage for language config files
         languages = {},
@@ -1102,7 +479,7 @@ var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/momen
 
         // ASP.NET json date format regex
         aspNetJsonRegex = /^\/?Date\((\-?\d+)/i,
-        aspNetTimeSpanJsonRegex = /(\-)?(?:(\d*)\.)?(\d+)\:(\d+)\:(\d+)\.?(\d{3})?/,
+        aspNetTimeSpanJsonRegex = /(\-)?(\d*)?\.?(\d+)\:(\d+)\:(\d+)\.?(\d{3})?/,
 
         // format tokens
         formattingTokens = /(\[[^\[]*\])|(\\)?(Mo|MM?M?M?|Do|DDDo|DD?D?D?|ddd?d?|do?|w[o|w]?|W[o|W]?|YYYYY|YYYY|YY|gg(ggg?)?|GG(GGG?)?|e|E|a|A|hh?|HH?|mm?|ss?|SS?S?|X|zz?|ZZ?|.)/g,
@@ -1154,7 +531,6 @@ var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/momen
             h : 'hour',
             d : 'day',
             w : 'week',
-            W : 'isoweek',
             M : 'month',
             y : 'year'
         },
@@ -1339,18 +715,18 @@ var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/momen
         this._input = duration;
 
         // representation for dateAddRemove
-        this._milliseconds = +milliseconds +
+        this._milliseconds = milliseconds +
             seconds * 1e3 + // 1000
             minutes * 6e4 + // 1000 * 60
             hours * 36e5; // 1000 * 60 * 60
         // Because of dateAddRemove treats 24 hours as different from a
         // day when working around DST, we need to store them separately
-        this._days = +days +
+        this._days = days +
             weeks * 7;
         // It is impossible translate months into days without knowing
         // which months you are are talking about, so we have to store
         // it separately.
-        this._months = +months +
+        this._months = months +
             years * 12;
 
         this._data = {};
@@ -1397,7 +773,8 @@ var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/momen
             days = duration._days,
             months = duration._months,
             minutes,
-            hours;
+            hours,
+            currentDate;
 
         if (milliseconds) {
             mom._d.setTime(+mom._d + milliseconds * isAdding);
@@ -1452,8 +829,7 @@ var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/momen
     ************************************/
 
 
-    extend(Language.prototype, {
-
+    Language.prototype = {
         set : function (config) {
             var prop, i;
             for (i in config) {
@@ -1486,7 +862,7 @@ var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/momen
             for (i = 0; i < 12; i++) {
                 // make the regex if we don't have it already
                 if (!this._monthsParse[i]) {
-                    mom = moment.utc([2000, i]);
+                    mom = moment([2000, i]);
                     regex = '^' + this.months(mom, '') + '|^' + this.monthsShort(mom, '');
                     this._monthsParse[i] = new RegExp(regex.replace('.', ''), 'i');
                 }
@@ -1552,9 +928,7 @@ var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/momen
         },
 
         isPM : function (input) {
-            // IE8 Quirks Mode & IE7 Standards Mode do not allow accessing strings like arrays
-            // Using charAt should be more compatible.
-            return ((input + '').toLowerCase().charAt(0) === 'p');
+            return ((input + '').toLowerCase()[0] === 'p');
         },
 
         _meridiemParse : /[ap]\.?m?\.?/i,
@@ -1625,7 +999,7 @@ var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/momen
             dow : 0, // Sunday is the first day of the week.
             doy : 6  // The week that contains Jan 1st is the first week of the year.
         }
-    });
+    };
 
     // Loads a language definition into the `languages` cache.  The function
     // takes a key and optionally values.  If not in the browser and no values
@@ -1638,11 +1012,6 @@ var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/momen
         }
         languages[key].set(values);
         return languages[key];
-    }
-
-    // Remove a language from the `languages` cache. Mostly useful in tests.
-    function unloadLang(key) {
-        delete languages[key];
     }
 
     // Determines which language definition to use and returns it.
@@ -1663,7 +1032,7 @@ var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/momen
                 return moment.fn._lang;
             }
         }
-        return languages[key] || moment.fn._lang;
+        return languages[key];
     }
 
 
@@ -1701,29 +1070,21 @@ var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/momen
 
     // format date using native date object
     function formatMoment(m, format) {
+        var i = 5;
 
-        format = expandFormat(format, m.lang());
+        function replaceLongDateFormatTokens(input) {
+            return m.lang().longDateFormat(input) || input;
+        }
+
+        while (i-- && localFormattingTokens.test(format)) {
+            format = format.replace(localFormattingTokens, replaceLongDateFormatTokens);
+        }
 
         if (!formatFunctions[format]) {
             formatFunctions[format] = makeFormatFunction(format);
         }
 
         return formatFunctions[format](m);
-    }
-
-    function expandFormat(format, lang) {
-        var i = 5;
-
-        function replaceLongDateFormatTokens(input) {
-            return lang.longDateFormat(input) || input;
-        }
-
-        while (i-- && (localFormattingTokens.lastIndex = 0,
-                    localFormattingTokens.test(format))) {
-            format = format.replace(localFormattingTokens, replaceLongDateFormatTokens);
-        }
-
-        return format;
     }
 
 
@@ -1798,9 +1159,7 @@ var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/momen
         // MONTH
         case 'M' : // fall through to MM
         case 'MM' :
-            if (input != null) {
-                datePartArray[1] = ~~input - 1;
-            }
+            datePartArray[1] = (input == null) ? 0 : ~~input - 1;
             break;
         case 'MMM' : // fall through to MMMM
         case 'MMMM' :
@@ -1813,17 +1172,11 @@ var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/momen
             }
             break;
         // DAY OF MONTH
-        case 'D' : // fall through to DD
-        case 'DD' :
-            if (input != null) {
-                datePartArray[2] = ~~input;
-            }
-            break;
-        // DAY OF YEAR
+        case 'D' : // fall through to DDDD
+        case 'DD' : // fall through to DDDD
         case 'DDD' : // fall through to DDDD
         case 'DDDD' :
             if (input != null) {
-                datePartArray[1] = 0;
                 datePartArray[2] = ~~input;
             }
             break;
@@ -1886,24 +1239,13 @@ var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/momen
     // note: all values past the year are optional and will default to the lowest possible value.
     // [year, month, day , hour, minute, second, millisecond]
     function dateFromArray(config) {
-        var i, date, input = [], currentDate;
+        var i, date, input = [];
 
         if (config._d) {
             return;
         }
 
-        // Default to current date.
-        // * if no year, month, day of month are given, default to today
-        // * if day of month is given, default month and year
-        // * if month is given, default only year
-        // * if year is given, don't default anything
-        currentDate = currentDateArray(config);
-        for (i = 0; i < 3 && config._a[i] == null; ++i) {
-            config._a[i] = input[i] = currentDate[i];
-        }
-
-        // Zero out whatever was not defaulted, including time
-        for (; i < 7; i++) {
+        for (i = 0; i < 7; i++) {
             config._a[i] = input[i] = (config._a[i] == null) ? (i === 2 ? 1 : 0) : config._a[i];
         }
 
@@ -1924,47 +1266,12 @@ var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/momen
         config._d = date;
     }
 
-    function dateFromObject(config) {
-        var o = config._i;
-
-        if (config._d) {
-            return;
-        }
-
-        config._a = [
-            o.years || o.year || o.y,
-            o.months || o.month || o.M,
-            o.days || o.day || o.d,
-            o.hours || o.hour || o.h,
-            o.minutes || o.minute || o.m,
-            o.seconds || o.second || o.s,
-            o.milliseconds || o.millisecond || o.ms
-        ];
-
-        dateFromArray(config);
-    }
-
-    function currentDateArray(config) {
-        var now = new Date();
-        if (config._useUTC) {
-            return [
-                now.getUTCFullYear(),
-                now.getUTCMonth(),
-                now.getUTCDate()
-            ];
-        } else {
-            return [now.getFullYear(), now.getMonth(), now.getDate()];
-        }
-    }
-
     // date from string and format string
     function makeDateFromStringAndFormat(config) {
         // This array is used to make a Date, either with `new Date` or `Date.UTC`
-        var lang = getLangDefinition(config._l),
-            string = '' + config._i,
-            i, parsedInput, tokens;
-
-        tokens = expandFormat(config._f, lang).match(formattingTokens);
+        var tokens = config._f.match(formattingTokens),
+            string = config._i,
+            i, parsedInput;
 
         config._a = [];
 
@@ -2066,12 +1373,8 @@ var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/momen
         } else if (isArray(input)) {
             config._a = input.slice(0);
             dateFromArray(config);
-        } else if (input instanceof Date) {
-            config._d = new Date(+input);
-        } else if (typeof(input) === 'object') {
-            dateFromObject(config);
         } else {
-            config._d = new Date(input);
+            config._d = input instanceof Date ? new Date(+input) : new Date(input);
         }
     }
 
@@ -2192,7 +1495,7 @@ var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/momen
             _l : lang,
             _i : input,
             _f : format
-        }).utc();
+        });
     };
 
     // creating with unix timestamp (in seconds)
@@ -2253,13 +1556,8 @@ var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/momen
         if (!key) {
             return moment.fn._lang._abbr;
         }
-        key = key.toLowerCase();
-        key = key.replace('_', '-');
         if (values) {
             loadLang(key, values);
-        } else if (values === null) {
-            unloadLang(key);
-            key = 'en';
         } else if (!languages[key]) {
             getLangDefinition(key);
         }
@@ -2290,7 +1588,7 @@ var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/momen
     ************************************/
 
 
-    extend(moment.fn = Moment.prototype, {
+    moment.fn = Moment.prototype = {
 
         clone : function () {
             return moment(this);
@@ -2338,14 +1636,6 @@ var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/momen
                 }
             }
             return !!this._isValid;
-        },
-
-        invalidAt: function () {
-            var i, arr1 = this._a, arr2 = (this._isUTC ? moment.utc(this._a) : moment(this._a)).toArray();
-            for (i = 6; i >= 0 && arr1[i] === arr2[i]; --i) {
-                // empty loop body
-            }
-            return i;
         },
 
         utc : function () {
@@ -2430,7 +1720,7 @@ var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/momen
         },
 
         calendar : function () {
-            var diff = this.diff(moment().zone(this.zone()).startOf('day'), 'days', true),
+            var diff = this.diff(moment().startOf('day'), 'days', true),
                 format = diff < -6 ? 'sameElse' :
                 diff < -1 ? 'lastWeek' :
                 diff < 0 ? 'lastDay' :
@@ -2467,7 +1757,8 @@ var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/momen
 
         month : function (input) {
             var utc = this._isUTC ? 'UTC' : '',
-                dayOfMonth;
+                dayOfMonth,
+                daysInMonth;
 
             if (input != null) {
                 if (typeof input === 'string') {
@@ -2501,7 +1792,6 @@ var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/momen
                 this.date(1);
                 /* falls through */
             case 'week':
-            case 'isoweek':
             case 'day':
                 this.hours(0);
                 /* falls through */
@@ -2519,16 +1809,13 @@ var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/momen
             // weeks are a special case
             if (units === 'week') {
                 this.weekday(0);
-            } else if (units === 'isoweek') {
-                this.isoWeekday(1);
             }
 
             return this;
         },
 
         endOf: function (units) {
-            units = normalizeUnits(units);
-            return this.startOf(units).add((units === 'isoweek' ? 'week' : units), 1).subtract('ms', 1);
+            return this.startOf(units).add(units, 1).subtract('ms', 1);
         },
 
         isAfter: function (input, units) {
@@ -2584,17 +1871,6 @@ var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/momen
             return this._isUTC ? "Coordinated Universal Time" : "";
         },
 
-        hasAlignedHourOffset : function (input) {
-            if (!input) {
-                input = 0;
-            }
-            else {
-                input = moment(input).zone();
-            }
-
-            return (this.zone() - input) % 60 === 0;
-        },
-
         daysInMonth : function () {
             return moment.utc([this.year(), this.month() + 1, 0]).date();
         },
@@ -2636,16 +1912,6 @@ var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/momen
             return input == null ? this.day() || 7 : this.day(this.day() % 7 ? input : input - 7);
         },
 
-        get : function (units) {
-            units = normalizeUnits(units);
-            return this[units.toLowerCase()]();
-        },
-
-        set : function (units, value) {
-            units = normalizeUnits(units);
-            this[units.toLowerCase()](value);
-        },
-
         // If passed a language key, it will set the language for this
         // instance.  Otherwise, it will return the language configuration
         // variables for this instance.
@@ -2657,7 +1923,7 @@ var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/momen
                 return this;
             }
         }
-    });
+    };
 
     // helper for adding shortcuts
     function makeGetterAndSetter(name, key) {
@@ -2695,8 +1961,7 @@ var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/momen
     ************************************/
 
 
-    extend(moment.duration.fn = Duration.prototype, {
-
+    moment.duration.fn = Duration.prototype = {
         _bubble : function () {
             var milliseconds = this._milliseconds,
                 days = this._days,
@@ -2785,7 +2050,7 @@ var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/momen
         },
 
         lang : moment.fn.lang
-    });
+    };
 
     function makeDurationGetter(name) {
         moment.duration.fn[name] = function () {
@@ -2829,7 +2094,6 @@ var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/momen
         }
     });
 
-    /* EMBED_LANGUAGES */
 
     /************************************
         Exposing Moment
@@ -2865,84 +2129,6312 @@ var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/momen
 // language : great britain english (en-gb)
 // author : Chris Gedrim : https://github.com/chrisgedrim
 
-(function (factory) {
-    if (typeof define === 'function' && define.amd) {
-        define(['moment'], factory); // AMD
-    } else if (typeof exports === 'object') {
-        factory(require('../moment')); // Node
-    } else {
-        factory(window.moment); // Browser global
+require('../moment').lang('en-gb', {
+    months : "January_February_March_April_May_June_July_August_September_October_November_December".split("_"),
+    monthsShort : "Jan_Feb_Mar_Apr_May_Jun_Jul_Aug_Sep_Oct_Nov_Dec".split("_"),
+    weekdays : "Sunday_Monday_Tuesday_Wednesday_Thursday_Friday_Saturday".split("_"),
+    weekdaysShort : "Sun_Mon_Tue_Wed_Thu_Fri_Sat".split("_"),
+    weekdaysMin : "Su_Mo_Tu_We_Th_Fr_Sa".split("_"),
+    longDateFormat : {
+        LT : "HH:mm",
+        L : "DD/MM/YYYY",
+        LL : "D MMMM YYYY",
+        LLL : "D MMMM YYYY LT",
+        LLLL : "dddd, D MMMM YYYY LT"
+    },
+    calendar : {
+        sameDay : '[Today at] LT',
+        nextDay : '[Tomorrow at] LT',
+        nextWeek : 'dddd [at] LT',
+        lastDay : '[Yesterday at] LT',
+        lastWeek : '[Last] dddd [at] LT',
+        sameElse : 'L'
+    },
+    relativeTime : {
+        future : "in %s",
+        past : "%s ago",
+        s : "a few seconds",
+        m : "a minute",
+        mm : "%d minutes",
+        h : "an hour",
+        hh : "%d hours",
+        d : "a day",
+        dd : "%d days",
+        M : "a month",
+        MM : "%d months",
+        y : "a year",
+        yy : "%d years"
+    },
+    ordinal : function (number) {
+        var b = number % 10,
+            output = (~~ (number % 100 / 10) === 1) ? 'th' :
+            (b === 1) ? 'st' :
+            (b === 2) ? 'nd' :
+            (b === 3) ? 'rd' : 'th';
+        return number + output;
+    },
+    week : {
+        dow : 1, // Monday is the first day of the week.
+        doy : 4  // The week that contains Jan 4th is the first week of the year.
     }
-}(function (moment) {
-    moment.lang('en-gb', {
-        months : "January_February_March_April_May_June_July_August_September_October_November_December".split("_"),
-        monthsShort : "Jan_Feb_Mar_Apr_May_Jun_Jul_Aug_Sep_Oct_Nov_Dec".split("_"),
-        weekdays : "Sunday_Monday_Tuesday_Wednesday_Thursday_Friday_Saturday".split("_"),
-        weekdaysShort : "Sun_Mon_Tue_Wed_Thu_Fri_Sat".split("_"),
-        weekdaysMin : "Su_Mo_Tu_We_Th_Fr_Sa".split("_"),
-        longDateFormat : {
-            LT : "HH:mm",
-            L : "DD/MM/YYYY",
-            LL : "D MMMM YYYY",
-            LLL : "D MMMM YYYY LT",
-            LLLL : "dddd, D MMMM YYYY LT"
-        },
-        calendar : {
-            sameDay : '[Today at] LT',
-            nextDay : '[Tomorrow at] LT',
-            nextWeek : 'dddd [at] LT',
-            lastDay : '[Yesterday at] LT',
-            lastWeek : '[Last] dddd [at] LT',
-            sameElse : 'L'
-        },
-        relativeTime : {
-            future : "in %s",
-            past : "%s ago",
-            s : "a few seconds",
-            m : "a minute",
-            mm : "%d minutes",
-            h : "an hour",
-            hh : "%d hours",
-            d : "a day",
-            dd : "%d days",
-            M : "a month",
-            MM : "%d months",
-            y : "a year",
-            yy : "%d years"
-        },
-        ordinal : function (number) {
-            var b = number % 10,
-                output = (~~ (number % 100 / 10) === 1) ? 'th' :
-                (b === 1) ? 'st' :
-                (b === 2) ? 'nd' :
-                (b === 3) ? 'rd' : 'th';
-            return number + output;
-        },
-        week : {
-            dow : 1, // Monday is the first day of the week.
-            doy : 4  // The week that contains Jan 4th is the first week of the year.
-        }
-    });
-}));
-
-},
-'cache-storage': 'src/Cache',
-'cache-storage/Storage/BrowserLocalStorage': 'src/Storage/BrowserLocalStorage',
-'cache-storage/Storage/DevNullStorage': 'src/Storage/DevNullStorage',
-'cache-storage/Storage/FileStorage': 'src/Storage/FileStorage',
-'cache-storage/Storage/MemoryStorage': 'src/Storage/MemoryStorage',
-'cache-storage/Storage/Storage': 'src/Storage/Storage'
 });
 
-require._setMeta({"cache-storage":{"base":"","path":"lib/Cache.js"},"moment":{"base":"node_modules/moment","path":"node_modules/moment/moment.js"}});
+},
+'node_modules/q/q.js': function(exports, __require, module) {
+var require = function(name) {return __require(name, 'node_modules/q/q.js');};
+var __filename = 'node_modules/q/q.js';
+var __dirname = 'node_modules/q';
+var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/q/q.js'], env: {}};
+// vim:ts=4:sts=4:sw=4:
+/*!
+ *
+ * Copyright 2009-2012 Kris Kowal under the terms of the MIT
+ * license found at http://github.com/kriskowal/q/raw/master/LICENSE
+ *
+ * With parts by Tyler Close
+ * Copyright 2007-2009 Tyler Close under the terms of the MIT X license found
+ * at http://www.opensource.org/licenses/mit-license.html
+ * Forked at ref_send.js version: 2009-05-11
+ *
+ * With parts by Mark Miller
+ * Copyright (C) 2011 Google Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
+(function (definition) {
+    // Turn off strict mode for this function so we can assign to global.Q
+    /* jshint strict: false */
+
+    // This file will function properly as a <script> tag, or a module
+    // using CommonJS and NodeJS or RequireJS module formats.  In
+    // Common/Node/RequireJS, the module exports the Q API and when
+    // executed as a simple <script>, it creates a Q global instead.
+
+    // Montage Require
+    if (typeof bootstrap === "function") {
+        bootstrap("promise", definition);
+
+    // CommonJS
+    } else if (typeof exports === "object") {
+        module.exports = definition();
+
+    // RequireJS
+    } else if (typeof define === "function" && define.amd) {
+        define(definition);
+
+    // SES (Secure EcmaScript)
+    } else if (typeof ses !== "undefined") {
+        if (!ses.ok()) {
+            return;
+        } else {
+            ses.makeQ = definition;
+        }
+
+    // <script>
+    } else {
+        Q = definition();
+    }
+
+})(function () {
+"use strict";
+
+var hasStacks = false;
+try {
+    throw new Error();
+} catch (e) {
+    hasStacks = !!e.stack;
+}
+
+// All code after this point will be filtered from stack traces reported
+// by Q.
+var qStartingLine = captureLine();
+var qFileName;
+
+// shims
+
+// used for fallback in "allResolved"
+var noop = function () {};
+
+// Use the fastest possible means to execute a task in a future turn
+// of the event loop.
+var nextTick =(function () {
+    // linked list of tasks (single, with head node)
+    var head = {task: void 0, next: null};
+    var tail = head;
+    var flushing = false;
+    var requestTick = void 0;
+    var isNodeJS = false;
+
+    function flush() {
+        while (head.next) {
+            head = head.next;
+            var task = head.task;
+            head.task = void 0;
+            var domain = head.domain;
+
+            if (domain) {
+                head.domain = void 0;
+                domain.enter();
+            }
+
+            try {
+                task();
+
+            } catch (e) {
+                if (isNodeJS) {
+                    // In node, uncaught exceptions are considered fatal errors.
+                    // Re-throw them synchronously to interrupt flushing!
+
+                    // Ensure continuation if the uncaught exception is suppressed
+                    // listening "uncaughtException" events (as domains does).
+                    // Continue in next event to avoid tick recursion.
+                    domain && domain.exit();
+                    setTimeout(flush, 0);
+                    domain && domain.enter();
+
+                    throw e;
+
+                } else {
+                    // In browsers, uncaught exceptions are not fatal.
+                    // Re-throw them asynchronously to avoid slow-downs.
+                    setTimeout(function() {
+                       throw e;
+                    }, 0);
+                }
+            }
+
+            if (domain) {
+                domain.exit();
+            }
+        }
+
+        flushing = false;
+    }
+
+    nextTick = function (task) {
+        tail = tail.next = {
+            task: task,
+            domain: isNodeJS && process.domain,
+            next: null
+        };
+
+        if (!flushing) {
+            flushing = true;
+            requestTick();
+        }
+    };
+
+    if (typeof process !== "undefined" && process.nextTick) {
+        // Node.js before 0.9. Note that some fake-Node environments, like the
+        // Mocha test runner, introduce a `process` global without a `nextTick`.
+        isNodeJS = true;
+
+        requestTick = function () {
+            process.nextTick(flush);
+        };
+
+    } else if (typeof setImmediate === "function") {
+        // In IE10, Node.js 0.9+, or https://github.com/NobleJS/setImmediate
+        if (typeof window !== "undefined") {
+            requestTick = setImmediate.bind(window, flush);
+        } else {
+            requestTick = function () {
+                setImmediate(flush);
+            };
+        }
+
+    } else if (typeof MessageChannel !== "undefined") {
+        // modern browsers
+        // http://www.nonblocking.io/2011/06/windownexttick.html
+        var channel = new MessageChannel();
+        channel.port1.onmessage = flush;
+        requestTick = function () {
+            channel.port2.postMessage(0);
+        };
+
+    } else {
+        // old browsers
+        requestTick = function () {
+            setTimeout(flush, 0);
+        };
+    }
+
+    return nextTick;
+})();
+
+// Attempt to make generics safe in the face of downstream
+// modifications.
+// There is no situation where this is necessary.
+// If you need a security guarantee, these primordials need to be
+// deeply frozen anyway, and if you don’t need a security guarantee,
+// this is just plain paranoid.
+// However, this does have the nice side-effect of reducing the size
+// of the code by reducing x.call() to merely x(), eliminating many
+// hard-to-minify characters.
+// See Mark Miller’s explanation of what this does.
+// http://wiki.ecmascript.org/doku.php?id=conventions:safe_meta_programming
+function uncurryThis(f) {
+    var call = Function.call;
+    return function () {
+        return call.apply(f, arguments);
+    };
+}
+// This is equivalent, but slower:
+// uncurryThis = Function_bind.bind(Function_bind.call);
+// http://jsperf.com/uncurrythis
+
+var array_slice = uncurryThis(Array.prototype.slice);
+
+var array_reduce = uncurryThis(
+    Array.prototype.reduce || function (callback, basis) {
+        var index = 0,
+            length = this.length;
+        // concerning the initial value, if one is not provided
+        if (arguments.length === 1) {
+            // seek to the first value in the array, accounting
+            // for the possibility that is is a sparse array
+            do {
+                if (index in this) {
+                    basis = this[index++];
+                    break;
+                }
+                if (++index >= length) {
+                    throw new TypeError();
+                }
+            } while (1);
+        }
+        // reduce
+        for (; index < length; index++) {
+            // account for the possibility that the array is sparse
+            if (index in this) {
+                basis = callback(basis, this[index], index);
+            }
+        }
+        return basis;
+    }
+);
+
+var array_indexOf = uncurryThis(
+    Array.prototype.indexOf || function (value) {
+        // not a very good shim, but good enough for our one use of it
+        for (var i = 0; i < this.length; i++) {
+            if (this[i] === value) {
+                return i;
+            }
+        }
+        return -1;
+    }
+);
+
+var array_map = uncurryThis(
+    Array.prototype.map || function (callback, thisp) {
+        var self = this;
+        var collect = [];
+        array_reduce(self, function (undefined, value, index) {
+            collect.push(callback.call(thisp, value, index, self));
+        }, void 0);
+        return collect;
+    }
+);
+
+var object_create = Object.create || function (prototype) {
+    function Type() { }
+    Type.prototype = prototype;
+    return new Type();
+};
+
+var object_hasOwnProperty = uncurryThis(Object.prototype.hasOwnProperty);
+
+var object_keys = Object.keys || function (object) {
+    var keys = [];
+    for (var key in object) {
+        if (object_hasOwnProperty(object, key)) {
+            keys.push(key);
+        }
+    }
+    return keys;
+};
+
+var object_toString = uncurryThis(Object.prototype.toString);
+
+function isObject(value) {
+    return value === Object(value);
+}
+
+// generator related shims
+
+// FIXME: Remove this function once ES6 generators are in SpiderMonkey.
+function isStopIteration(exception) {
+    return (
+        object_toString(exception) === "[object StopIteration]" ||
+        exception instanceof QReturnValue
+    );
+}
+
+// FIXME: Remove this helper and Q.return once ES6 generators are in
+// SpiderMonkey.
+var QReturnValue;
+if (typeof ReturnValue !== "undefined") {
+    QReturnValue = ReturnValue;
+} else {
+    QReturnValue = function (value) {
+        this.value = value;
+    };
+}
+
+// Until V8 3.19 / Chromium 29 is released, SpiderMonkey is the only
+// engine that has a deployed base of browsers that support generators.
+// However, SM's generators use the Python-inspired semantics of
+// outdated ES6 drafts.  We would like to support ES6, but we'd also
+// like to make it possible to use generators in deployed browsers, so
+// we also support Python-style generators.  At some point we can remove
+// this block.
+var hasES6Generators;
+try {
+    /* jshint evil: true, nonew: false */
+    new Function("(function* (){ yield 1; })");
+    hasES6Generators = true;
+} catch (e) {
+    hasES6Generators = false;
+}
+
+// long stack traces
+
+var STACK_JUMP_SEPARATOR = "From previous event:";
+
+function makeStackTraceLong(error, promise) {
+    // If possible, transform the error stack trace by removing Node and Q
+    // cruft, then concatenating with the stack trace of `promise`. See #57.
+    if (hasStacks &&
+        promise.stack &&
+        typeof error === "object" &&
+        error !== null &&
+        error.stack &&
+        error.stack.indexOf(STACK_JUMP_SEPARATOR) === -1
+    ) {
+        var stacks = [];
+        for (var p = promise; !!p; p = p.source) {
+            if (p.stack) {
+                stacks.unshift(p.stack);
+            }
+        }
+        stacks.unshift(error.stack);
+
+        var concatedStacks = stacks.join("\n" + STACK_JUMP_SEPARATOR + "\n");
+        error.stack = filterStackString(concatedStacks);
+    }
+}
+
+function filterStackString(stackString) {
+    var lines = stackString.split("\n");
+    var desiredLines = [];
+    for (var i = 0; i < lines.length; ++i) {
+        var line = lines[i];
+
+        if (!isInternalFrame(line) && !isNodeFrame(line) && line) {
+            desiredLines.push(line);
+        }
+    }
+    return desiredLines.join("\n");
+}
+
+function isNodeFrame(stackLine) {
+    return stackLine.indexOf("(module.js:") !== -1 ||
+           stackLine.indexOf("(node.js:") !== -1;
+}
+
+function getFileNameAndLineNumber(stackLine) {
+    // Named functions: "at functionName (filename:lineNumber:columnNumber)"
+    // In IE10 function name can have spaces ("Anonymous function") O_o
+    var attempt1 = /at .+ \((.+):(\d+):(?:\d+)\)$/.exec(stackLine);
+    if (attempt1) {
+        return [attempt1[1], Number(attempt1[2])];
+    }
+
+    // Anonymous functions: "at filename:lineNumber:columnNumber"
+    var attempt2 = /at ([^ ]+):(\d+):(?:\d+)$/.exec(stackLine);
+    if (attempt2) {
+        return [attempt2[1], Number(attempt2[2])];
+    }
+
+    // Firefox style: "function@filename:lineNumber or @filename:lineNumber"
+    var attempt3 = /.*@(.+):(\d+)$/.exec(stackLine);
+    if (attempt3) {
+        return [attempt3[1], Number(attempt3[2])];
+    }
+}
+
+function isInternalFrame(stackLine) {
+    var fileNameAndLineNumber = getFileNameAndLineNumber(stackLine);
+
+    if (!fileNameAndLineNumber) {
+        return false;
+    }
+
+    var fileName = fileNameAndLineNumber[0];
+    var lineNumber = fileNameAndLineNumber[1];
+
+    return fileName === qFileName &&
+        lineNumber >= qStartingLine &&
+        lineNumber <= qEndingLine;
+}
+
+// discover own file name and line number range for filtering stack
+// traces
+function captureLine() {
+    if (!hasStacks) {
+        return;
+    }
+
+    try {
+        throw new Error();
+    } catch (e) {
+        var lines = e.stack.split("\n");
+        var firstLine = lines[0].indexOf("@") > 0 ? lines[1] : lines[2];
+        var fileNameAndLineNumber = getFileNameAndLineNumber(firstLine);
+        if (!fileNameAndLineNumber) {
+            return;
+        }
+
+        qFileName = fileNameAndLineNumber[0];
+        return fileNameAndLineNumber[1];
+    }
+}
+
+function deprecate(callback, name, alternative) {
+    return function () {
+        if (typeof console !== "undefined" &&
+            typeof console.warn === "function") {
+            console.warn(name + " is deprecated, use " + alternative +
+                         " instead.", new Error("").stack);
+        }
+        return callback.apply(callback, arguments);
+    };
+}
+
+// end of shims
+// beginning of real work
+
+/**
+ * Creates fulfilled promises from non-thenables,
+ * Passes Q promises through,
+ * Coerces other thenables to Q promises.
+ */
+function Q(value) {
+    return resolve(value);
+}
+
+/**
+ * Performs a task in a future turn of the event loop.
+ * @param {Function} task
+ */
+Q.nextTick = nextTick;
+
+/**
+ * Controls whether or not long stack traces will be on
+ */
+Q.longStackSupport = false;
+
+/**
+ * Constructs a {promise, resolve, reject} object.
+ *
+ * `resolve` is a callback to invoke with a more resolved value for the
+ * promise. To fulfill the promise, invoke `resolve` with any value that is
+ * not a thenable. To reject the promise, invoke `resolve` with a rejected
+ * thenable, or invoke `reject` with the reason directly. To resolve the
+ * promise to another thenable, thus putting it in the same state, invoke
+ * `resolve` with that other thenable.
+ */
+Q.defer = defer;
+function defer() {
+    // if "messages" is an "Array", that indicates that the promise has not yet
+    // been resolved.  If it is "undefined", it has been resolved.  Each
+    // element of the messages array is itself an array of complete arguments to
+    // forward to the resolved promise.  We coerce the resolution value to a
+    // promise using the `resolve` function because it handles both fully
+    // non-thenable values and other thenables gracefully.
+    var messages = [], progressListeners = [], resolvedPromise;
+
+    var deferred = object_create(defer.prototype);
+    var promise = object_create(Promise.prototype);
+
+    promise.promiseDispatch = function (resolve, op, operands) {
+        var args = array_slice(arguments);
+        if (messages) {
+            messages.push(args);
+            if (op === "when" && operands[1]) { // progress operand
+                progressListeners.push(operands[1]);
+            }
+        } else {
+            nextTick(function () {
+                resolvedPromise.promiseDispatch.apply(resolvedPromise, args);
+            });
+        }
+    };
+
+    // XXX deprecated
+    promise.valueOf = deprecate(function () {
+        if (messages) {
+            return promise;
+        }
+        var nearerValue = nearer(resolvedPromise);
+        if (isPromise(nearerValue)) {
+            resolvedPromise = nearerValue; // shorten chain
+        }
+        return nearerValue;
+    }, "valueOf", "inspect");
+
+    promise.inspect = function () {
+        if (!resolvedPromise) {
+            return { state: "pending" };
+        }
+        return resolvedPromise.inspect();
+    };
+
+    if (Q.longStackSupport && hasStacks) {
+        try {
+            throw new Error();
+        } catch (e) {
+            // NOTE: don't try to use `Error.captureStackTrace` or transfer the
+            // accessor around; that causes memory leaks as per GH-111. Just
+            // reify the stack trace as a string ASAP.
+            //
+            // At the same time, cut off the first line; it's always just
+            // "[object Promise]\n", as per the `toString`.
+            promise.stack = e.stack.substring(e.stack.indexOf("\n") + 1);
+        }
+    }
+
+    // NOTE: we do the checks for `resolvedPromise` in each method, instead of
+    // consolidating them into `become`, since otherwise we'd create new
+    // promises with the lines `become(whatever(value))`. See e.g. GH-252.
+
+    function become(newPromise) {
+        resolvedPromise = newPromise;
+        promise.source = newPromise;
+
+        array_reduce(messages, function (undefined, message) {
+            nextTick(function () {
+                newPromise.promiseDispatch.apply(newPromise, message);
+            });
+        }, void 0);
+
+        messages = void 0;
+        progressListeners = void 0;
+    }
+
+    deferred.promise = promise;
+    deferred.resolve = function (value) {
+        if (resolvedPromise) {
+            return;
+        }
+
+        become(resolve(value));
+    };
+
+    deferred.fulfill = function (value) {
+        if (resolvedPromise) {
+            return;
+        }
+
+        become(fulfill(value));
+    };
+    deferred.reject = function (reason) {
+        if (resolvedPromise) {
+            return;
+        }
+
+        become(reject(reason));
+    };
+    deferred.notify = function (progress) {
+        if (resolvedPromise) {
+            return;
+        }
+
+        array_reduce(progressListeners, function (undefined, progressListener) {
+            nextTick(function () {
+                progressListener(progress);
+            });
+        }, void 0);
+    };
+
+    return deferred;
+}
+
+/**
+ * Creates a Node-style callback that will resolve or reject the deferred
+ * promise.
+ * @returns a nodeback
+ */
+defer.prototype.makeNodeResolver = function () {
+    var self = this;
+    return function (error, value) {
+        if (error) {
+            self.reject(error);
+        } else if (arguments.length > 2) {
+            self.resolve(array_slice(arguments, 1));
+        } else {
+            self.resolve(value);
+        }
+    };
+};
+
+/**
+ * @param resolver {Function} a function that returns nothing and accepts
+ * the resolve, reject, and notify functions for a deferred.
+ * @returns a promise that may be resolved with the given resolve and reject
+ * functions, or rejected by a thrown exception in resolver
+ */
+Q.promise = promise;
+function promise(resolver) {
+    if (typeof resolver !== "function") {
+        throw new TypeError("resolver must be a function.");
+    }
+
+    var deferred = defer();
+    fcall(
+        resolver,
+        deferred.resolve,
+        deferred.reject,
+        deferred.notify
+    ).fail(deferred.reject);
+    return deferred.promise;
+}
+
+/**
+ * Constructs a Promise with a promise descriptor object and optional fallback
+ * function.  The descriptor contains methods like when(rejected), get(name),
+ * set(name, value), post(name, args), and delete(name), which all
+ * return either a value, a promise for a value, or a rejection.  The fallback
+ * accepts the operation name, a resolver, and any further arguments that would
+ * have been forwarded to the appropriate method above had a method been
+ * provided with the proper name.  The API makes no guarantees about the nature
+ * of the returned object, apart from that it is usable whereever promises are
+ * bought and sold.
+ */
+Q.makePromise = Promise;
+function Promise(descriptor, fallback, inspect) {
+    if (fallback === void 0) {
+        fallback = function (op) {
+            return reject(new Error(
+                "Promise does not support operation: " + op
+            ));
+        };
+    }
+    if (inspect === void 0) {
+        inspect = function () {
+            return {state: "unknown"};
+        };
+    }
+
+    var promise = object_create(Promise.prototype);
+
+    promise.promiseDispatch = function (resolve, op, args) {
+        var result;
+        try {
+            if (descriptor[op]) {
+                result = descriptor[op].apply(promise, args);
+            } else {
+                result = fallback.call(promise, op, args);
+            }
+        } catch (exception) {
+            result = reject(exception);
+        }
+        if (resolve) {
+            resolve(result);
+        }
+    };
+
+    promise.inspect = inspect;
+
+    // XXX deprecated `valueOf` and `exception` support
+    if (inspect) {
+        var inspected = inspect();
+        if (inspected.state === "rejected") {
+            promise.exception = inspected.reason;
+        }
+
+        promise.valueOf = deprecate(function () {
+            var inspected = inspect();
+            if (inspected.state === "pending" ||
+                inspected.state === "rejected") {
+                return promise;
+            }
+            return inspected.value;
+        });
+    }
+
+    return promise;
+}
+
+Promise.prototype.then = function (fulfilled, rejected, progressed) {
+    var self = this;
+    var deferred = defer();
+    var done = false;   // ensure the untrusted promise makes at most a
+                        // single call to one of the callbacks
+
+    function _fulfilled(value) {
+        try {
+            return typeof fulfilled === "function" ? fulfilled(value) : value;
+        } catch (exception) {
+            return reject(exception);
+        }
+    }
+
+    function _rejected(exception) {
+        if (typeof rejected === "function") {
+            makeStackTraceLong(exception, self);
+            try {
+                return rejected(exception);
+            } catch (newException) {
+                return reject(newException);
+            }
+        }
+        return reject(exception);
+    }
+
+    function _progressed(value) {
+        return typeof progressed === "function" ? progressed(value) : value;
+    }
+
+    nextTick(function () {
+        self.promiseDispatch(function (value) {
+            if (done) {
+                return;
+            }
+            done = true;
+
+            deferred.resolve(_fulfilled(value));
+        }, "when", [function (exception) {
+            if (done) {
+                return;
+            }
+            done = true;
+
+            deferred.resolve(_rejected(exception));
+        }]);
+    });
+
+    // Progress propagator need to be attached in the current tick.
+    self.promiseDispatch(void 0, "when", [void 0, function (value) {
+        var newValue;
+        var threw = false;
+        try {
+            newValue = _progressed(value);
+        } catch (e) {
+            threw = true;
+            if (Q.onerror) {
+                Q.onerror(e);
+            } else {
+                throw e;
+            }
+        }
+
+        if (!threw) {
+            deferred.notify(newValue);
+        }
+    }]);
+
+    return deferred.promise;
+};
+
+Promise.prototype.thenResolve = function (value) {
+    return when(this, function () { return value; });
+};
+
+Promise.prototype.thenReject = function (reason) {
+    return when(this, function () { throw reason; });
+};
+
+// Chainable methods
+array_reduce(
+    [
+        "isFulfilled", "isRejected", "isPending",
+        "dispatch",
+        "when", "spread",
+        "get", "set", "del", "delete",
+        "post", "send", "mapply", "invoke", "mcall",
+        "keys",
+        "fapply", "fcall", "fbind",
+        "all", "allResolved",
+        "timeout", "delay",
+        "catch", "finally", "fail", "fin", "progress", "done",
+        "nfcall", "nfapply", "nfbind", "denodeify", "nbind",
+        "npost", "nsend", "nmapply", "ninvoke", "nmcall",
+        "nodeify"
+    ],
+    function (undefined, name) {
+        Promise.prototype[name] = function () {
+            return Q[name].apply(
+                Q,
+                [this].concat(array_slice(arguments))
+            );
+        };
+    },
+    void 0
+);
+
+Promise.prototype.toSource = function () {
+    return this.toString();
+};
+
+Promise.prototype.toString = function () {
+    return "[object Promise]";
+};
+
+/**
+ * If an object is not a promise, it is as "near" as possible.
+ * If a promise is rejected, it is as "near" as possible too.
+ * If it’s a fulfilled promise, the fulfillment value is nearer.
+ * If it’s a deferred promise and the deferred has been resolved, the
+ * resolution is "nearer".
+ * @param object
+ * @returns most resolved (nearest) form of the object
+ */
+
+// XXX should we re-do this?
+Q.nearer = nearer;
+function nearer(value) {
+    if (isPromise(value)) {
+        var inspected = value.inspect();
+        if (inspected.state === "fulfilled") {
+            return inspected.value;
+        }
+    }
+    return value;
+}
+
+/**
+ * @returns whether the given object is a promise.
+ * Otherwise it is a fulfilled value.
+ */
+Q.isPromise = isPromise;
+function isPromise(object) {
+    return isObject(object) &&
+        typeof object.promiseDispatch === "function" &&
+        typeof object.inspect === "function";
+}
+
+Q.isPromiseAlike = isPromiseAlike;
+function isPromiseAlike(object) {
+    return isObject(object) && typeof object.then === "function";
+}
+
+/**
+ * @returns whether the given object is a pending promise, meaning not
+ * fulfilled or rejected.
+ */
+Q.isPending = isPending;
+function isPending(object) {
+    return isPromise(object) && object.inspect().state === "pending";
+}
+
+/**
+ * @returns whether the given object is a value or fulfilled
+ * promise.
+ */
+Q.isFulfilled = isFulfilled;
+function isFulfilled(object) {
+    return !isPromise(object) || object.inspect().state === "fulfilled";
+}
+
+/**
+ * @returns whether the given object is a rejected promise.
+ */
+Q.isRejected = isRejected;
+function isRejected(object) {
+    return isPromise(object) && object.inspect().state === "rejected";
+}
+
+//// BEGIN UNHANDLED REJECTION TRACKING
+
+// This promise library consumes exceptions thrown in handlers so they can be
+// handled by a subsequent promise.  The exceptions get added to this array when
+// they are created, and removed when they are handled.  Note that in ES6 or
+// shimmed environments, this would naturally be a `Set`.
+var unhandledReasons = [];
+var unhandledRejections = [];
+var unhandledReasonsDisplayed = false;
+var trackUnhandledRejections = true;
+function displayUnhandledReasons() {
+    if (
+        !unhandledReasonsDisplayed &&
+        typeof window !== "undefined" &&
+        !window.Touch &&
+        window.console
+    ) {
+        console.warn("[Q] Unhandled rejection reasons (should be empty):",
+                     unhandledReasons);
+    }
+
+    unhandledReasonsDisplayed = true;
+}
+
+function logUnhandledReasons() {
+    for (var i = 0; i < unhandledReasons.length; i++) {
+        var reason = unhandledReasons[i];
+        if (reason && typeof reason.stack !== "undefined") {
+            console.warn("Unhandled rejection reason:", reason.stack);
+        } else {
+            console.warn("Unhandled rejection reason (no stack):", reason);
+        }
+    }
+}
+
+function resetUnhandledRejections() {
+    unhandledReasons.length = 0;
+    unhandledRejections.length = 0;
+    unhandledReasonsDisplayed = false;
+
+    if (!trackUnhandledRejections) {
+        trackUnhandledRejections = true;
+
+        // Show unhandled rejection reasons if Node exits without handling an
+        // outstanding rejection.  (Note that Browserify presently produces a
+        // `process` global without the `EventEmitter` `on` method.)
+        if (typeof process !== "undefined" && process.on) {
+            process.on("exit", logUnhandledReasons);
+        }
+    }
+}
+
+function trackRejection(promise, reason) {
+    if (!trackUnhandledRejections) {
+        return;
+    }
+
+    unhandledRejections.push(promise);
+    unhandledReasons.push(reason);
+    displayUnhandledReasons();
+}
+
+function untrackRejection(promise) {
+    if (!trackUnhandledRejections) {
+        return;
+    }
+
+    var at = array_indexOf(unhandledRejections, promise);
+    if (at !== -1) {
+        unhandledRejections.splice(at, 1);
+        unhandledReasons.splice(at, 1);
+    }
+}
+
+Q.resetUnhandledRejections = resetUnhandledRejections;
+
+Q.getUnhandledReasons = function () {
+    // Make a copy so that consumers can't interfere with our internal state.
+    return unhandledReasons.slice();
+};
+
+Q.stopUnhandledRejectionTracking = function () {
+    resetUnhandledRejections();
+    if (typeof process !== "undefined" && process.on) {
+        process.removeListener("exit", logUnhandledReasons);
+    }
+    trackUnhandledRejections = false;
+};
+
+resetUnhandledRejections();
+
+//// END UNHANDLED REJECTION TRACKING
+
+/**
+ * Constructs a rejected promise.
+ * @param reason value describing the failure
+ */
+Q.reject = reject;
+function reject(reason) {
+    var rejection = Promise({
+        "when": function (rejected) {
+            // note that the error has been handled
+            if (rejected) {
+                untrackRejection(this);
+            }
+            return rejected ? rejected(reason) : this;
+        }
+    }, function fallback() {
+        return this;
+    }, function inspect() {
+        return { state: "rejected", reason: reason };
+    });
+
+    // Note that the reason has not been handled.
+    trackRejection(rejection, reason);
+
+    return rejection;
+}
+
+/**
+ * Constructs a fulfilled promise for an immediate reference.
+ * @param value immediate reference
+ */
+Q.fulfill = fulfill;
+function fulfill(value) {
+    return Promise({
+        "when": function () {
+            return value;
+        },
+        "get": function (name) {
+            return value[name];
+        },
+        "set": function (name, rhs) {
+            value[name] = rhs;
+        },
+        "delete": function (name) {
+            delete value[name];
+        },
+        "post": function (name, args) {
+            // Mark Miller proposes that post with no name should apply a
+            // promised function.
+            if (name === null || name === void 0) {
+                return value.apply(void 0, args);
+            } else {
+                return value[name].apply(value, args);
+            }
+        },
+        "apply": function (thisP, args) {
+            return value.apply(thisP, args);
+        },
+        "keys": function () {
+            return object_keys(value);
+        }
+    }, void 0, function inspect() {
+        return { state: "fulfilled", value: value };
+    });
+}
+
+/**
+ * Constructs a promise for an immediate reference, passes promises through, or
+ * coerces promises from different systems.
+ * @param value immediate reference or promise
+ */
+Q.resolve = resolve;
+function resolve(value) {
+    // If the object is already a Promise, return it directly.  This enables
+    // the resolve function to both be used to created references from objects,
+    // but to tolerably coerce non-promises to promises.
+    if (isPromise(value)) {
+        return value;
+    }
+
+    // assimilate thenables
+    if (isPromiseAlike(value)) {
+        return coerce(value);
+    } else {
+        return fulfill(value);
+    }
+}
+
+/**
+ * Converts thenables to Q promises.
+ * @param promise thenable promise
+ * @returns a Q promise
+ */
+function coerce(promise) {
+    var deferred = defer();
+    nextTick(function () {
+        try {
+            promise.then(deferred.resolve, deferred.reject, deferred.notify);
+        } catch (exception) {
+            deferred.reject(exception);
+        }
+    });
+    return deferred.promise;
+}
+
+/**
+ * Annotates an object such that it will never be
+ * transferred away from this process over any promise
+ * communication channel.
+ * @param object
+ * @returns promise a wrapping of that object that
+ * additionally responds to the "isDef" message
+ * without a rejection.
+ */
+Q.master = master;
+function master(object) {
+    return Promise({
+        "isDef": function () {}
+    }, function fallback(op, args) {
+        return dispatch(object, op, args);
+    }, function () {
+        return resolve(object).inspect();
+    });
+}
+
+/**
+ * Registers an observer on a promise.
+ *
+ * Guarantees:
+ *
+ * 1. that fulfilled and rejected will be called only once.
+ * 2. that either the fulfilled callback or the rejected callback will be
+ *    called, but not both.
+ * 3. that fulfilled and rejected will not be called in this turn.
+ *
+ * @param value      promise or immediate reference to observe
+ * @param fulfilled  function to be called with the fulfilled value
+ * @param rejected   function to be called with the rejection exception
+ * @param progressed function to be called on any progress notifications
+ * @return promise for the return value from the invoked callback
+ */
+Q.when = when;
+function when(value, fulfilled, rejected, progressed) {
+    return Q(value).then(fulfilled, rejected, progressed);
+}
+
+/**
+ * Spreads the values of a promised array of arguments into the
+ * fulfillment callback.
+ * @param fulfilled callback that receives variadic arguments from the
+ * promised array
+ * @param rejected callback that receives the exception if the promise
+ * is rejected.
+ * @returns a promise for the return value or thrown exception of
+ * either callback.
+ */
+Q.spread = spread;
+function spread(promise, fulfilled, rejected) {
+    return when(promise, function (valuesOrPromises) {
+        return all(valuesOrPromises).then(function (values) {
+            return fulfilled.apply(void 0, values);
+        }, rejected);
+    }, rejected);
+}
+
+/**
+ * The async function is a decorator for generator functions, turning
+ * them into asynchronous generators.  Although generators are only part
+ * of the newest ECMAScript 6 drafts, this code does not cause syntax
+ * errors in older engines.  This code should continue to work and will
+ * in fact improve over time as the language improves.
+ *
+ * ES6 generators are currently part of V8 version 3.19 with the
+ * --harmony-generators runtime flag enabled.  SpiderMonkey has had them
+ * for longer, but under an older Python-inspired form.  This function
+ * works on both kinds of generators.
+ *
+ * Decorates a generator function such that:
+ *  - it may yield promises
+ *  - execution will continue when that promise is fulfilled
+ *  - the value of the yield expression will be the fulfilled value
+ *  - it returns a promise for the return value (when the generator
+ *    stops iterating)
+ *  - the decorated function returns a promise for the return value
+ *    of the generator or the first rejected promise among those
+ *    yielded.
+ *  - if an error is thrown in the generator, it propagates through
+ *    every following yield until it is caught, or until it escapes
+ *    the generator function altogether, and is translated into a
+ *    rejection for the promise returned by the decorated generator.
+ */
+Q.async = async;
+function async(makeGenerator) {
+    return function () {
+        // when verb is "send", arg is a value
+        // when verb is "throw", arg is an exception
+        function continuer(verb, arg) {
+            var result;
+            if (hasES6Generators) {
+                try {
+                    result = generator[verb](arg);
+                } catch (exception) {
+                    return reject(exception);
+                }
+                if (result.done) {
+                    return result.value;
+                } else {
+                    return when(result.value, callback, errback);
+                }
+            } else {
+                // FIXME: Remove this case when SM does ES6 generators.
+                try {
+                    result = generator[verb](arg);
+                } catch (exception) {
+                    if (isStopIteration(exception)) {
+                        return exception.value;
+                    } else {
+                        return reject(exception);
+                    }
+                }
+                return when(result, callback, errback);
+            }
+        }
+        var generator = makeGenerator.apply(this, arguments);
+        var callback = continuer.bind(continuer, "send");
+        var errback = continuer.bind(continuer, "throw");
+        return callback();
+    };
+}
+
+/**
+ * The spawn function is a small wrapper around async that immediately
+ * calls the generator and also ends the promise chain, so that any
+ * unhandled errors are thrown instead of forwarded to the error
+ * handler. This is useful because it's extremely common to run
+ * generators at the top-level to work with libraries.
+ */
+Q.spawn = spawn;
+function spawn(makeGenerator) {
+    Q.done(Q.async(makeGenerator)());
+}
+
+// FIXME: Remove this interface once ES6 generators are in SpiderMonkey.
+/**
+ * Throws a ReturnValue exception to stop an asynchronous generator.
+ *
+ * This interface is a stop-gap measure to support generator return
+ * values in older Firefox/SpiderMonkey.  In browsers that support ES6
+ * generators like Chromium 29, just use "return" in your generator
+ * functions.
+ *
+ * @param value the return value for the surrounding generator
+ * @throws ReturnValue exception with the value.
+ * @example
+ * // ES6 style
+ * Q.async(function* () {
+ *      var foo = yield getFooPromise();
+ *      var bar = yield getBarPromise();
+ *      return foo + bar;
+ * })
+ * // Older SpiderMonkey style
+ * Q.async(function () {
+ *      var foo = yield getFooPromise();
+ *      var bar = yield getBarPromise();
+ *      Q.return(foo + bar);
+ * })
+ */
+Q["return"] = _return;
+function _return(value) {
+    throw new QReturnValue(value);
+}
+
+/**
+ * The promised function decorator ensures that any promise arguments
+ * are settled and passed as values (`this` is also settled and passed
+ * as a value).  It will also ensure that the result of a function is
+ * always a promise.
+ *
+ * @example
+ * var add = Q.promised(function (a, b) {
+ *     return a + b;
+ * });
+ * add(Q.resolve(a), Q.resolve(B));
+ *
+ * @param {function} callback The function to decorate
+ * @returns {function} a function that has been decorated.
+ */
+Q.promised = promised;
+function promised(callback) {
+    return function () {
+        return spread([this, all(arguments)], function (self, args) {
+            return callback.apply(self, args);
+        });
+    };
+}
+
+/**
+ * sends a message to a value in a future turn
+ * @param object* the recipient
+ * @param op the name of the message operation, e.g., "when",
+ * @param args further arguments to be forwarded to the operation
+ * @returns result {Promise} a promise for the result of the operation
+ */
+Q.dispatch = dispatch;
+function dispatch(object, op, args) {
+    var deferred = defer();
+    nextTick(function () {
+        resolve(object).promiseDispatch(deferred.resolve, op, args);
+    });
+    return deferred.promise;
+}
+
+/**
+ * Constructs a promise method that can be used to safely observe resolution of
+ * a promise for an arbitrarily named method like "propfind" in a future turn.
+ *
+ * "dispatcher" constructs methods like "get(promise, name)" and "set(promise)".
+ */
+Q.dispatcher = dispatcher;
+function dispatcher(op) {
+    return function (object) {
+        var args = array_slice(arguments, 1);
+        return dispatch(object, op, args);
+    };
+}
+
+/**
+ * Gets the value of a property in a future turn.
+ * @param object    promise or immediate reference for target object
+ * @param name      name of property to get
+ * @return promise for the property value
+ */
+Q.get = dispatcher("get");
+
+/**
+ * Sets the value of a property in a future turn.
+ * @param object    promise or immediate reference for object object
+ * @param name      name of property to set
+ * @param value     new value of property
+ * @return promise for the return value
+ */
+Q.set = dispatcher("set");
+
+/**
+ * Deletes a property in a future turn.
+ * @param object    promise or immediate reference for target object
+ * @param name      name of property to delete
+ * @return promise for the return value
+ */
+Q["delete"] = // XXX experimental
+Q.del = dispatcher("delete");
+
+/**
+ * Invokes a method in a future turn.
+ * @param object    promise or immediate reference for target object
+ * @param name      name of method to invoke
+ * @param value     a value to post, typically an array of
+ *                  invocation arguments for promises that
+ *                  are ultimately backed with `resolve` values,
+ *                  as opposed to those backed with URLs
+ *                  wherein the posted value can be any
+ *                  JSON serializable object.
+ * @return promise for the return value
+ */
+// bound locally because it is used by other methods
+var post = Q.post = dispatcher("post");
+Q.mapply = post; // experimental
+
+/**
+ * Invokes a method in a future turn.
+ * @param object    promise or immediate reference for target object
+ * @param name      name of method to invoke
+ * @param ...args   array of invocation arguments
+ * @return promise for the return value
+ */
+Q.send = send;
+Q.invoke = send; // synonyms
+Q.mcall = send; // experimental
+function send(value, name) {
+    var args = array_slice(arguments, 2);
+    return post(value, name, args);
+}
+
+/**
+ * Applies the promised function in a future turn.
+ * @param object    promise or immediate reference for target function
+ * @param args      array of application arguments
+ */
+Q.fapply = fapply;
+function fapply(value, args) {
+    return dispatch(value, "apply", [void 0, args]);
+}
+
+/**
+ * Calls the promised function in a future turn.
+ * @param object    promise or immediate reference for target function
+ * @param ...args   array of application arguments
+ */
+Q["try"] = fcall; // XXX experimental
+Q.fcall = fcall;
+function fcall(value) {
+    var args = array_slice(arguments, 1);
+    return fapply(value, args);
+}
+
+/**
+ * Binds the promised function, transforming return values into a fulfilled
+ * promise and thrown errors into a rejected one.
+ * @param object    promise or immediate reference for target function
+ * @param ...args   array of application arguments
+ */
+Q.fbind = fbind;
+function fbind(value) {
+    var args = array_slice(arguments, 1);
+    return function fbound() {
+        var allArgs = args.concat(array_slice(arguments));
+        return dispatch(value, "apply", [this, allArgs]);
+    };
+}
+
+/**
+ * Requests the names of the owned properties of a promised
+ * object in a future turn.
+ * @param object    promise or immediate reference for target object
+ * @return promise for the keys of the eventually settled object
+ */
+Q.keys = dispatcher("keys");
+
+/**
+ * Turns an array of promises into a promise for an array.  If any of
+ * the promises gets rejected, the whole array is rejected immediately.
+ * @param {Array*} an array (or promise for an array) of values (or
+ * promises for values)
+ * @returns a promise for an array of the corresponding values
+ */
+// By Mark Miller
+// http://wiki.ecmascript.org/doku.php?id=strawman:concurrency&rev=1308776521#allfulfilled
+Q.all = all;
+function all(promises) {
+    return when(promises, function (promises) {
+        var countDown = 0;
+        var deferred = defer();
+        array_reduce(promises, function (undefined, promise, index) {
+            var snapshot;
+            if (
+                isPromise(promise) &&
+                (snapshot = promise.inspect()).state === "fulfilled"
+            ) {
+                promises[index] = snapshot.value;
+            } else {
+                ++countDown;
+                when(promise, function (value) {
+                    promises[index] = value;
+                    if (--countDown === 0) {
+                        deferred.resolve(promises);
+                    }
+                }, deferred.reject);
+            }
+        }, void 0);
+        if (countDown === 0) {
+            deferred.resolve(promises);
+        }
+        return deferred.promise;
+    });
+}
+
+/**
+ * Waits for all promises to be settled, either fulfilled or
+ * rejected.  This is distinct from `all` since that would stop
+ * waiting at the first rejection.  The promise returned by
+ * `allResolved` will never be rejected.
+ * @param promises a promise for an array (or an array) of promises
+ * (or values)
+ * @return a promise for an array of promises
+ */
+Q.allResolved = deprecate(allResolved, "allResolved", "allSettled");
+function allResolved(promises) {
+    return when(promises, function (promises) {
+        promises = array_map(promises, resolve);
+        return when(all(array_map(promises, function (promise) {
+            return when(promise, noop, noop);
+        })), function () {
+            return promises;
+        });
+    });
+}
+
+Q.allSettled = allSettled;
+function allSettled(values) {
+    return when(values, function (values) {
+        return all(array_map(values, function (value, i) {
+            return when(
+                value,
+                function (fulfillmentValue) {
+                    values[i] = { state: "fulfilled", value: fulfillmentValue };
+                    return values[i];
+                },
+                function (reason) {
+                    values[i] = { state: "rejected", reason: reason };
+                    return values[i];
+                }
+            );
+        })).thenResolve(values);
+    });
+}
+
+/**
+ * Captures the failure of a promise, giving an oportunity to recover
+ * with a callback.  If the given promise is fulfilled, the returned
+ * promise is fulfilled.
+ * @param {Any*} promise for something
+ * @param {Function} callback to fulfill the returned promise if the
+ * given promise is rejected
+ * @returns a promise for the return value of the callback
+ */
+Q["catch"] = // XXX experimental
+Q.fail = fail;
+function fail(promise, rejected) {
+    return when(promise, void 0, rejected);
+}
+
+/**
+ * Attaches a listener that can respond to progress notifications from a
+ * promise's originating deferred. This listener receives the exact arguments
+ * passed to ``deferred.notify``.
+ * @param {Any*} promise for something
+ * @param {Function} callback to receive any progress notifications
+ * @returns the given promise, unchanged
+ */
+Q.progress = progress;
+function progress(promise, progressed) {
+    return when(promise, void 0, void 0, progressed);
+}
+
+/**
+ * Provides an opportunity to observe the settling of a promise,
+ * regardless of whether the promise is fulfilled or rejected.  Forwards
+ * the resolution to the returned promise when the callback is done.
+ * The callback can return a promise to defer completion.
+ * @param {Any*} promise
+ * @param {Function} callback to observe the resolution of the given
+ * promise, takes no arguments.
+ * @returns a promise for the resolution of the given promise when
+ * ``fin`` is done.
+ */
+Q["finally"] = // XXX experimental
+Q.fin = fin;
+function fin(promise, callback) {
+    return when(promise, function (value) {
+        return when(callback(), function () {
+            return value;
+        });
+    }, function (exception) {
+        return when(callback(), function () {
+            return reject(exception);
+        });
+    });
+}
+
+/**
+ * Terminates a chain of promises, forcing rejections to be
+ * thrown as exceptions.
+ * @param {Any*} promise at the end of a chain of promises
+ * @returns nothing
+ */
+Q.done = done;
+function done(promise, fulfilled, rejected, progress) {
+    var onUnhandledError = function (error) {
+        // forward to a future turn so that ``when``
+        // does not catch it and turn it into a rejection.
+        nextTick(function () {
+            makeStackTraceLong(error, promise);
+
+            if (Q.onerror) {
+                Q.onerror(error);
+            } else {
+                throw error;
+            }
+        });
+    };
+
+    // Avoid unnecessary `nextTick`ing via an unnecessary `when`.
+    var promiseToHandle = fulfilled || rejected || progress ?
+        when(promise, fulfilled, rejected, progress) :
+        promise;
+
+    if (typeof process === "object" && process && process.domain) {
+        onUnhandledError = process.domain.bind(onUnhandledError);
+    }
+    fail(promiseToHandle, onUnhandledError);
+}
+
+/**
+ * Causes a promise to be rejected if it does not get fulfilled before
+ * some milliseconds time out.
+ * @param {Any*} promise
+ * @param {Number} milliseconds timeout
+ * @param {String} custom error message (optional)
+ * @returns a promise for the resolution of the given promise if it is
+ * fulfilled before the timeout, otherwise rejected.
+ */
+Q.timeout = timeout;
+function timeout(promise, ms, msg) {
+    var deferred = defer();
+    var timeoutId = setTimeout(function () {
+        deferred.reject(new Error(msg || "Timed out after " + ms + " ms"));
+    }, ms);
+
+    when(promise, function (value) {
+        clearTimeout(timeoutId);
+        deferred.resolve(value);
+    }, function (exception) {
+        clearTimeout(timeoutId);
+        deferred.reject(exception);
+    }, deferred.notify);
+
+    return deferred.promise;
+}
+
+/**
+ * Returns a promise for the given value (or promised value) after some
+ * milliseconds.
+ * @param {Any*} promise
+ * @param {Number} milliseconds
+ * @returns a promise for the resolution of the given promise after some
+ * time has elapsed.
+ */
+Q.delay = delay;
+function delay(promise, timeout) {
+    if (timeout === void 0) {
+        timeout = promise;
+        promise = void 0;
+    }
+
+    var deferred = defer();
+
+    when(promise, undefined, undefined, deferred.notify);
+    setTimeout(function () {
+        deferred.resolve(promise);
+    }, timeout);
+
+    return deferred.promise;
+}
+
+/**
+ * Passes a continuation to a Node function, which is called with the given
+ * arguments provided as an array, and returns a promise.
+ *
+ *      Q.nfapply(FS.readFile, [__filename])
+ *      .then(function (content) {
+ *      })
+ *
+ */
+Q.nfapply = nfapply;
+function nfapply(callback, args) {
+    var nodeArgs = array_slice(args);
+    var deferred = defer();
+    nodeArgs.push(deferred.makeNodeResolver());
+
+    fapply(callback, nodeArgs).fail(deferred.reject);
+    return deferred.promise;
+}
+
+/**
+ * Passes a continuation to a Node function, which is called with the given
+ * arguments provided individually, and returns a promise.
+ *
+ *      Q.nfcall(FS.readFile, __filename)
+ *      .then(function (content) {
+ *      })
+ *
+ */
+Q.nfcall = nfcall;
+function nfcall(callback/*, ...args */) {
+    var nodeArgs = array_slice(arguments, 1);
+    var deferred = defer();
+    nodeArgs.push(deferred.makeNodeResolver());
+
+    fapply(callback, nodeArgs).fail(deferred.reject);
+    return deferred.promise;
+}
+
+/**
+ * Wraps a NodeJS continuation passing function and returns an equivalent
+ * version that returns a promise.
+ *
+ *      Q.nfbind(FS.readFile, __filename)("utf-8")
+ *      .then(console.log)
+ *      .done()
+ *
+ */
+Q.nfbind = nfbind;
+Q.denodeify = Q.nfbind; // synonyms
+function nfbind(callback/*, ...args */) {
+    var baseArgs = array_slice(arguments, 1);
+    return function () {
+        var nodeArgs = baseArgs.concat(array_slice(arguments));
+        var deferred = defer();
+        nodeArgs.push(deferred.makeNodeResolver());
+
+        fapply(callback, nodeArgs).fail(deferred.reject);
+        return deferred.promise;
+    };
+}
+
+Q.nbind = nbind;
+function nbind(callback, thisArg /*, ... args*/) {
+    var baseArgs = array_slice(arguments, 2);
+    return function () {
+        var nodeArgs = baseArgs.concat(array_slice(arguments));
+        var deferred = defer();
+        nodeArgs.push(deferred.makeNodeResolver());
+
+        function bound() {
+            return callback.apply(thisArg, arguments);
+        }
+
+        fapply(bound, nodeArgs).fail(deferred.reject);
+        return deferred.promise;
+    };
+}
+
+/**
+ * Calls a method of a Node-style object that accepts a Node-style
+ * callback with a given array of arguments, plus a provided callback.
+ * @param object an object that has the named method
+ * @param {String} name name of the method of object
+ * @param {Array} args arguments to pass to the method; the callback
+ * will be provided by Q and appended to these arguments.
+ * @returns a promise for the value or error
+ */
+Q.npost = npost;
+Q.nmapply = npost; // synonyms
+function npost(object, name, args) {
+    var nodeArgs = array_slice(args || []);
+    var deferred = defer();
+    nodeArgs.push(deferred.makeNodeResolver());
+
+    post(object, name, nodeArgs).fail(deferred.reject);
+    return deferred.promise;
+}
+
+/**
+ * Calls a method of a Node-style object that accepts a Node-style
+ * callback, forwarding the given variadic arguments, plus a provided
+ * callback argument.
+ * @param object an object that has the named method
+ * @param {String} name name of the method of object
+ * @param ...args arguments to pass to the method; the callback will
+ * be provided by Q and appended to these arguments.
+ * @returns a promise for the value or error
+ */
+Q.nsend = nsend;
+Q.ninvoke = Q.nsend; // synonyms
+Q.nmcall = Q.nsend; // synonyms
+function nsend(object, name /*, ...args*/) {
+    var nodeArgs = array_slice(arguments, 2);
+    var deferred = defer();
+    nodeArgs.push(deferred.makeNodeResolver());
+    post(object, name, nodeArgs).fail(deferred.reject);
+    return deferred.promise;
+}
+
+Q.nodeify = nodeify;
+function nodeify(promise, nodeback) {
+    if (nodeback) {
+        promise.then(function (value) {
+            nextTick(function () {
+                nodeback(null, value);
+            });
+        }, function (error) {
+            nextTick(function () {
+                nodeback(error);
+            });
+        });
+    } else {
+        return promise;
+    }
+}
+
+// All code before this point will be filtered from stack traces.
+var qEndingLine = captureLine();
+
+return Q;
+
+});
+
+},
+'node_modules/xml2js/lib/xml2js.js': function(exports, __require, module) {
+var require = function(name) {return __require(name, 'node_modules/xml2js/lib/xml2js.js');};
+var __filename = 'node_modules/xml2js/lib/xml2js.js';
+var __dirname = 'node_modules/xml2js/lib';
+var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/xml2js/lib/xml2js.js'], env: {}};
+// Generated by CoffeeScript 1.6.3
+(function() {
+  var events, isEmpty, sax,
+    __hasProp = {}.hasOwnProperty,
+    __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
+    __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
+
+  sax = require('sax');
+
+  events = require('events');
+
+  isEmpty = function(thing) {
+    return typeof thing === "object" && (thing != null) && Object.keys(thing).length === 0;
+  };
+
+  exports.defaults = {
+    "0.1": {
+      explicitCharkey: false,
+      trim: true,
+      normalize: true,
+      normalizeTags: false,
+      attrkey: "@",
+      charkey: "#",
+      explicitArray: false,
+      ignoreAttrs: false,
+      mergeAttrs: false,
+      explicitRoot: false,
+      validator: null,
+      xmlns: false,
+      explicitChildren: false,
+      childkey: '@@',
+      charsAsChildren: false,
+      async: false,
+      strict: true
+    },
+    "0.2": {
+      explicitCharkey: false,
+      trim: false,
+      normalize: false,
+      normalizeTags: false,
+      attrkey: "$",
+      charkey: "_",
+      explicitArray: true,
+      ignoreAttrs: false,
+      mergeAttrs: false,
+      explicitRoot: true,
+      validator: null,
+      xmlns: false,
+      explicitChildren: false,
+      childkey: '$$',
+      charsAsChildren: false,
+      async: false,
+      strict: true
+    }
+  };
+
+  exports.ValidationError = (function(_super) {
+    __extends(ValidationError, _super);
+
+    function ValidationError(message) {
+      this.message = message;
+    }
+
+    return ValidationError;
+
+  })(Error);
+
+  exports.Parser = (function(_super) {
+    __extends(Parser, _super);
+
+    function Parser(opts) {
+      this.parseString = __bind(this.parseString, this);
+      this.reset = __bind(this.reset, this);
+      var key, value, _ref;
+      if (!(this instanceof exports.Parser)) {
+        return new exports.Parser(opts);
+      }
+      this.options = {};
+      _ref = exports.defaults["0.2"];
+      for (key in _ref) {
+        if (!__hasProp.call(_ref, key)) continue;
+        value = _ref[key];
+        this.options[key] = value;
+      }
+      for (key in opts) {
+        if (!__hasProp.call(opts, key)) continue;
+        value = opts[key];
+        this.options[key] = value;
+      }
+      if (this.options.xmlns) {
+        this.options.xmlnskey = this.options.attrkey + "ns";
+      }
+      this.reset();
+    }
+
+    Parser.prototype.reset = function() {
+      var attrkey, charkey, err, ontext, stack,
+        _this = this;
+      this.removeAllListeners();
+      this.saxParser = sax.parser(this.options.strict, {
+        trim: false,
+        normalize: false,
+        xmlns: this.options.xmlns
+      });
+      err = false;
+      this.saxParser.onerror = function(error) {
+        if (!err) {
+          err = true;
+          return _this.emit("error", error);
+        }
+      };
+      this.EXPLICIT_CHARKEY = this.options.explicitCharkey;
+      this.resultObject = null;
+      stack = [];
+      attrkey = this.options.attrkey;
+      charkey = this.options.charkey;
+      this.saxParser.onopentag = function(node) {
+        var key, obj, _ref;
+        obj = {};
+        obj[charkey] = "";
+        if (!_this.options.ignoreAttrs) {
+          _ref = node.attributes;
+          for (key in _ref) {
+            if (!__hasProp.call(_ref, key)) continue;
+            if (!(attrkey in obj) && !_this.options.mergeAttrs) {
+              obj[attrkey] = {};
+            }
+            if (_this.options.mergeAttrs) {
+              obj[key] = node.attributes[key];
+            } else {
+              obj[attrkey][key] = node.attributes[key];
+            }
+          }
+        }
+        obj["#name"] = _this.options.normalizeTags ? node.name.toLowerCase() : node.name;
+        if (_this.options.xmlns) {
+          obj[_this.options.xmlnskey] = {
+            uri: node.uri,
+            local: node.local
+          };
+        }
+        return stack.push(obj);
+      };
+      this.saxParser.onclosetag = function() {
+        var cdata, emptyStr, node, nodeName, obj, old, s, xpath;
+        obj = stack.pop();
+        nodeName = obj["#name"];
+        delete obj["#name"];
+        cdata = obj.cdata;
+        delete obj.cdata;
+        s = stack[stack.length - 1];
+        if (obj[charkey].match(/^\s*$/) && !cdata) {
+          emptyStr = obj[charkey];
+          delete obj[charkey];
+        } else {
+          if (_this.options.trim) {
+            obj[charkey] = obj[charkey].trim();
+          }
+          if (_this.options.normalize) {
+            obj[charkey] = obj[charkey].replace(/\s{2,}/g, " ").trim();
+          }
+          if (Object.keys(obj).length === 1 && charkey in obj && !_this.EXPLICIT_CHARKEY) {
+            obj = obj[charkey];
+          }
+        }
+        if (isEmpty(obj)) {
+          obj = _this.options.emptyTag !== void 0 ? _this.options.emptyTag : emptyStr;
+        }
+        if (_this.options.validator != null) {
+          xpath = "/" + ((function() {
+            var _i, _len, _results;
+            _results = [];
+            for (_i = 0, _len = stack.length; _i < _len; _i++) {
+              node = stack[_i];
+              _results.push(node["#name"]);
+            }
+            return _results;
+          })()).concat(nodeName).join("/");
+          try {
+            obj = _this.options.validator(xpath, s && s[nodeName], obj);
+          } catch (_error) {
+            err = _error;
+            _this.emit("error", err);
+          }
+        }
+        if (_this.options.explicitChildren && !_this.options.mergeAttrs && typeof obj === 'object') {
+          node = {};
+          if (_this.options.attrkey in obj) {
+            node[_this.options.attrkey] = obj[_this.options.attrkey];
+            delete obj[_this.options.attrkey];
+          }
+          if (!_this.options.charsAsChildren && _this.options.charkey in obj) {
+            node[_this.options.charkey] = obj[_this.options.charkey];
+            delete obj[_this.options.charkey];
+          }
+          if (Object.getOwnPropertyNames(obj).length > 0) {
+            node[_this.options.childkey] = obj;
+          }
+          obj = node;
+        }
+        if (stack.length > 0) {
+          if (!_this.options.explicitArray) {
+            if (!(nodeName in s)) {
+              return s[nodeName] = obj;
+            } else if (s[nodeName] instanceof Array) {
+              return s[nodeName].push(obj);
+            } else {
+              old = s[nodeName];
+              s[nodeName] = [old];
+              return s[nodeName].push(obj);
+            }
+          } else {
+            if (!(s[nodeName] instanceof Array)) {
+              s[nodeName] = [];
+            }
+            return s[nodeName].push(obj);
+          }
+        } else {
+          if (_this.options.explicitRoot) {
+            old = obj;
+            obj = {};
+            obj[nodeName] = old;
+          }
+          _this.resultObject = obj;
+          return _this.emit("end", _this.resultObject);
+        }
+      };
+      ontext = function(text) {
+        var s;
+        s = stack[stack.length - 1];
+        if (s) {
+          s[charkey] += text;
+          return s;
+        }
+      };
+      this.saxParser.ontext = ontext;
+      return this.saxParser.oncdata = function(text) {
+        var s;
+        s = ontext(text);
+        if (s) {
+          return s.cdata = true;
+        }
+      };
+    };
+
+    Parser.prototype.parseString = function(str, cb) {
+      if ((cb != null) && typeof cb === "function") {
+        this.on("end", function(result) {
+          this.reset();
+          if (this.options.async) {
+            return process.nextTick(function() {
+              return cb(null, result);
+            });
+          } else {
+            return cb(null, result);
+          }
+        });
+        this.on("error", function(err) {
+          this.reset();
+          if (this.options.async) {
+            return process.nextTick(function() {
+              return cb(err);
+            });
+          } else {
+            return cb(err);
+          }
+        });
+      }
+      if (str.toString().trim() === '') {
+        this.emit("end", null);
+        return true;
+      }
+      return this.saxParser.write(str.toString());
+    };
+
+    return Parser;
+
+  })(events.EventEmitter);
+
+  exports.parseString = function(str, a, b) {
+    var cb, options, parser;
+    if (b != null) {
+      if (typeof b === 'function') {
+        cb = b;
+      }
+      if (typeof a === 'object') {
+        options = a;
+      }
+    } else {
+      if (typeof a === 'function') {
+        cb = a;
+      }
+      options = {};
+    }
+    parser = new exports.Parser(options);
+    return parser.parseString(str, cb);
+  };
+
+}).call(this);
+
+},
+'node_modules/xml2js/node_modules/sax/lib/sax.js': function(exports, __require, module) {
+var require = function(name) {return __require(name, 'node_modules/xml2js/node_modules/sax/lib/sax.js');};
+var __filename = 'node_modules/xml2js/node_modules/sax/lib/sax.js';
+var __dirname = 'node_modules/xml2js/node_modules/sax/lib';
+var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/xml2js/node_modules/sax/lib/sax.js'], env: {}};
+// wrapper for non-node envs
+;(function (sax) {
+
+sax.parser = function (strict, opt) { return new SAXParser(strict, opt) }
+sax.SAXParser = SAXParser
+sax.SAXStream = SAXStream
+sax.createStream = createStream
+
+// When we pass the MAX_BUFFER_LENGTH position, start checking for buffer overruns.
+// When we check, schedule the next check for MAX_BUFFER_LENGTH - (max(buffer lengths)),
+// since that's the earliest that a buffer overrun could occur.  This way, checks are
+// as rare as required, but as often as necessary to ensure never crossing this bound.
+// Furthermore, buffers are only tested at most once per write(), so passing a very
+// large string into write() might have undesirable effects, but this is manageable by
+// the caller, so it is assumed to be safe.  Thus, a call to write() may, in the extreme
+// edge case, result in creating at most one complete copy of the string passed in.
+// Set to Infinity to have unlimited buffers.
+sax.MAX_BUFFER_LENGTH = 64 * 1024
+
+var buffers = [
+  "comment", "sgmlDecl", "textNode", "tagName", "doctype",
+  "procInstName", "procInstBody", "entity", "attribName",
+  "attribValue", "cdata", "script"
+]
+
+sax.EVENTS = // for discoverability.
+  [ "text"
+  , "processinginstruction"
+  , "sgmldeclaration"
+  , "doctype"
+  , "comment"
+  , "attribute"
+  , "opentag"
+  , "closetag"
+  , "opencdata"
+  , "cdata"
+  , "closecdata"
+  , "error"
+  , "end"
+  , "ready"
+  , "script"
+  , "opennamespace"
+  , "closenamespace"
+  ]
+
+function SAXParser (strict, opt) {
+  if (!(this instanceof SAXParser)) return new SAXParser(strict, opt)
+
+  var parser = this
+  clearBuffers(parser)
+  parser.q = parser.c = ""
+  parser.bufferCheckPosition = sax.MAX_BUFFER_LENGTH
+  parser.opt = opt || {}
+  parser.opt.lowercase = parser.opt.lowercase || parser.opt.lowercasetags
+  parser.looseCase = parser.opt.lowercase ? "toLowerCase" : "toUpperCase"
+  parser.tags = []
+  parser.closed = parser.closedRoot = parser.sawRoot = false
+  parser.tag = parser.error = null
+  parser.strict = !!strict
+  parser.noscript = !!(strict || parser.opt.noscript)
+  parser.state = S.BEGIN
+  parser.ENTITIES = Object.create(sax.ENTITIES)
+  parser.attribList = []
+
+  // namespaces form a prototype chain.
+  // it always points at the current tag,
+  // which protos to its parent tag.
+  if (parser.opt.xmlns) parser.ns = Object.create(rootNS)
+
+  // mostly just for error reporting
+  parser.trackPosition = parser.opt.position !== false
+  if (parser.trackPosition) {
+    parser.position = parser.line = parser.column = 0
+  }
+  emit(parser, "onready")
+}
+
+if (!Object.create) Object.create = function (o) {
+  function f () { this.__proto__ = o }
+  f.prototype = o
+  return new f
+}
+
+if (!Object.getPrototypeOf) Object.getPrototypeOf = function (o) {
+  return o.__proto__
+}
+
+if (!Object.keys) Object.keys = function (o) {
+  var a = []
+  for (var i in o) if (o.hasOwnProperty(i)) a.push(i)
+  return a
+}
+
+function checkBufferLength (parser) {
+  var maxAllowed = Math.max(sax.MAX_BUFFER_LENGTH, 10)
+    , maxActual = 0
+  for (var i = 0, l = buffers.length; i < l; i ++) {
+    var len = parser[buffers[i]].length
+    if (len > maxAllowed) {
+      // Text/cdata nodes can get big, and since they're buffered,
+      // we can get here under normal conditions.
+      // Avoid issues by emitting the text node now,
+      // so at least it won't get any bigger.
+      switch (buffers[i]) {
+        case "textNode":
+          closeText(parser)
+        break
+
+        case "cdata":
+          emitNode(parser, "oncdata", parser.cdata)
+          parser.cdata = ""
+        break
+
+        case "script":
+          emitNode(parser, "onscript", parser.script)
+          parser.script = ""
+        break
+
+        default:
+          error(parser, "Max buffer length exceeded: "+buffers[i])
+      }
+    }
+    maxActual = Math.max(maxActual, len)
+  }
+  // schedule the next check for the earliest possible buffer overrun.
+  parser.bufferCheckPosition = (sax.MAX_BUFFER_LENGTH - maxActual)
+                             + parser.position
+}
+
+function clearBuffers (parser) {
+  for (var i = 0, l = buffers.length; i < l; i ++) {
+    parser[buffers[i]] = ""
+  }
+}
+
+SAXParser.prototype =
+  { end: function () { end(this) }
+  , write: write
+  , resume: function () { this.error = null; return this }
+  , close: function () { return this.write(null) }
+  }
+
+try {
+  var Stream = require("stream").Stream
+} catch (ex) {
+  var Stream = function () {}
+}
 
 
-require('test/browser/Cache');
+var streamWraps = sax.EVENTS.filter(function (ev) {
+  return ev !== "error" && ev !== "end"
+})
 
-require('test/browser/BrowserLocalStorage');
+function createStream (strict, opt) {
+  return new SAXStream(strict, opt)
+}
 
-require('test/browser/FileStorage');
+function SAXStream (strict, opt) {
+  if (!(this instanceof SAXStream)) return new SAXStream(strict, opt)
 
-require('test/browser/DevNullStorage');
+  Stream.apply(this)
 
-require('test/browser/MemoryStorage');
+  this._parser = new SAXParser(strict, opt)
+  this.writable = true
+  this.readable = true
+
+
+  var me = this
+
+  this._parser.onend = function () {
+    me.emit("end")
+  }
+
+  this._parser.onerror = function (er) {
+    me.emit("error", er)
+
+    // if didn't throw, then means error was handled.
+    // go ahead and clear error, so we can write again.
+    me._parser.error = null
+  }
+
+  streamWraps.forEach(function (ev) {
+    Object.defineProperty(me, "on" + ev, {
+      get: function () { return me._parser["on" + ev] },
+      set: function (h) {
+        if (!h) {
+          me.removeAllListeners(ev)
+          return me._parser["on"+ev] = h
+        }
+        me.on(ev, h)
+      },
+      enumerable: true,
+      configurable: false
+    })
+  })
+}
+
+SAXStream.prototype = Object.create(Stream.prototype,
+  { constructor: { value: SAXStream } })
+
+SAXStream.prototype.write = function (data) {
+  this._parser.write(data.toString())
+  this.emit("data", data)
+  return true
+}
+
+SAXStream.prototype.end = function (chunk) {
+  if (chunk && chunk.length) this._parser.write(chunk.toString())
+  this._parser.end()
+  return true
+}
+
+SAXStream.prototype.on = function (ev, handler) {
+  var me = this
+  if (!me._parser["on"+ev] && streamWraps.indexOf(ev) !== -1) {
+    me._parser["on"+ev] = function () {
+      var args = arguments.length === 1 ? [arguments[0]]
+               : Array.apply(null, arguments)
+      args.splice(0, 0, ev)
+      me.emit.apply(me, args)
+    }
+  }
+
+  return Stream.prototype.on.call(me, ev, handler)
+}
+
+
+
+// character classes and tokens
+var whitespace = "\r\n\t "
+  // this really needs to be replaced with character classes.
+  // XML allows all manner of ridiculous numbers and digits.
+  , number = "0124356789"
+  , letter = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+  // (Letter | "_" | ":")
+  , quote = "'\""
+  , entity = number+letter+"#"
+  , attribEnd = whitespace + ">"
+  , CDATA = "[CDATA["
+  , DOCTYPE = "DOCTYPE"
+  , XML_NAMESPACE = "http://www.w3.org/XML/1998/namespace"
+  , XMLNS_NAMESPACE = "http://www.w3.org/2000/xmlns/"
+  , rootNS = { xml: XML_NAMESPACE, xmlns: XMLNS_NAMESPACE }
+
+// turn all the string character sets into character class objects.
+whitespace = charClass(whitespace)
+number = charClass(number)
+letter = charClass(letter)
+
+// http://www.w3.org/TR/REC-xml/#NT-NameStartChar
+// This implementation works on strings, a single character at a time
+// as such, it cannot ever support astral-plane characters (10000-EFFFF)
+// without a significant breaking change to either this  parser, or the
+// JavaScript language.  Implementation of an emoji-capable xml parser
+// is left as an exercise for the reader.
+var nameStart = /[:_A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u02FF\u0370-\u037D\u037F-\u1FFF\u200C-\u200D\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF\uF900-\uFDCF\uFDF0-\uFFFD]/
+
+var nameBody = /[:_A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u02FF\u0370-\u037D\u037F-\u1FFF\u200C-\u200D\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF\uF900-\uFDCF\uFDF0-\uFFFD\u00B7\u0300-\u036F\u203F-\u2040\.\d-]/
+
+quote = charClass(quote)
+entity = charClass(entity)
+attribEnd = charClass(attribEnd)
+
+function charClass (str) {
+  return str.split("").reduce(function (s, c) {
+    s[c] = true
+    return s
+  }, {})
+}
+
+function isRegExp (c) {
+  return Object.prototype.toString.call(c) === '[object RegExp]'
+}
+
+function is (charclass, c) {
+  return isRegExp(charclass) ? !!c.match(charclass) : charclass[c]
+}
+
+function not (charclass, c) {
+  return !is(charclass, c)
+}
+
+var S = 0
+sax.STATE =
+{ BEGIN                     : S++
+, TEXT                      : S++ // general stuff
+, TEXT_ENTITY               : S++ // &amp and such.
+, OPEN_WAKA                 : S++ // <
+, SGML_DECL                 : S++ // <!BLARG
+, SGML_DECL_QUOTED          : S++ // <!BLARG foo "bar
+, DOCTYPE                   : S++ // <!DOCTYPE
+, DOCTYPE_QUOTED            : S++ // <!DOCTYPE "//blah
+, DOCTYPE_DTD               : S++ // <!DOCTYPE "//blah" [ ...
+, DOCTYPE_DTD_QUOTED        : S++ // <!DOCTYPE "//blah" [ "foo
+, COMMENT_STARTING          : S++ // <!-
+, COMMENT                   : S++ // <!--
+, COMMENT_ENDING            : S++ // <!-- blah -
+, COMMENT_ENDED             : S++ // <!-- blah --
+, CDATA                     : S++ // <![CDATA[ something
+, CDATA_ENDING              : S++ // ]
+, CDATA_ENDING_2            : S++ // ]]
+, PROC_INST                 : S++ // <?hi
+, PROC_INST_BODY            : S++ // <?hi there
+, PROC_INST_ENDING          : S++ // <?hi "there" ?
+, OPEN_TAG                  : S++ // <strong
+, OPEN_TAG_SLASH            : S++ // <strong /
+, ATTRIB                    : S++ // <a
+, ATTRIB_NAME               : S++ // <a foo
+, ATTRIB_NAME_SAW_WHITE     : S++ // <a foo _
+, ATTRIB_VALUE              : S++ // <a foo=
+, ATTRIB_VALUE_QUOTED       : S++ // <a foo="bar
+, ATTRIB_VALUE_UNQUOTED     : S++ // <a foo=bar
+, ATTRIB_VALUE_ENTITY_Q     : S++ // <foo bar="&quot;"
+, ATTRIB_VALUE_ENTITY_U     : S++ // <foo bar=&quot;
+, CLOSE_TAG                 : S++ // </a
+, CLOSE_TAG_SAW_WHITE       : S++ // </a   >
+, SCRIPT                    : S++ // <script> ...
+, SCRIPT_ENDING             : S++ // <script> ... <
+}
+
+sax.ENTITIES =
+{ "amp" : "&"
+, "gt" : ">"
+, "lt" : "<"
+, "quot" : "\""
+, "apos" : "'"
+, "AElig" : 198
+, "Aacute" : 193
+, "Acirc" : 194
+, "Agrave" : 192
+, "Aring" : 197
+, "Atilde" : 195
+, "Auml" : 196
+, "Ccedil" : 199
+, "ETH" : 208
+, "Eacute" : 201
+, "Ecirc" : 202
+, "Egrave" : 200
+, "Euml" : 203
+, "Iacute" : 205
+, "Icirc" : 206
+, "Igrave" : 204
+, "Iuml" : 207
+, "Ntilde" : 209
+, "Oacute" : 211
+, "Ocirc" : 212
+, "Ograve" : 210
+, "Oslash" : 216
+, "Otilde" : 213
+, "Ouml" : 214
+, "THORN" : 222
+, "Uacute" : 218
+, "Ucirc" : 219
+, "Ugrave" : 217
+, "Uuml" : 220
+, "Yacute" : 221
+, "aacute" : 225
+, "acirc" : 226
+, "aelig" : 230
+, "agrave" : 224
+, "aring" : 229
+, "atilde" : 227
+, "auml" : 228
+, "ccedil" : 231
+, "eacute" : 233
+, "ecirc" : 234
+, "egrave" : 232
+, "eth" : 240
+, "euml" : 235
+, "iacute" : 237
+, "icirc" : 238
+, "igrave" : 236
+, "iuml" : 239
+, "ntilde" : 241
+, "oacute" : 243
+, "ocirc" : 244
+, "ograve" : 242
+, "oslash" : 248
+, "otilde" : 245
+, "ouml" : 246
+, "szlig" : 223
+, "thorn" : 254
+, "uacute" : 250
+, "ucirc" : 251
+, "ugrave" : 249
+, "uuml" : 252
+, "yacute" : 253
+, "yuml" : 255
+, "copy" : 169
+, "reg" : 174
+, "nbsp" : 160
+, "iexcl" : 161
+, "cent" : 162
+, "pound" : 163
+, "curren" : 164
+, "yen" : 165
+, "brvbar" : 166
+, "sect" : 167
+, "uml" : 168
+, "ordf" : 170
+, "laquo" : 171
+, "not" : 172
+, "shy" : 173
+, "macr" : 175
+, "deg" : 176
+, "plusmn" : 177
+, "sup1" : 185
+, "sup2" : 178
+, "sup3" : 179
+, "acute" : 180
+, "micro" : 181
+, "para" : 182
+, "middot" : 183
+, "cedil" : 184
+, "ordm" : 186
+, "raquo" : 187
+, "frac14" : 188
+, "frac12" : 189
+, "frac34" : 190
+, "iquest" : 191
+, "times" : 215
+, "divide" : 247
+, "OElig" : 338
+, "oelig" : 339
+, "Scaron" : 352
+, "scaron" : 353
+, "Yuml" : 376
+, "fnof" : 402
+, "circ" : 710
+, "tilde" : 732
+, "Alpha" : 913
+, "Beta" : 914
+, "Gamma" : 915
+, "Delta" : 916
+, "Epsilon" : 917
+, "Zeta" : 918
+, "Eta" : 919
+, "Theta" : 920
+, "Iota" : 921
+, "Kappa" : 922
+, "Lambda" : 923
+, "Mu" : 924
+, "Nu" : 925
+, "Xi" : 926
+, "Omicron" : 927
+, "Pi" : 928
+, "Rho" : 929
+, "Sigma" : 931
+, "Tau" : 932
+, "Upsilon" : 933
+, "Phi" : 934
+, "Chi" : 935
+, "Psi" : 936
+, "Omega" : 937
+, "alpha" : 945
+, "beta" : 946
+, "gamma" : 947
+, "delta" : 948
+, "epsilon" : 949
+, "zeta" : 950
+, "eta" : 951
+, "theta" : 952
+, "iota" : 953
+, "kappa" : 954
+, "lambda" : 955
+, "mu" : 956
+, "nu" : 957
+, "xi" : 958
+, "omicron" : 959
+, "pi" : 960
+, "rho" : 961
+, "sigmaf" : 962
+, "sigma" : 963
+, "tau" : 964
+, "upsilon" : 965
+, "phi" : 966
+, "chi" : 967
+, "psi" : 968
+, "omega" : 969
+, "thetasym" : 977
+, "upsih" : 978
+, "piv" : 982
+, "ensp" : 8194
+, "emsp" : 8195
+, "thinsp" : 8201
+, "zwnj" : 8204
+, "zwj" : 8205
+, "lrm" : 8206
+, "rlm" : 8207
+, "ndash" : 8211
+, "mdash" : 8212
+, "lsquo" : 8216
+, "rsquo" : 8217
+, "sbquo" : 8218
+, "ldquo" : 8220
+, "rdquo" : 8221
+, "bdquo" : 8222
+, "dagger" : 8224
+, "Dagger" : 8225
+, "bull" : 8226
+, "hellip" : 8230
+, "permil" : 8240
+, "prime" : 8242
+, "Prime" : 8243
+, "lsaquo" : 8249
+, "rsaquo" : 8250
+, "oline" : 8254
+, "frasl" : 8260
+, "euro" : 8364
+, "image" : 8465
+, "weierp" : 8472
+, "real" : 8476
+, "trade" : 8482
+, "alefsym" : 8501
+, "larr" : 8592
+, "uarr" : 8593
+, "rarr" : 8594
+, "darr" : 8595
+, "harr" : 8596
+, "crarr" : 8629
+, "lArr" : 8656
+, "uArr" : 8657
+, "rArr" : 8658
+, "dArr" : 8659
+, "hArr" : 8660
+, "forall" : 8704
+, "part" : 8706
+, "exist" : 8707
+, "empty" : 8709
+, "nabla" : 8711
+, "isin" : 8712
+, "notin" : 8713
+, "ni" : 8715
+, "prod" : 8719
+, "sum" : 8721
+, "minus" : 8722
+, "lowast" : 8727
+, "radic" : 8730
+, "prop" : 8733
+, "infin" : 8734
+, "ang" : 8736
+, "and" : 8743
+, "or" : 8744
+, "cap" : 8745
+, "cup" : 8746
+, "int" : 8747
+, "there4" : 8756
+, "sim" : 8764
+, "cong" : 8773
+, "asymp" : 8776
+, "ne" : 8800
+, "equiv" : 8801
+, "le" : 8804
+, "ge" : 8805
+, "sub" : 8834
+, "sup" : 8835
+, "nsub" : 8836
+, "sube" : 8838
+, "supe" : 8839
+, "oplus" : 8853
+, "otimes" : 8855
+, "perp" : 8869
+, "sdot" : 8901
+, "lceil" : 8968
+, "rceil" : 8969
+, "lfloor" : 8970
+, "rfloor" : 8971
+, "lang" : 9001
+, "rang" : 9002
+, "loz" : 9674
+, "spades" : 9824
+, "clubs" : 9827
+, "hearts" : 9829
+, "diams" : 9830
+}
+
+Object.keys(sax.ENTITIES).forEach(function (key) {
+    var e = sax.ENTITIES[key]
+    var s = typeof e === 'number' ? String.fromCharCode(e) : e
+    sax.ENTITIES[key] = s
+})
+
+for (var S in sax.STATE) sax.STATE[sax.STATE[S]] = S
+
+// shorthand
+S = sax.STATE
+
+function emit (parser, event, data) {
+  parser[event] && parser[event](data)
+}
+
+function emitNode (parser, nodeType, data) {
+  if (parser.textNode) closeText(parser)
+  emit(parser, nodeType, data)
+}
+
+function closeText (parser) {
+  parser.textNode = textopts(parser.opt, parser.textNode)
+  if (parser.textNode) emit(parser, "ontext", parser.textNode)
+  parser.textNode = ""
+}
+
+function textopts (opt, text) {
+  if (opt.trim) text = text.trim()
+  if (opt.normalize) text = text.replace(/\s+/g, " ")
+  return text
+}
+
+function error (parser, er) {
+  closeText(parser)
+  if (parser.trackPosition) {
+    er += "\nLine: "+parser.line+
+          "\nColumn: "+parser.column+
+          "\nChar: "+parser.c
+  }
+  er = new Error(er)
+  parser.error = er
+  emit(parser, "onerror", er)
+  return parser
+}
+
+function end (parser) {
+  if (!parser.closedRoot) strictFail(parser, "Unclosed root tag")
+  if (parser.state !== S.TEXT) error(parser, "Unexpected end")
+  closeText(parser)
+  parser.c = ""
+  parser.closed = true
+  emit(parser, "onend")
+  SAXParser.call(parser, parser.strict, parser.opt)
+  return parser
+}
+
+function strictFail (parser, message) {
+  if (typeof parser !== 'object' || !(parser instanceof SAXParser))
+    throw new Error('bad call to strictFail');
+  if (parser.strict) error(parser, message)
+}
+
+function newTag (parser) {
+  if (!parser.strict) parser.tagName = parser.tagName[parser.looseCase]()
+  var parent = parser.tags[parser.tags.length - 1] || parser
+    , tag = parser.tag = { name : parser.tagName, attributes : {} }
+
+  // will be overridden if tag contails an xmlns="foo" or xmlns:foo="bar"
+  if (parser.opt.xmlns) tag.ns = parent.ns
+  parser.attribList.length = 0
+}
+
+function qname (name) {
+  var i = name.indexOf(":")
+    , qualName = i < 0 ? [ "", name ] : name.split(":")
+    , prefix = qualName[0]
+    , local = qualName[1]
+
+  // <x "xmlns"="http://foo">
+  if (name === "xmlns") {
+    prefix = "xmlns"
+    local = ""
+  }
+
+  return { prefix: prefix, local: local }
+}
+
+function attrib (parser) {
+  if (!parser.strict) parser.attribName = parser.attribName[parser.looseCase]()
+
+  if (parser.attribList.indexOf(parser.attribName) !== -1 ||
+      parser.tag.attributes.hasOwnProperty(parser.attribName)) {
+    return parser.attribName = parser.attribValue = ""
+  }
+
+  if (parser.opt.xmlns) {
+    var qn = qname(parser.attribName)
+      , prefix = qn.prefix
+      , local = qn.local
+
+    if (prefix === "xmlns") {
+      // namespace binding attribute; push the binding into scope
+      if (local === "xml" && parser.attribValue !== XML_NAMESPACE) {
+        strictFail( parser
+                  , "xml: prefix must be bound to " + XML_NAMESPACE + "\n"
+                  + "Actual: " + parser.attribValue )
+      } else if (local === "xmlns" && parser.attribValue !== XMLNS_NAMESPACE) {
+        strictFail( parser
+                  , "xmlns: prefix must be bound to " + XMLNS_NAMESPACE + "\n"
+                  + "Actual: " + parser.attribValue )
+      } else {
+        var tag = parser.tag
+          , parent = parser.tags[parser.tags.length - 1] || parser
+        if (tag.ns === parent.ns) {
+          tag.ns = Object.create(parent.ns)
+        }
+        tag.ns[local] = parser.attribValue
+      }
+    }
+
+    // defer onattribute events until all attributes have been seen
+    // so any new bindings can take effect; preserve attribute order
+    // so deferred events can be emitted in document order
+    parser.attribList.push([parser.attribName, parser.attribValue])
+  } else {
+    // in non-xmlns mode, we can emit the event right away
+    parser.tag.attributes[parser.attribName] = parser.attribValue
+    emitNode( parser
+            , "onattribute"
+            , { name: parser.attribName
+              , value: parser.attribValue } )
+  }
+
+  parser.attribName = parser.attribValue = ""
+}
+
+function openTag (parser, selfClosing) {
+  if (parser.opt.xmlns) {
+    // emit namespace binding events
+    var tag = parser.tag
+
+    // add namespace info to tag
+    var qn = qname(parser.tagName)
+    tag.prefix = qn.prefix
+    tag.local = qn.local
+    tag.uri = tag.ns[qn.prefix] || ""
+
+    if (tag.prefix && !tag.uri) {
+      strictFail(parser, "Unbound namespace prefix: "
+                       + JSON.stringify(parser.tagName))
+      tag.uri = qn.prefix
+    }
+
+    var parent = parser.tags[parser.tags.length - 1] || parser
+    if (tag.ns && parent.ns !== tag.ns) {
+      Object.keys(tag.ns).forEach(function (p) {
+        emitNode( parser
+                , "onopennamespace"
+                , { prefix: p , uri: tag.ns[p] } )
+      })
+    }
+
+    // handle deferred onattribute events
+    // Note: do not apply default ns to attributes:
+    //   http://www.w3.org/TR/REC-xml-names/#defaulting
+    for (var i = 0, l = parser.attribList.length; i < l; i ++) {
+      var nv = parser.attribList[i]
+      var name = nv[0]
+        , value = nv[1]
+        , qualName = qname(name)
+        , prefix = qualName.prefix
+        , local = qualName.local
+        , uri = prefix == "" ? "" : (tag.ns[prefix] || "")
+        , a = { name: name
+              , value: value
+              , prefix: prefix
+              , local: local
+              , uri: uri
+              }
+
+      // if there's any attributes with an undefined namespace,
+      // then fail on them now.
+      if (prefix && prefix != "xmlns" && !uri) {
+        strictFail(parser, "Unbound namespace prefix: "
+                         + JSON.stringify(prefix))
+        a.uri = prefix
+      }
+      parser.tag.attributes[name] = a
+      emitNode(parser, "onattribute", a)
+    }
+    parser.attribList.length = 0
+  }
+
+  parser.tag.isSelfClosing = !!selfClosing
+
+  // process the tag
+  parser.sawRoot = true
+  parser.tags.push(parser.tag)
+  emitNode(parser, "onopentag", parser.tag)
+  if (!selfClosing) {
+    // special case for <script> in non-strict mode.
+    if (!parser.noscript && parser.tagName.toLowerCase() === "script") {
+      parser.state = S.SCRIPT
+    } else {
+      parser.state = S.TEXT
+    }
+    parser.tag = null
+    parser.tagName = ""
+  }
+  parser.attribName = parser.attribValue = ""
+  parser.attribList.length = 0
+}
+
+function closeTag (parser) {
+  if (!parser.tagName) {
+    strictFail(parser, "Weird empty close tag.")
+    parser.textNode += "</>"
+    parser.state = S.TEXT
+    return
+  }
+
+  if (parser.script) {
+    if (parser.tagName !== "script") {
+      parser.script += "</" + parser.tagName + ">"
+      parser.tagName = ""
+      parser.state = S.SCRIPT
+      return
+    }
+    emitNode(parser, "onscript", parser.script)
+    parser.script = ""
+  }
+
+  // first make sure that the closing tag actually exists.
+  // <a><b></c></b></a> will close everything, otherwise.
+  var t = parser.tags.length
+  var tagName = parser.tagName
+  if (!parser.strict) tagName = tagName[parser.looseCase]()
+  var closeTo = tagName
+  while (t --) {
+    var close = parser.tags[t]
+    if (close.name !== closeTo) {
+      // fail the first time in strict mode
+      strictFail(parser, "Unexpected close tag")
+    } else break
+  }
+
+  // didn't find it.  we already failed for strict, so just abort.
+  if (t < 0) {
+    strictFail(parser, "Unmatched closing tag: "+parser.tagName)
+    parser.textNode += "</" + parser.tagName + ">"
+    parser.state = S.TEXT
+    return
+  }
+  parser.tagName = tagName
+  var s = parser.tags.length
+  while (s --> t) {
+    var tag = parser.tag = parser.tags.pop()
+    parser.tagName = parser.tag.name
+    emitNode(parser, "onclosetag", parser.tagName)
+
+    var x = {}
+    for (var i in tag.ns) x[i] = tag.ns[i]
+
+    var parent = parser.tags[parser.tags.length - 1] || parser
+    if (parser.opt.xmlns && tag.ns !== parent.ns) {
+      // remove namespace bindings introduced by tag
+      Object.keys(tag.ns).forEach(function (p) {
+        var n = tag.ns[p]
+        emitNode(parser, "onclosenamespace", { prefix: p, uri: n })
+      })
+    }
+  }
+  if (t === 0) parser.closedRoot = true
+  parser.tagName = parser.attribValue = parser.attribName = ""
+  parser.attribList.length = 0
+  parser.state = S.TEXT
+}
+
+function parseEntity (parser) {
+  var entity = parser.entity
+    , entityLC = entity.toLowerCase()
+    , num
+    , numStr = ""
+  if (parser.ENTITIES[entity])
+    return parser.ENTITIES[entity]
+  if (parser.ENTITIES[entityLC])
+    return parser.ENTITIES[entityLC]
+  entity = entityLC
+  if (entity.charAt(0) === "#") {
+    if (entity.charAt(1) === "x") {
+      entity = entity.slice(2)
+      num = parseInt(entity, 16)
+      numStr = num.toString(16)
+    } else {
+      entity = entity.slice(1)
+      num = parseInt(entity, 10)
+      numStr = num.toString(10)
+    }
+  }
+  entity = entity.replace(/^0+/, "")
+  if (numStr.toLowerCase() !== entity) {
+    strictFail(parser, "Invalid character entity")
+    return "&"+parser.entity + ";"
+  }
+  return String.fromCharCode(num)
+}
+
+function write (chunk) {
+  var parser = this
+  if (this.error) throw this.error
+  if (parser.closed) return error(parser,
+    "Cannot write after close. Assign an onready handler.")
+  if (chunk === null) return end(parser)
+  var i = 0, c = ""
+  while (parser.c = c = chunk.charAt(i++)) {
+    if (parser.trackPosition) {
+      parser.position ++
+      if (c === "\n") {
+        parser.line ++
+        parser.column = 0
+      } else parser.column ++
+    }
+    switch (parser.state) {
+
+      case S.BEGIN:
+        if (c === "<") {
+          parser.state = S.OPEN_WAKA
+          parser.startTagPosition = parser.position
+        } else if (not(whitespace,c)) {
+          // have to process this as a text node.
+          // weird, but happens.
+          strictFail(parser, "Non-whitespace before first tag.")
+          parser.textNode = c
+          parser.state = S.TEXT
+        }
+      continue
+
+      case S.TEXT:
+        if (parser.sawRoot && !parser.closedRoot) {
+          var starti = i-1
+          while (c && c!=="<" && c!=="&") {
+            c = chunk.charAt(i++)
+            if (c && parser.trackPosition) {
+              parser.position ++
+              if (c === "\n") {
+                parser.line ++
+                parser.column = 0
+              } else parser.column ++
+            }
+          }
+          parser.textNode += chunk.substring(starti, i-1)
+        }
+        if (c === "<") {
+          parser.state = S.OPEN_WAKA
+          parser.startTagPosition = parser.position
+        } else {
+          if (not(whitespace, c) && (!parser.sawRoot || parser.closedRoot))
+            strictFail(parser, "Text data outside of root node.")
+          if (c === "&") parser.state = S.TEXT_ENTITY
+          else parser.textNode += c
+        }
+      continue
+
+      case S.SCRIPT:
+        // only non-strict
+        if (c === "<") {
+          parser.state = S.SCRIPT_ENDING
+        } else parser.script += c
+      continue
+
+      case S.SCRIPT_ENDING:
+        if (c === "/") {
+          parser.state = S.CLOSE_TAG
+        } else {
+          parser.script += "<" + c
+          parser.state = S.SCRIPT
+        }
+      continue
+
+      case S.OPEN_WAKA:
+        // either a /, ?, !, or text is coming next.
+        if (c === "!") {
+          parser.state = S.SGML_DECL
+          parser.sgmlDecl = ""
+        } else if (is(whitespace, c)) {
+          // wait for it...
+        } else if (is(nameStart,c)) {
+          parser.state = S.OPEN_TAG
+          parser.tagName = c
+        } else if (c === "/") {
+          parser.state = S.CLOSE_TAG
+          parser.tagName = ""
+        } else if (c === "?") {
+          parser.state = S.PROC_INST
+          parser.procInstName = parser.procInstBody = ""
+        } else {
+          strictFail(parser, "Unencoded <")
+          // if there was some whitespace, then add that in.
+          if (parser.startTagPosition + 1 < parser.position) {
+            var pad = parser.position - parser.startTagPosition
+            c = new Array(pad).join(" ") + c
+          }
+          parser.textNode += "<" + c
+          parser.state = S.TEXT
+        }
+      continue
+
+      case S.SGML_DECL:
+        if ((parser.sgmlDecl+c).toUpperCase() === CDATA) {
+          emitNode(parser, "onopencdata")
+          parser.state = S.CDATA
+          parser.sgmlDecl = ""
+          parser.cdata = ""
+        } else if (parser.sgmlDecl+c === "--") {
+          parser.state = S.COMMENT
+          parser.comment = ""
+          parser.sgmlDecl = ""
+        } else if ((parser.sgmlDecl+c).toUpperCase() === DOCTYPE) {
+          parser.state = S.DOCTYPE
+          if (parser.doctype || parser.sawRoot) strictFail(parser,
+            "Inappropriately located doctype declaration")
+          parser.doctype = ""
+          parser.sgmlDecl = ""
+        } else if (c === ">") {
+          emitNode(parser, "onsgmldeclaration", parser.sgmlDecl)
+          parser.sgmlDecl = ""
+          parser.state = S.TEXT
+        } else if (is(quote, c)) {
+          parser.state = S.SGML_DECL_QUOTED
+          parser.sgmlDecl += c
+        } else parser.sgmlDecl += c
+      continue
+
+      case S.SGML_DECL_QUOTED:
+        if (c === parser.q) {
+          parser.state = S.SGML_DECL
+          parser.q = ""
+        }
+        parser.sgmlDecl += c
+      continue
+
+      case S.DOCTYPE:
+        if (c === ">") {
+          parser.state = S.TEXT
+          emitNode(parser, "ondoctype", parser.doctype)
+          parser.doctype = true // just remember that we saw it.
+        } else {
+          parser.doctype += c
+          if (c === "[") parser.state = S.DOCTYPE_DTD
+          else if (is(quote, c)) {
+            parser.state = S.DOCTYPE_QUOTED
+            parser.q = c
+          }
+        }
+      continue
+
+      case S.DOCTYPE_QUOTED:
+        parser.doctype += c
+        if (c === parser.q) {
+          parser.q = ""
+          parser.state = S.DOCTYPE
+        }
+      continue
+
+      case S.DOCTYPE_DTD:
+        parser.doctype += c
+        if (c === "]") parser.state = S.DOCTYPE
+        else if (is(quote,c)) {
+          parser.state = S.DOCTYPE_DTD_QUOTED
+          parser.q = c
+        }
+      continue
+
+      case S.DOCTYPE_DTD_QUOTED:
+        parser.doctype += c
+        if (c === parser.q) {
+          parser.state = S.DOCTYPE_DTD
+          parser.q = ""
+        }
+      continue
+
+      case S.COMMENT:
+        if (c === "-") parser.state = S.COMMENT_ENDING
+        else parser.comment += c
+      continue
+
+      case S.COMMENT_ENDING:
+        if (c === "-") {
+          parser.state = S.COMMENT_ENDED
+          parser.comment = textopts(parser.opt, parser.comment)
+          if (parser.comment) emitNode(parser, "oncomment", parser.comment)
+          parser.comment = ""
+        } else {
+          parser.comment += "-" + c
+          parser.state = S.COMMENT
+        }
+      continue
+
+      case S.COMMENT_ENDED:
+        if (c !== ">") {
+          strictFail(parser, "Malformed comment")
+          // allow <!-- blah -- bloo --> in non-strict mode,
+          // which is a comment of " blah -- bloo "
+          parser.comment += "--" + c
+          parser.state = S.COMMENT
+        } else parser.state = S.TEXT
+      continue
+
+      case S.CDATA:
+        if (c === "]") parser.state = S.CDATA_ENDING
+        else parser.cdata += c
+      continue
+
+      case S.CDATA_ENDING:
+        if (c === "]") parser.state = S.CDATA_ENDING_2
+        else {
+          parser.cdata += "]" + c
+          parser.state = S.CDATA
+        }
+      continue
+
+      case S.CDATA_ENDING_2:
+        if (c === ">") {
+          if (parser.cdata) emitNode(parser, "oncdata", parser.cdata)
+          emitNode(parser, "onclosecdata")
+          parser.cdata = ""
+          parser.state = S.TEXT
+        } else if (c === "]") {
+          parser.cdata += "]"
+        } else {
+          parser.cdata += "]]" + c
+          parser.state = S.CDATA
+        }
+      continue
+
+      case S.PROC_INST:
+        if (c === "?") parser.state = S.PROC_INST_ENDING
+        else if (is(whitespace, c)) parser.state = S.PROC_INST_BODY
+        else parser.procInstName += c
+      continue
+
+      case S.PROC_INST_BODY:
+        if (!parser.procInstBody && is(whitespace, c)) continue
+        else if (c === "?") parser.state = S.PROC_INST_ENDING
+        else parser.procInstBody += c
+      continue
+
+      case S.PROC_INST_ENDING:
+        if (c === ">") {
+          emitNode(parser, "onprocessinginstruction", {
+            name : parser.procInstName,
+            body : parser.procInstBody
+          })
+          parser.procInstName = parser.procInstBody = ""
+          parser.state = S.TEXT
+        } else {
+          parser.procInstBody += "?" + c
+          parser.state = S.PROC_INST_BODY
+        }
+      continue
+
+      case S.OPEN_TAG:
+        if (is(nameBody, c)) parser.tagName += c
+        else {
+          newTag(parser)
+          if (c === ">") openTag(parser)
+          else if (c === "/") parser.state = S.OPEN_TAG_SLASH
+          else {
+            if (not(whitespace, c)) strictFail(
+              parser, "Invalid character in tag name")
+            parser.state = S.ATTRIB
+          }
+        }
+      continue
+
+      case S.OPEN_TAG_SLASH:
+        if (c === ">") {
+          openTag(parser, true)
+          closeTag(parser)
+        } else {
+          strictFail(parser, "Forward-slash in opening tag not followed by >")
+          parser.state = S.ATTRIB
+        }
+      continue
+
+      case S.ATTRIB:
+        // haven't read the attribute name yet.
+        if (is(whitespace, c)) continue
+        else if (c === ">") openTag(parser)
+        else if (c === "/") parser.state = S.OPEN_TAG_SLASH
+        else if (is(nameStart, c)) {
+          parser.attribName = c
+          parser.attribValue = ""
+          parser.state = S.ATTRIB_NAME
+        } else strictFail(parser, "Invalid attribute name")
+      continue
+
+      case S.ATTRIB_NAME:
+        if (c === "=") parser.state = S.ATTRIB_VALUE
+        else if (c === ">") {
+          strictFail(parser, "Attribute without value")
+          parser.attribValue = parser.attribName
+          attrib(parser)
+          openTag(parser)
+        }
+        else if (is(whitespace, c)) parser.state = S.ATTRIB_NAME_SAW_WHITE
+        else if (is(nameBody, c)) parser.attribName += c
+        else strictFail(parser, "Invalid attribute name")
+      continue
+
+      case S.ATTRIB_NAME_SAW_WHITE:
+        if (c === "=") parser.state = S.ATTRIB_VALUE
+        else if (is(whitespace, c)) continue
+        else {
+          strictFail(parser, "Attribute without value")
+          parser.tag.attributes[parser.attribName] = ""
+          parser.attribValue = ""
+          emitNode(parser, "onattribute",
+                   { name : parser.attribName, value : "" })
+          parser.attribName = ""
+          if (c === ">") openTag(parser)
+          else if (is(nameStart, c)) {
+            parser.attribName = c
+            parser.state = S.ATTRIB_NAME
+          } else {
+            strictFail(parser, "Invalid attribute name")
+            parser.state = S.ATTRIB
+          }
+        }
+      continue
+
+      case S.ATTRIB_VALUE:
+        if (is(whitespace, c)) continue
+        else if (is(quote, c)) {
+          parser.q = c
+          parser.state = S.ATTRIB_VALUE_QUOTED
+        } else {
+          strictFail(parser, "Unquoted attribute value")
+          parser.state = S.ATTRIB_VALUE_UNQUOTED
+          parser.attribValue = c
+        }
+      continue
+
+      case S.ATTRIB_VALUE_QUOTED:
+        if (c !== parser.q) {
+          if (c === "&") parser.state = S.ATTRIB_VALUE_ENTITY_Q
+          else parser.attribValue += c
+          continue
+        }
+        attrib(parser)
+        parser.q = ""
+        parser.state = S.ATTRIB
+      continue
+
+      case S.ATTRIB_VALUE_UNQUOTED:
+        if (not(attribEnd,c)) {
+          if (c === "&") parser.state = S.ATTRIB_VALUE_ENTITY_U
+          else parser.attribValue += c
+          continue
+        }
+        attrib(parser)
+        if (c === ">") openTag(parser)
+        else parser.state = S.ATTRIB
+      continue
+
+      case S.CLOSE_TAG:
+        if (!parser.tagName) {
+          if (is(whitespace, c)) continue
+          else if (not(nameStart, c)) {
+            if (parser.script) {
+              parser.script += "</" + c
+              parser.state = S.SCRIPT
+            } else {
+              strictFail(parser, "Invalid tagname in closing tag.")
+            }
+          } else parser.tagName = c
+        }
+        else if (c === ">") closeTag(parser)
+        else if (is(nameBody, c)) parser.tagName += c
+        else if (parser.script) {
+          parser.script += "</" + parser.tagName
+          parser.tagName = ""
+          parser.state = S.SCRIPT
+        } else {
+          if (not(whitespace, c)) strictFail(parser,
+            "Invalid tagname in closing tag")
+          parser.state = S.CLOSE_TAG_SAW_WHITE
+        }
+      continue
+
+      case S.CLOSE_TAG_SAW_WHITE:
+        if (is(whitespace, c)) continue
+        if (c === ">") closeTag(parser)
+        else strictFail(parser, "Invalid characters in closing tag")
+      continue
+
+      case S.TEXT_ENTITY:
+      case S.ATTRIB_VALUE_ENTITY_Q:
+      case S.ATTRIB_VALUE_ENTITY_U:
+        switch(parser.state) {
+          case S.TEXT_ENTITY:
+            var returnState = S.TEXT, buffer = "textNode"
+          break
+
+          case S.ATTRIB_VALUE_ENTITY_Q:
+            var returnState = S.ATTRIB_VALUE_QUOTED, buffer = "attribValue"
+          break
+
+          case S.ATTRIB_VALUE_ENTITY_U:
+            var returnState = S.ATTRIB_VALUE_UNQUOTED, buffer = "attribValue"
+          break
+        }
+        if (c === ";") {
+          parser[buffer] += parseEntity(parser)
+          parser.entity = ""
+          parser.state = returnState
+        }
+        else if (is(entity, c)) parser.entity += c
+        else {
+          strictFail(parser, "Invalid character entity")
+          parser[buffer] += "&" + parser.entity + c
+          parser.entity = ""
+          parser.state = returnState
+        }
+      continue
+
+      default:
+        throw new Error(parser, "Unknown state: " + parser.state)
+    }
+  } // while
+  // cdata blocks can get very big under normal conditions. emit and move on.
+  // if (parser.state === S.CDATA && parser.cdata) {
+  //   emitNode(parser, "oncdata", parser.cdata)
+  //   parser.cdata = ""
+  // }
+  if (parser.position >= parser.bufferCheckPosition) checkBufferLength(parser)
+  return parser
+}
+
+})(typeof exports === "undefined" ? sax = {} : exports)
+
+},
+'node_modules/xml2js/node_modules/sax/component.json': function(exports, __require, module) {
+var require = function(name) {return __require(name, 'node_modules/xml2js/node_modules/sax/component.json');};
+var __filename = 'node_modules/xml2js/node_modules/sax/component.json';
+var __dirname = 'node_modules/xml2js/node_modules/sax';
+var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/xml2js/node_modules/sax/component.json'], env: {}};
+module.exports = (function() {
+return {
+  "name": "sax",
+  "description": "An evented streaming XML parser in JavaScript",
+  "author": "Isaac Z. Schlueter <i@izs.me> (http://blog.izs.me/)",
+  "version": "0.5.2",
+  "main": "lib/sax.js",
+  "license": "BSD",
+  "scripts": [
+    "lib/sax.js"
+  ],
+  "repository": "git://github.com/isaacs/sax-js.git"
+}
+
+}).call(this);
+
+},
+'node_modules/xml2js/node_modules/sax/examples/example.js': function(exports, __require, module) {
+var require = function(name) {return __require(name, 'node_modules/xml2js/node_modules/sax/examples/example.js');};
+var __filename = 'node_modules/xml2js/node_modules/sax/examples/example.js';
+var __dirname = 'node_modules/xml2js/node_modules/sax/examples';
+var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/xml2js/node_modules/sax/examples/example.js'], env: {}};
+
+var fs = require("fs"),
+  util = require("util"),
+  path = require("path"),
+  xml = fs.readFileSync(path.join(__dirname, "test.xml"), "utf8"),
+  sax = require("../lib/sax"),
+  strict = sax.parser(true),
+  loose = sax.parser(false, {trim:true}),
+  inspector = function (ev) { return function (data) {
+    console.error("%s %s %j", this.line+":"+this.column, ev, data);
+  }};
+
+sax.EVENTS.forEach(function (ev) {
+  loose["on"+ev] = inspector(ev);
+});
+loose.onend = function () {
+  console.error("end");
+  console.error(loose);
+};
+
+// do this in random bits at a time to verify that it works.
+(function () {
+  if (xml) {
+    var c = Math.ceil(Math.random() * 1000)
+    loose.write(xml.substr(0,c));
+    xml = xml.substr(c);
+    process.nextTick(arguments.callee);
+  } else loose.close();
+})();
+
+},
+'node_modules/xml2js/node_modules/sax/examples/get-products.js': function(exports, __require, module) {
+var require = function(name) {return __require(name, 'node_modules/xml2js/node_modules/sax/examples/get-products.js');};
+var __filename = 'node_modules/xml2js/node_modules/sax/examples/get-products.js';
+var __dirname = 'node_modules/xml2js/node_modules/sax/examples';
+var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/xml2js/node_modules/sax/examples/get-products.js'], env: {}};
+// pull out /GeneralSearchResponse/categories/category/items/product tags
+// the rest we don't care about.
+
+var sax = require("../lib/sax.js")
+var fs = require("fs")
+var path = require("path")
+var xmlFile = path.resolve(__dirname, "shopping.xml")
+var util = require("util")
+var http = require("http")
+
+fs.readFile(xmlFile, function (er, d) {
+  http.createServer(function (req, res) {
+    if (er) throw er
+    var xmlstr = d.toString("utf8")
+
+    var parser = sax.parser(true)
+    var products = []
+    var product = null
+    var currentTag = null
+
+    parser.onclosetag = function (tagName) {
+      if (tagName === "product") {
+        products.push(product)
+        currentTag = product = null
+        return
+      }
+      if (currentTag && currentTag.parent) {
+        var p = currentTag.parent
+        delete currentTag.parent
+        currentTag = p
+      }
+    }
+
+    parser.onopentag = function (tag) {
+      if (tag.name !== "product" && !product) return
+      if (tag.name === "product") {
+        product = tag
+      }
+      tag.parent = currentTag
+      tag.children = []
+      tag.parent && tag.parent.children.push(tag)
+      currentTag = tag
+    }
+
+    parser.ontext = function (text) {
+      if (currentTag) currentTag.children.push(text)
+    }
+
+    parser.onend = function () {
+      var out = util.inspect(products, false, 3, true)
+      res.writeHead(200, {"content-type":"application/json"})
+      res.end("{\"ok\":true}")
+      // res.end(JSON.stringify(products))
+    }
+
+    parser.write(xmlstr).end()
+  }).listen(1337)
+})
+
+},
+'node_modules/xml2js/node_modules/sax/examples/hello-world.js': function(exports, __require, module) {
+var require = function(name) {return __require(name, 'node_modules/xml2js/node_modules/sax/examples/hello-world.js');};
+var __filename = 'node_modules/xml2js/node_modules/sax/examples/hello-world.js';
+var __dirname = 'node_modules/xml2js/node_modules/sax/examples';
+var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/xml2js/node_modules/sax/examples/hello-world.js'], env: {}};
+require("http").createServer(function (req, res) {
+  res.writeHead(200, {"content-type":"application/json"})
+  res.end(JSON.stringify({ok: true}))
+}).listen(1337)
+
+},
+'node_modules/xml2js/node_modules/sax/examples/pretty-print.js': function(exports, __require, module) {
+var require = function(name) {return __require(name, 'node_modules/xml2js/node_modules/sax/examples/pretty-print.js');};
+var __filename = 'node_modules/xml2js/node_modules/sax/examples/pretty-print.js';
+var __dirname = 'node_modules/xml2js/node_modules/sax/examples';
+var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/xml2js/node_modules/sax/examples/pretty-print.js'], env: {}};
+var sax = require("../lib/sax")
+  , printer = sax.createStream(false, {lowercasetags:true, trim:true})
+  , fs = require("fs")
+
+function entity (str) {
+  return str.replace('"', '&quot;')
+}
+
+printer.tabstop = 2
+printer.level = 0
+printer.indent = function () {
+  print("\n")
+  for (var i = this.level; i > 0; i --) {
+    for (var j = this.tabstop; j > 0; j --) {
+      print(" ")
+    }
+  }
+}
+printer.on("opentag", function (tag) {
+  this.indent()
+  this.level ++
+  print("<"+tag.name)
+  for (var i in tag.attributes) {
+    print(" "+i+"=\""+entity(tag.attributes[i])+"\"")
+  }
+  print(">")
+})
+
+printer.on("text", ontext)
+printer.on("doctype", ontext)
+function ontext (text) {
+  this.indent()
+  print(text)
+}
+
+printer.on("closetag", function (tag) {
+  this.level --
+  this.indent()
+  print("</"+tag+">")
+})
+
+printer.on("cdata", function (data) {
+  this.indent()
+  print("<![CDATA["+data+"]]>")
+})
+
+printer.on("comment", function (comment) {
+  this.indent()
+  print("<!--"+comment+"-->")
+})
+
+printer.on("error", function (error) {
+  console.error(error)
+  throw error
+})
+
+if (!process.argv[2]) {
+  throw new Error("Please provide an xml file to prettify\n"+
+    "TODO: read from stdin or take a file")
+}
+var xmlfile = require("path").join(process.cwd(), process.argv[2])
+var fstr = fs.createReadStream(xmlfile, { encoding: "utf8" })
+
+function print (c) {
+  if (!process.stdout.write(c)) {
+    fstr.pause()
+  }
+}
+
+process.stdout.on("drain", function () {
+  fstr.resume()
+})
+
+fstr.pipe(printer)
+
+},
+'node_modules/xml2js/node_modules/sax/package.json': function(exports, __require, module) {
+var require = function(name) {return __require(name, 'node_modules/xml2js/node_modules/sax/package.json');};
+var __filename = 'node_modules/xml2js/node_modules/sax/package.json';
+var __dirname = 'node_modules/xml2js/node_modules/sax';
+var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/xml2js/node_modules/sax/package.json'], env: {}};
+module.exports = (function() {
+return {
+  "name": "sax",
+  "description": "An evented streaming XML parser in JavaScript",
+  "author": {
+    "name": "Isaac Z. Schlueter",
+    "email": "i@izs.me",
+    "url": "http://blog.izs.me/"
+  },
+  "version": "0.5.4",
+  "main": "lib/sax.js",
+  "license": "BSD",
+  "scripts": {
+    "test": "node test/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/isaacs/sax-js.git"
+  },
+  "contributors": [
+    {
+      "name": "Isaac Z. Schlueter",
+      "email": "i@izs.me"
+    },
+    {
+      "name": "Stein Martin Hustad",
+      "email": "stein@hustad.com"
+    },
+    {
+      "name": "Mikeal Rogers",
+      "email": "mikeal.rogers@gmail.com"
+    },
+    {
+      "name": "Laurie Harper",
+      "email": "laurie@holoweb.net"
+    },
+    {
+      "name": "Jann Horn",
+      "email": "jann@Jann-PC.fritz.box"
+    },
+    {
+      "name": "Elijah Insua",
+      "email": "tmpvar@gmail.com"
+    },
+    {
+      "name": "Henry Rawas",
+      "email": "henryr@schakra.com"
+    },
+    {
+      "name": "Justin Makeig",
+      "email": "jmpublic@makeig.com"
+    },
+    {
+      "name": "Mike Schilling",
+      "email": "mike@emotive.com"
+    }
+  ],
+  "readme": "# sax js\n\nA sax-style parser for XML and HTML.\n\nDesigned with [node](http://nodejs.org/) in mind, but should work fine in\nthe browser or other CommonJS implementations.\n\n## What This Is\n\n* A very simple tool to parse through an XML string.\n* A stepping stone to a streaming HTML parser.\n* A handy way to deal with RSS and other mostly-ok-but-kinda-broken XML \n  docs.\n\n## What This Is (probably) Not\n\n* An HTML Parser - That's a fine goal, but this isn't it.  It's just\n  XML.\n* A DOM Builder - You can use it to build an object model out of XML,\n  but it doesn't do that out of the box.\n* XSLT - No DOM = no querying.\n* 100% Compliant with (some other SAX implementation) - Most SAX\n  implementations are in Java and do a lot more than this does.\n* An XML Validator - It does a little validation when in strict mode, but\n  not much.\n* A Schema-Aware XSD Thing - Schemas are an exercise in fetishistic \n  masochism.\n* A DTD-aware Thing - Fetching DTDs is a much bigger job.\n\n## Regarding `<!DOCTYPE`s and `<!ENTITY`s\n\nThe parser will handle the basic XML entities in text nodes and attribute\nvalues: `&amp; &lt; &gt; &apos; &quot;`. It's possible to define additional\nentities in XML by putting them in the DTD. This parser doesn't do anything\nwith that. If you want to listen to the `ondoctype` event, and then fetch\nthe doctypes, and read the entities and add them to `parser.ENTITIES`, then\nbe my guest.\n\nUnknown entities will fail in strict mode, and in loose mode, will pass\nthrough unmolested.\n\n## Usage\n\n    var sax = require(\"./lib/sax\"),\n      strict = true, // set to false for html-mode\n      parser = sax.parser(strict);\n\n    parser.onerror = function (e) {\n      // an error happened.\n    };\n    parser.ontext = function (t) {\n      // got some text.  t is the string of text.\n    };\n    parser.onopentag = function (node) {\n      // opened a tag.  node has \"name\" and \"attributes\"\n    };\n    parser.onattribute = function (attr) {\n      // an attribute.  attr has \"name\" and \"value\"\n    };\n    parser.onend = function () {\n      // parser stream is done, and ready to have more stuff written to it.\n    };\n\n    parser.write('<xml>Hello, <who name=\"world\">world</who>!</xml>').close();\n\n    // stream usage\n    // takes the same options as the parser\n    var saxStream = require(\"sax\").createStream(strict, options)\n    saxStream.on(\"error\", function (e) {\n      // unhandled errors will throw, since this is a proper node\n      // event emitter.\n      console.error(\"error!\", e)\n      // clear the error\n      this._parser.error = null\n      this._parser.resume()\n    })\n    saxStream.on(\"opentag\", function (node) {\n      // same object as above\n    })\n    // pipe is supported, and it's readable/writable\n    // same chunks coming in also go out.\n    fs.createReadStream(\"file.xml\")\n      .pipe(saxStream)\n      .pipe(fs.createWriteStream(\"file-copy.xml\"))\n\n\n\n## Arguments\n\nPass the following arguments to the parser function.  All are optional.\n\n`strict` - Boolean. Whether or not to be a jerk. Default: `false`.\n\n`opt` - Object bag of settings regarding string formatting.  All default to `false`.\n\nSettings supported:\n\n* `trim` - Boolean. Whether or not to trim text and comment nodes.\n* `normalize` - Boolean. If true, then turn any whitespace into a single\n  space.\n* `lowercase` - Boolean. If true, then lowercase tag names and attribute names\n  in loose mode, rather than uppercasing them.\n* `xmlns` - Boolean. If true, then namespaces are supported.\n* `position` - Boolean. If false, then don't track line/col/position.\n\n## Methods\n\n`write` - Write bytes onto the stream. You don't have to do this all at\nonce. You can keep writing as much as you want.\n\n`close` - Close the stream. Once closed, no more data may be written until\nit is done processing the buffer, which is signaled by the `end` event.\n\n`resume` - To gracefully handle errors, assign a listener to the `error`\nevent. Then, when the error is taken care of, you can call `resume` to\ncontinue parsing. Otherwise, the parser will not continue while in an error\nstate.\n\n## Members\n\nAt all times, the parser object will have the following members:\n\n`line`, `column`, `position` - Indications of the position in the XML\ndocument where the parser currently is looking.\n\n`startTagPosition` - Indicates the position where the current tag starts.\n\n`closed` - Boolean indicating whether or not the parser can be written to.\nIf it's `true`, then wait for the `ready` event to write again.\n\n`strict` - Boolean indicating whether or not the parser is a jerk.\n\n`opt` - Any options passed into the constructor.\n\n`tag` - The current tag being dealt with.\n\nAnd a bunch of other stuff that you probably shouldn't touch.\n\n## Events\n\nAll events emit with a single argument. To listen to an event, assign a\nfunction to `on<eventname>`. Functions get executed in the this-context of\nthe parser object. The list of supported events are also in the exported\n`EVENTS` array.\n\nWhen using the stream interface, assign handlers using the EventEmitter\n`on` function in the normal fashion.\n\n`error` - Indication that something bad happened. The error will be hanging\nout on `parser.error`, and must be deleted before parsing can continue. By\nlistening to this event, you can keep an eye on that kind of stuff. Note:\nthis happens *much* more in strict mode. Argument: instance of `Error`.\n\n`text` - Text node. Argument: string of text.\n\n`doctype` - The `<!DOCTYPE` declaration. Argument: doctype string.\n\n`processinginstruction` - Stuff like `<?xml foo=\"blerg\" ?>`. Argument:\nobject with `name` and `body` members. Attributes are not parsed, as\nprocessing instructions have implementation dependent semantics.\n\n`sgmldeclaration` - Random SGML declarations. Stuff like `<!ENTITY p>`\nwould trigger this kind of event. This is a weird thing to support, so it\nmight go away at some point. SAX isn't intended to be used to parse SGML,\nafter all.\n\n`opentag` - An opening tag. Argument: object with `name` and `attributes`.\nIn non-strict mode, tag names are uppercased, unless the `lowercase`\noption is set.  If the `xmlns` option is set, then it will contain\nnamespace binding information on the `ns` member, and will have a\n`local`, `prefix`, and `uri` member.\n\n`closetag` - A closing tag. In loose mode, tags are auto-closed if their\nparent closes. In strict mode, well-formedness is enforced. Note that\nself-closing tags will have `closeTag` emitted immediately after `openTag`.\nArgument: tag name.\n\n`attribute` - An attribute node.  Argument: object with `name` and `value`.\nIn non-strict mode, attribute names are uppercased, unless the `lowercase`\noption is set.  If the `xmlns` option is set, it will also contains namespace\ninformation.\n\n`comment` - A comment node.  Argument: the string of the comment.\n\n`opencdata` - The opening tag of a `<![CDATA[` block.\n\n`cdata` - The text of a `<![CDATA[` block. Since `<![CDATA[` blocks can get\nquite large, this event may fire multiple times for a single block, if it\nis broken up into multiple `write()`s. Argument: the string of random\ncharacter data.\n\n`closecdata` - The closing tag (`]]>`) of a `<![CDATA[` block.\n\n`opennamespace` - If the `xmlns` option is set, then this event will\nsignal the start of a new namespace binding.\n\n`closenamespace` - If the `xmlns` option is set, then this event will\nsignal the end of a namespace binding.\n\n`end` - Indication that the closed stream has ended.\n\n`ready` - Indication that the stream has reset, and is ready to be written\nto.\n\n`noscript` - In non-strict mode, `<script>` tags trigger a `\"script\"`\nevent, and their contents are not checked for special xml characters.\nIf you pass `noscript: true`, then this behavior is suppressed.\n\n## Reporting Problems\n\nIt's best to write a failing test if you find an issue.  I will always\naccept pull requests with failing tests if they demonstrate intended\nbehavior, but it is very hard to figure out what issue you're describing\nwithout a test.  Writing a test is also the best way for you yourself\nto figure out if you really understand the issue you think you have with\nsax-js.\n",
+  "readmeFilename": "README.md",
+  "bugs": {
+    "url": "https://github.com/isaacs/sax-js/issues"
+  },
+  "_id": "sax@0.5.4",
+  "_from": "sax@0.5.x"
+}
+
+}).call(this);
+
+},
+'node_modules/xml2js/node_modules/sax/test/attribute-name.js': function(exports, __require, module) {
+var require = function(name) {return __require(name, 'node_modules/xml2js/node_modules/sax/test/attribute-name.js');};
+var __filename = 'node_modules/xml2js/node_modules/sax/test/attribute-name.js';
+var __dirname = 'node_modules/xml2js/node_modules/sax/test';
+var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/xml2js/node_modules/sax/test/attribute-name.js'], env: {}};
+require(__dirname).test(
+  { xml: "<root length='12345'></root>"
+  , expect: [
+    ["attribute", {
+      name: "length"
+    , value: "12345"
+    , prefix: ""
+    , local: "length"
+    , uri: ""
+    }]
+  , ["opentag", {
+      name: "root"
+    , prefix: ""
+    , local: "root"
+    , uri: ""
+    , attributes: {
+      length: {
+        name: "length"
+      , value: "12345"
+      , prefix: ""
+      , local: "length"
+      , uri: ""
+      }
+    }
+    , ns: {}
+    , isSelfClosing: false
+    }]
+  , ["closetag", "root"]
+  ]
+  , strict: true
+  , opt: { xmlns: true }
+  }
+)
+
+},
+'node_modules/xml2js/node_modules/sax/test/buffer-overrun.js': function(exports, __require, module) {
+var require = function(name) {return __require(name, 'node_modules/xml2js/node_modules/sax/test/buffer-overrun.js');};
+var __filename = 'node_modules/xml2js/node_modules/sax/test/buffer-overrun.js';
+var __dirname = 'node_modules/xml2js/node_modules/sax/test';
+var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/xml2js/node_modules/sax/test/buffer-overrun.js'], env: {}};
+// set this really low so that I don't have to put 64 MB of xml in here.
+var sax = require("../lib/sax")
+var bl = sax.MAX_BUFFER_LENGTH
+sax.MAX_BUFFER_LENGTH = 5;
+
+require(__dirname).test({
+  expect : [
+    ["error", "Max buffer length exceeded: tagName\nLine: 0\nColumn: 15\nChar: "],
+    ["error", "Max buffer length exceeded: tagName\nLine: 0\nColumn: 30\nChar: "],
+    ["error", "Max buffer length exceeded: tagName\nLine: 0\nColumn: 45\nChar: "],
+    ["opentag", {
+     "name": "ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZ",
+     "attributes": {},
+     "isSelfClosing": false
+    }],
+    ["text", "yo"],
+    ["closetag", "ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZ"]
+  ]
+}).write("<abcdefghijklmn")
+  .write("opqrstuvwxyzABC")
+  .write("DEFGHIJKLMNOPQR")
+  .write("STUVWXYZ>")
+  .write("yo")
+  .write("</abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ>")
+  .close();
+sax.MAX_BUFFER_LENGTH = bl
+
+},
+'node_modules/xml2js/node_modules/sax/test/case.js': function(exports, __require, module) {
+var require = function(name) {return __require(name, 'node_modules/xml2js/node_modules/sax/test/case.js');};
+var __filename = 'node_modules/xml2js/node_modules/sax/test/case.js';
+var __dirname = 'node_modules/xml2js/node_modules/sax/test';
+var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/xml2js/node_modules/sax/test/case.js'], env: {}};
+// default to uppercase
+require(__dirname).test
+  ( { xml :
+      "<span class=\"test\" hello=\"world\"></span>"
+    , expect :
+      [ [ "attribute", { name: "CLASS", value: "test" } ]
+      , [ "attribute", { name: "HELLO", value: "world" } ]
+      , [ "opentag", { name: "SPAN",
+                       attributes: { CLASS: "test", HELLO: "world" },
+                       isSelfClosing: false } ]
+      , [ "closetag", "SPAN" ]
+      ]
+    , strict : false
+    , opt : {}
+    }
+  )
+
+// lowercase option : lowercase tag/attribute names
+require(__dirname).test
+  ( { xml :
+      "<span class=\"test\" hello=\"world\"></span>"
+    , expect :
+      [ [ "attribute", { name: "class", value: "test" } ]
+      , [ "attribute", { name: "hello", value: "world" } ]
+      , [ "opentag", { name: "span",
+                       attributes: { class: "test", hello: "world" },
+                       isSelfClosing: false } ]
+      , [ "closetag", "span" ]
+      ]
+    , strict : false
+    , opt : {lowercase:true}
+    }
+  )
+
+// backward compatibility with old lowercasetags opt
+require(__dirname).test
+  ( { xml :
+      "<span class=\"test\" hello=\"world\"></span>"
+    , expect :
+      [ [ "attribute", { name: "class", value: "test" } ]
+      , [ "attribute", { name: "hello", value: "world" } ]
+      , [ "opentag", { name: "span",
+                       attributes: { class: "test", hello: "world" },
+                       isSelfClosing: false } ]
+      , [ "closetag", "span" ]
+      ]
+    , strict : false
+    , opt : {lowercasetags:true}
+    }
+  )
+
+},
+'node_modules/xml2js/node_modules/sax/test/cdata-chunked.js': function(exports, __require, module) {
+var require = function(name) {return __require(name, 'node_modules/xml2js/node_modules/sax/test/cdata-chunked.js');};
+var __filename = 'node_modules/xml2js/node_modules/sax/test/cdata-chunked.js';
+var __dirname = 'node_modules/xml2js/node_modules/sax/test';
+var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/xml2js/node_modules/sax/test/cdata-chunked.js'], env: {}};
+
+require(__dirname).test({
+  expect : [
+    ["opentag", {"name": "R","attributes": {}, "isSelfClosing": false}],
+    ["opencdata", undefined],
+    ["cdata", " this is character data  "],
+    ["closecdata", undefined],
+    ["closetag", "R"]
+  ]
+}).write("<r><![CDATA[ this is ").write("character data  ").write("]]></r>").close();
+
+
+},
+'node_modules/xml2js/node_modules/sax/test/cdata-end-split.js': function(exports, __require, module) {
+var require = function(name) {return __require(name, 'node_modules/xml2js/node_modules/sax/test/cdata-end-split.js');};
+var __filename = 'node_modules/xml2js/node_modules/sax/test/cdata-end-split.js';
+var __dirname = 'node_modules/xml2js/node_modules/sax/test';
+var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/xml2js/node_modules/sax/test/cdata-end-split.js'], env: {}};
+
+require(__dirname).test({
+  expect : [
+    ["opentag", {"name": "R","attributes": {}, "isSelfClosing": false}],
+    ["opencdata", undefined],
+    ["cdata", " this is "],
+    ["closecdata", undefined],
+    ["closetag", "R"]
+  ]
+})
+  .write("<r><![CDATA[ this is ]")
+  .write("]>")
+  .write("</r>")
+  .close();
+
+
+},
+'node_modules/xml2js/node_modules/sax/test/cdata-fake-end.js': function(exports, __require, module) {
+var require = function(name) {return __require(name, 'node_modules/xml2js/node_modules/sax/test/cdata-fake-end.js');};
+var __filename = 'node_modules/xml2js/node_modules/sax/test/cdata-fake-end.js';
+var __dirname = 'node_modules/xml2js/node_modules/sax/test';
+var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/xml2js/node_modules/sax/test/cdata-fake-end.js'], env: {}};
+
+var p = require(__dirname).test({
+  expect : [
+    ["opentag", {"name": "R","attributes": {}, "isSelfClosing": false}],
+    ["opencdata", undefined],
+    ["cdata", "[[[[[[[[]]]]]]]]"],
+    ["closecdata", undefined],
+    ["closetag", "R"]
+  ]
+})
+var x = "<r><![CDATA[[[[[[[[[]]]]]]]]]]></r>"
+for (var i = 0; i < x.length ; i ++) {
+  p.write(x.charAt(i))
+}
+p.close();
+
+
+var p2 = require(__dirname).test({
+  expect : [
+    ["opentag", {"name": "R","attributes": {}, "isSelfClosing": false}],
+    ["opencdata", undefined],
+    ["cdata", "[[[[[[[[]]]]]]]]"],
+    ["closecdata", undefined],
+    ["closetag", "R"]
+  ]
+})
+var x = "<r><![CDATA[[[[[[[[[]]]]]]]]]]></r>"
+p2.write(x).close();
+
+},
+'node_modules/xml2js/node_modules/sax/test/cdata-multiple.js': function(exports, __require, module) {
+var require = function(name) {return __require(name, 'node_modules/xml2js/node_modules/sax/test/cdata-multiple.js');};
+var __filename = 'node_modules/xml2js/node_modules/sax/test/cdata-multiple.js';
+var __dirname = 'node_modules/xml2js/node_modules/sax/test';
+var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/xml2js/node_modules/sax/test/cdata-multiple.js'], env: {}};
+
+require(__dirname).test({
+  expect : [
+    ["opentag", {"name": "R","attributes": {}, "isSelfClosing": false}],
+    ["opencdata", undefined],
+    ["cdata", " this is "],
+    ["closecdata", undefined],
+    ["opencdata", undefined],
+    ["cdata", "character data  "],
+    ["closecdata", undefined],
+    ["closetag", "R"]
+  ]
+}).write("<r><![CDATA[ this is ]]>").write("<![CDA").write("T").write("A[")
+  .write("character data  ").write("]]></r>").close();
+
+
+},
+'node_modules/xml2js/node_modules/sax/test/cdata.js': function(exports, __require, module) {
+var require = function(name) {return __require(name, 'node_modules/xml2js/node_modules/sax/test/cdata.js');};
+var __filename = 'node_modules/xml2js/node_modules/sax/test/cdata.js';
+var __dirname = 'node_modules/xml2js/node_modules/sax/test';
+var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/xml2js/node_modules/sax/test/cdata.js'], env: {}};
+require(__dirname).test({
+  xml : "<r><![CDATA[ this is character data  ]]></r>",
+  expect : [
+    ["opentag", {"name": "R","attributes": {}, "isSelfClosing": false}],
+    ["opencdata", undefined],
+    ["cdata", " this is character data  "],
+    ["closecdata", undefined],
+    ["closetag", "R"]
+  ]
+});
+
+},
+'node_modules/xml2js/node_modules/sax/test/cyrillic.js': function(exports, __require, module) {
+var require = function(name) {return __require(name, 'node_modules/xml2js/node_modules/sax/test/cyrillic.js');};
+var __filename = 'node_modules/xml2js/node_modules/sax/test/cyrillic.js';
+var __dirname = 'node_modules/xml2js/node_modules/sax/test';
+var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/xml2js/node_modules/sax/test/cyrillic.js'], env: {}};
+require(__dirname).test({
+  xml: '<Р>тест</Р>',
+  expect: [
+    ['opentag', {'name':'Р', attributes:{}, isSelfClosing: false}],
+    ['text', 'тест'],
+    ['closetag', 'Р']
+  ]
+});
+
+},
+'node_modules/xml2js/node_modules/sax/test/duplicate-attribute.js': function(exports, __require, module) {
+var require = function(name) {return __require(name, 'node_modules/xml2js/node_modules/sax/test/duplicate-attribute.js');};
+var __filename = 'node_modules/xml2js/node_modules/sax/test/duplicate-attribute.js';
+var __dirname = 'node_modules/xml2js/node_modules/sax/test';
+var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/xml2js/node_modules/sax/test/duplicate-attribute.js'], env: {}};
+require(__dirname).test
+  ( { xml :
+      "<span id=\"hello\" id=\"there\"></span>"
+    , expect :
+      [ [ "attribute", { name: "ID", value: "hello" } ]
+      , [ "opentag", { name: "SPAN",
+                       attributes: { ID: "hello" }, isSelfClosing: false } ]
+      , [ "closetag", "SPAN" ]
+      ]
+    , strict : false
+    , opt : {}
+    }
+  )
+
+},
+'node_modules/xml2js/node_modules/sax/test/entities.js': function(exports, __require, module) {
+var require = function(name) {return __require(name, 'node_modules/xml2js/node_modules/sax/test/entities.js');};
+var __filename = 'node_modules/xml2js/node_modules/sax/test/entities.js';
+var __dirname = 'node_modules/xml2js/node_modules/sax/test';
+var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/xml2js/node_modules/sax/test/entities.js'], env: {}};
+require(__dirname).test({
+  xml: '<r>&rfloor; ' +
+       '&spades; &copy; &rarr; &amp; ' +
+        '&lt; < <  <   < &gt; &real; &weierp; &euro;</r>',
+  expect: [
+    ['opentag', {'name':'R', attributes:{}, isSelfClosing: false}],
+    ['text', '⌋ ♠ © → & < < <  <   < > ℜ ℘ €'],
+    ['closetag', 'R']
+  ]
+});
+
+},
+'node_modules/xml2js/node_modules/sax/test/entity-mega.js': function(exports, __require, module) {
+var require = function(name) {return __require(name, 'node_modules/xml2js/node_modules/sax/test/entity-mega.js');};
+var __filename = 'node_modules/xml2js/node_modules/sax/test/entity-mega.js';
+var __dirname = 'node_modules/xml2js/node_modules/sax/test';
+var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/xml2js/node_modules/sax/test/entity-mega.js'], env: {}};
+var sax = require('../');
+var xml = '<r>';
+var text = '';
+for (var i in sax.ENTITIES) {
+  xml += '&' + i + ';'
+  text += sax.ENTITIES[i]
+}
+xml += '</r>'
+require(__dirname).test({
+  xml: xml,
+  expect: [
+    ['opentag', {'name':'R', attributes:{}, isSelfClosing: false}],
+    ['text', text],
+    ['closetag', 'R']
+  ]
+});
+
+},
+'node_modules/xml2js/node_modules/sax/test/index.js': function(exports, __require, module) {
+var require = function(name) {return __require(name, 'node_modules/xml2js/node_modules/sax/test/index.js');};
+var __filename = 'node_modules/xml2js/node_modules/sax/test/index.js';
+var __dirname = 'node_modules/xml2js/node_modules/sax/test';
+var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/xml2js/node_modules/sax/test/index.js'], env: {}};
+var globalsBefore = JSON.stringify(Object.keys(global))
+  , util = require("util")
+  , assert = require("assert")
+  , fs = require("fs")
+  , path = require("path")
+  , sax = require("../lib/sax")
+
+exports.sax = sax
+
+// handy way to do simple unit tests
+// if the options contains an xml string, it'll be written and the parser closed.
+// otherwise, it's assumed that the test will write and close.
+exports.test = function test (options) {
+  var xml = options.xml
+    , parser = sax.parser(options.strict, options.opt)
+    , expect = options.expect
+    , e = 0
+  sax.EVENTS.forEach(function (ev) {
+    parser["on" + ev] = function (n) {
+      if (process.env.DEBUG) {
+        console.error({ expect: expect[e]
+                      , actual: [ev, n] })
+      }
+      if (e >= expect.length && (ev === "end" || ev === "ready")) return
+      assert.ok( e < expect.length,
+        "expectation #"+e+" "+util.inspect(expect[e])+"\n"+
+        "Unexpected event: "+ev+" "+(n ? util.inspect(n) : ""))
+      var inspected = n instanceof Error ? "\n"+ n.message : util.inspect(n)
+      assert.equal(ev, expect[e][0],
+        "expectation #"+e+"\n"+
+        "Didn't get expected event\n"+
+        "expect: "+expect[e][0] + " " +util.inspect(expect[e][1])+"\n"+
+        "actual: "+ev+" "+inspected+"\n")
+      if (ev === "error") assert.equal(n.message, expect[e][1])
+      else assert.deepEqual(n, expect[e][1],
+        "expectation #"+e+"\n"+
+        "Didn't get expected argument\n"+
+        "expect: "+expect[e][0] + " " +util.inspect(expect[e][1])+"\n"+
+        "actual: "+ev+" "+inspected+"\n")
+      e++
+      if (ev === "error") parser.resume()
+    }
+  })
+  if (xml) parser.write(xml).close()
+  return parser
+}
+
+if (module === require.main) {
+  var running = true
+    , failures = 0
+
+  function fail (file, er) {
+    util.error("Failed: "+file)
+    util.error(er.stack || er.message)
+    failures ++
+  }
+
+  fs.readdir(__dirname, function (error, files) {
+    files = files.filter(function (file) {
+      return (/\.js$/.exec(file) && file !== 'index.js')
+    })
+    var n = files.length
+      , i = 0
+    console.log("0.." + n)
+    files.forEach(function (file) {
+      // run this test.
+      try {
+        require(path.resolve(__dirname, file))
+        var globalsAfter = JSON.stringify(Object.keys(global))
+        if (globalsAfter !== globalsBefore) {
+          var er = new Error("new globals introduced\n"+
+                             "expected: "+globalsBefore+"\n"+
+                             "actual:   "+globalsAfter)
+          globalsBefore = globalsAfter
+          throw er
+        }
+        console.log("ok " + (++i) + " - " + file)
+      } catch (er) {
+        console.log("not ok "+ (++i) + " - " + file)
+        fail(file, er)
+      }
+    })
+    if (!failures) return console.log("#all pass")
+    else return console.error(failures + " failure" + (failures > 1 ? "s" : ""))
+  })
+}
+
+},
+'node_modules/xml2js/node_modules/sax/test/issue-23.js': function(exports, __require, module) {
+var require = function(name) {return __require(name, 'node_modules/xml2js/node_modules/sax/test/issue-23.js');};
+var __filename = 'node_modules/xml2js/node_modules/sax/test/issue-23.js';
+var __dirname = 'node_modules/xml2js/node_modules/sax/test';
+var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/xml2js/node_modules/sax/test/issue-23.js'], env: {}};
+
+require(__dirname).test
+  ( { xml :
+      "<compileClassesResponse>"+
+        "<result>"+
+          "<bodyCrc>653724009</bodyCrc>"+
+          "<column>-1</column>"+
+          "<id>01pG0000002KoSUIA0</id>"+
+          "<line>-1</line>"+
+          "<name>CalendarController</name>"+
+          "<success>true</success>"+
+        "</result>"+
+      "</compileClassesResponse>"
+
+    , expect :
+      [ [ "opentag", { name: "COMPILECLASSESRESPONSE", attributes: {}, isSelfClosing: false } ]
+      , [ "opentag", { name : "RESULT", attributes: {}, isSelfClosing: false } ]
+      , [ "opentag", { name: "BODYCRC", attributes: {}, isSelfClosing: false } ]
+      , [ "text", "653724009" ]
+      , [ "closetag", "BODYCRC" ]
+      , [ "opentag", { name: "COLUMN", attributes: {}, isSelfClosing: false } ]
+      , [ "text", "-1" ]
+      , [ "closetag", "COLUMN" ]
+      , [ "opentag", { name: "ID", attributes: {}, isSelfClosing: false } ]
+      , [ "text", "01pG0000002KoSUIA0" ]
+      , [ "closetag", "ID" ]
+      , [ "opentag", {name: "LINE", attributes: {}, isSelfClosing: false } ]
+      , [ "text", "-1" ]
+      , [ "closetag", "LINE" ]
+      , [ "opentag", {name: "NAME", attributes: {}, isSelfClosing: false } ]
+      , [ "text", "CalendarController" ]
+      , [ "closetag", "NAME" ]
+      , [ "opentag", {name: "SUCCESS", attributes: {}, isSelfClosing: false } ]
+      , [ "text", "true" ]
+      , [ "closetag", "SUCCESS" ]
+      , [ "closetag", "RESULT" ]
+      , [ "closetag", "COMPILECLASSESRESPONSE" ]
+      ]
+    , strict : false
+    , opt : {}
+    }
+  )
+
+
+},
+'node_modules/xml2js/node_modules/sax/test/issue-30.js': function(exports, __require, module) {
+var require = function(name) {return __require(name, 'node_modules/xml2js/node_modules/sax/test/issue-30.js');};
+var __filename = 'node_modules/xml2js/node_modules/sax/test/issue-30.js';
+var __dirname = 'node_modules/xml2js/node_modules/sax/test';
+var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/xml2js/node_modules/sax/test/issue-30.js'], env: {}};
+// https://github.com/isaacs/sax-js/issues/33
+require(__dirname).test
+  ( { xml : "<xml>\n"+
+            "<!-- \n"+
+            "  comment with a single dash- in it\n"+
+            "-->\n"+
+            "<data/>\n"+
+            "</xml>"
+
+    , expect :
+      [ [ "opentag", { name: "xml", attributes: {}, isSelfClosing: false } ]
+      , [ "text", "\n" ]
+      , [ "comment", " \n  comment with a single dash- in it\n" ]
+      , [ "text", "\n" ]
+      , [ "opentag", { name: "data", attributes: {}, isSelfClosing: true } ]
+      , [ "closetag", "data" ]
+      , [ "text", "\n" ]
+      , [ "closetag", "xml" ]
+      ]
+    , strict : true
+    , opt : {}
+    }
+  )
+
+
+},
+'node_modules/xml2js/node_modules/sax/test/issue-35.js': function(exports, __require, module) {
+var require = function(name) {return __require(name, 'node_modules/xml2js/node_modules/sax/test/issue-35.js');};
+var __filename = 'node_modules/xml2js/node_modules/sax/test/issue-35.js';
+var __dirname = 'node_modules/xml2js/node_modules/sax/test';
+var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/xml2js/node_modules/sax/test/issue-35.js'], env: {}};
+// https://github.com/isaacs/sax-js/issues/35
+require(__dirname).test
+  ( { xml : "<xml>&#Xd;&#X0d;\n"+
+            "</xml>"
+
+    , expect :
+      [ [ "opentag", { name: "xml", attributes: {}, isSelfClosing: false } ]
+      , [ "text", "\r\r\n" ]
+      , [ "closetag", "xml" ]
+      ]
+    , strict : true
+    , opt : {}
+    }
+  )
+
+
+},
+'node_modules/xml2js/node_modules/sax/test/issue-47.js': function(exports, __require, module) {
+var require = function(name) {return __require(name, 'node_modules/xml2js/node_modules/sax/test/issue-47.js');};
+var __filename = 'node_modules/xml2js/node_modules/sax/test/issue-47.js';
+var __dirname = 'node_modules/xml2js/node_modules/sax/test';
+var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/xml2js/node_modules/sax/test/issue-47.js'], env: {}};
+// https://github.com/isaacs/sax-js/issues/47
+require(__dirname).test
+  ( { xml : '<a href="query.svc?x=1&y=2&z=3"/>'
+    , expect : [
+        [ "attribute", { name:'HREF', value:"query.svc?x=1&y=2&z=3"} ],
+        [ "opentag", { name: "A", attributes: { HREF:"query.svc?x=1&y=2&z=3"}, isSelfClosing: true } ],
+        [ "closetag", "A" ]
+      ]
+    , opt : {}
+    }
+  )
+
+
+},
+'node_modules/xml2js/node_modules/sax/test/issue-49.js': function(exports, __require, module) {
+var require = function(name) {return __require(name, 'node_modules/xml2js/node_modules/sax/test/issue-49.js');};
+var __filename = 'node_modules/xml2js/node_modules/sax/test/issue-49.js';
+var __dirname = 'node_modules/xml2js/node_modules/sax/test';
+var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/xml2js/node_modules/sax/test/issue-49.js'], env: {}};
+// https://github.com/isaacs/sax-js/issues/49
+require(__dirname).test
+  ( { xml : "<xml><script>hello world</script></xml>"
+    , expect :
+      [ [ "opentag", { name: "xml", attributes: {}, isSelfClosing: false } ]
+      , [ "opentag", { name: "script", attributes: {}, isSelfClosing: false } ]
+      , [ "text", "hello world" ]
+      , [ "closetag", "script" ]
+      , [ "closetag", "xml" ]
+      ]
+    , strict : false
+    , opt : { lowercasetags: true, noscript: true }
+    }
+  )
+
+require(__dirname).test
+  ( { xml : "<xml><script><![CDATA[hello world]]></script></xml>"
+    , expect :
+      [ [ "opentag", { name: "xml", attributes: {}, isSelfClosing: false } ]
+      , [ "opentag", { name: "script", attributes: {}, isSelfClosing: false } ]
+      , [ "opencdata", undefined ]
+      , [ "cdata", "hello world" ]
+      , [ "closecdata", undefined ]
+      , [ "closetag", "script" ]
+      , [ "closetag", "xml" ]
+      ]
+    , strict : false
+    , opt : { lowercasetags: true, noscript: true }
+    }
+  )
+
+
+},
+'node_modules/xml2js/node_modules/sax/test/issue-84.js': function(exports, __require, module) {
+var require = function(name) {return __require(name, 'node_modules/xml2js/node_modules/sax/test/issue-84.js');};
+var __filename = 'node_modules/xml2js/node_modules/sax/test/issue-84.js';
+var __dirname = 'node_modules/xml2js/node_modules/sax/test';
+var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/xml2js/node_modules/sax/test/issue-84.js'], env: {}};
+// https://github.com/isaacs/sax-js/issues/49
+require(__dirname).test
+  ( { xml : "<?has unbalanced \"quotes?><xml>body</xml>"
+    , expect :
+      [ [ "processinginstruction", { name: "has", body: "unbalanced \"quotes" } ],
+        [ "opentag", { name: "xml", attributes: {}, isSelfClosing: false } ]
+      , [ "text", "body" ]
+      , [ "closetag", "xml" ]
+      ]
+    , strict : false
+    , opt : { lowercasetags: true, noscript: true }
+    }
+  )
+
+},
+'node_modules/xml2js/node_modules/sax/test/parser-position.js': function(exports, __require, module) {
+var require = function(name) {return __require(name, 'node_modules/xml2js/node_modules/sax/test/parser-position.js');};
+var __filename = 'node_modules/xml2js/node_modules/sax/test/parser-position.js';
+var __dirname = 'node_modules/xml2js/node_modules/sax/test';
+var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/xml2js/node_modules/sax/test/parser-position.js'], env: {}};
+var sax = require("../lib/sax"),
+    assert = require("assert")
+
+function testPosition(chunks, expectedEvents) {
+  var parser = sax.parser();
+  expectedEvents.forEach(function(expectation) {
+    parser['on' + expectation[0]] = function() {
+      for (var prop in expectation[1]) {
+        assert.equal(parser[prop], expectation[1][prop]);
+      }
+    }
+  });
+  chunks.forEach(function(chunk) {
+    parser.write(chunk);
+  });
+};
+
+testPosition(['<div>abcdefgh</div>'],
+             [ ['opentag',  { position:  5, startTagPosition:  1 }]
+             , ['text',     { position: 19, startTagPosition: 14 }]
+             , ['closetag', { position: 19, startTagPosition: 14 }]
+             ]);
+
+testPosition(['<div>abcde','fgh</div>'],
+             [ ['opentag',  { position:  5, startTagPosition:  1 }]
+             , ['text',     { position: 19, startTagPosition: 14 }]
+             , ['closetag', { position: 19, startTagPosition: 14 }]
+             ]);
+
+},
+'node_modules/xml2js/node_modules/sax/test/script-close-better.js': function(exports, __require, module) {
+var require = function(name) {return __require(name, 'node_modules/xml2js/node_modules/sax/test/script-close-better.js');};
+var __filename = 'node_modules/xml2js/node_modules/sax/test/script-close-better.js';
+var __dirname = 'node_modules/xml2js/node_modules/sax/test';
+var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/xml2js/node_modules/sax/test/script-close-better.js'], env: {}};
+require(__dirname).test({
+  xml : "<html><head><script>'<div>foo</div></'</script></head></html>",
+  expect : [
+    ["opentag", {"name": "HTML","attributes": {}, isSelfClosing: false}],
+    ["opentag", {"name": "HEAD","attributes": {}, isSelfClosing: false}],
+    ["opentag", {"name": "SCRIPT","attributes": {}, isSelfClosing: false}],
+    ["script", "'<div>foo</div></'"],
+    ["closetag", "SCRIPT"],
+    ["closetag", "HEAD"],
+    ["closetag", "HTML"]
+  ]
+});
+
+},
+'node_modules/xml2js/node_modules/sax/test/script.js': function(exports, __require, module) {
+var require = function(name) {return __require(name, 'node_modules/xml2js/node_modules/sax/test/script.js');};
+var __filename = 'node_modules/xml2js/node_modules/sax/test/script.js';
+var __dirname = 'node_modules/xml2js/node_modules/sax/test';
+var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/xml2js/node_modules/sax/test/script.js'], env: {}};
+require(__dirname).test({
+  xml : "<html><head><script>if (1 < 0) { console.log('elo there'); }</script></head></html>",
+  expect : [
+    ["opentag", {"name": "HTML","attributes": {}, "isSelfClosing": false}],
+    ["opentag", {"name": "HEAD","attributes": {}, "isSelfClosing": false}],
+    ["opentag", {"name": "SCRIPT","attributes": {}, "isSelfClosing": false}],
+    ["script", "if (1 < 0) { console.log('elo there'); }"],
+    ["closetag", "SCRIPT"],
+    ["closetag", "HEAD"],
+    ["closetag", "HTML"]
+  ]
+});
+
+},
+'node_modules/xml2js/node_modules/sax/test/self-closing-child-strict.js': function(exports, __require, module) {
+var require = function(name) {return __require(name, 'node_modules/xml2js/node_modules/sax/test/self-closing-child-strict.js');};
+var __filename = 'node_modules/xml2js/node_modules/sax/test/self-closing-child-strict.js';
+var __dirname = 'node_modules/xml2js/node_modules/sax/test';
+var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/xml2js/node_modules/sax/test/self-closing-child-strict.js'], env: {}};
+
+require(__dirname).test({
+  xml :
+  "<root>"+
+    "<child>" +
+      "<haha />" +
+    "</child>" +
+    "<monkey>" +
+      "=(|)" +
+    "</monkey>" +
+  "</root>",
+  expect : [
+    ["opentag", {
+     "name": "root",
+     "attributes": {},
+     "isSelfClosing": false
+    }],
+    ["opentag", {
+     "name": "child",
+     "attributes": {},
+     "isSelfClosing": false
+    }],
+    ["opentag", {
+     "name": "haha",
+     "attributes": {},
+     "isSelfClosing": true
+    }],
+    ["closetag", "haha"],
+    ["closetag", "child"],
+    ["opentag", {
+     "name": "monkey",
+     "attributes": {},
+     "isSelfClosing": false
+    }],
+    ["text", "=(|)"],
+    ["closetag", "monkey"],
+    ["closetag", "root"],
+    ["end"],
+    ["ready"]
+  ],
+  strict : true,
+  opt : {}
+});
+
+
+},
+'node_modules/xml2js/node_modules/sax/test/self-closing-child.js': function(exports, __require, module) {
+var require = function(name) {return __require(name, 'node_modules/xml2js/node_modules/sax/test/self-closing-child.js');};
+var __filename = 'node_modules/xml2js/node_modules/sax/test/self-closing-child.js';
+var __dirname = 'node_modules/xml2js/node_modules/sax/test';
+var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/xml2js/node_modules/sax/test/self-closing-child.js'], env: {}};
+
+require(__dirname).test({
+  xml :
+  "<root>"+
+    "<child>" +
+      "<haha />" +
+    "</child>" +
+    "<monkey>" +
+      "=(|)" +
+    "</monkey>" +
+  "</root>",
+  expect : [
+    ["opentag", {
+     "name": "ROOT",
+     "attributes": {},
+     "isSelfClosing": false
+    }],
+    ["opentag", {
+     "name": "CHILD",
+     "attributes": {},
+     "isSelfClosing": false
+    }],
+    ["opentag", {
+     "name": "HAHA",
+     "attributes": {},
+     "isSelfClosing": true
+    }],
+    ["closetag", "HAHA"],
+    ["closetag", "CHILD"],
+    ["opentag", {
+     "name": "MONKEY",
+     "attributes": {},
+     "isSelfClosing": false
+    }],
+    ["text", "=(|)"],
+    ["closetag", "MONKEY"],
+    ["closetag", "ROOT"],
+    ["end"],
+    ["ready"]
+  ],
+  strict : false,
+  opt : {}
+});
+
+
+},
+'node_modules/xml2js/node_modules/sax/test/self-closing-tag.js': function(exports, __require, module) {
+var require = function(name) {return __require(name, 'node_modules/xml2js/node_modules/sax/test/self-closing-tag.js');};
+var __filename = 'node_modules/xml2js/node_modules/sax/test/self-closing-tag.js';
+var __dirname = 'node_modules/xml2js/node_modules/sax/test';
+var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/xml2js/node_modules/sax/test/self-closing-tag.js'], env: {}};
+
+require(__dirname).test({
+  xml :
+  "<root>   "+
+    "<haha /> "+
+    "<haha/>  "+
+    "<monkey> "+
+      "=(|)     "+
+    "</monkey>"+
+  "</root>  ",
+  expect : [
+    ["opentag", {name:"ROOT", attributes:{}, isSelfClosing: false}],
+    ["opentag", {name:"HAHA", attributes:{}, isSelfClosing: true}],
+    ["closetag", "HAHA"],
+    ["opentag", {name:"HAHA", attributes:{}, isSelfClosing: true}],
+    ["closetag", "HAHA"],
+    // ["opentag", {name:"HAHA", attributes:{}}],
+    // ["closetag", "HAHA"],
+    ["opentag", {name:"MONKEY", attributes:{}, isSelfClosing: false}],
+    ["text", "=(|)"],
+    ["closetag", "MONKEY"],
+    ["closetag", "ROOT"]
+  ],
+  opt : { trim : true }
+});
+},
+'node_modules/xml2js/node_modules/sax/test/stray-ending.js': function(exports, __require, module) {
+var require = function(name) {return __require(name, 'node_modules/xml2js/node_modules/sax/test/stray-ending.js');};
+var __filename = 'node_modules/xml2js/node_modules/sax/test/stray-ending.js';
+var __dirname = 'node_modules/xml2js/node_modules/sax/test';
+var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/xml2js/node_modules/sax/test/stray-ending.js'], env: {}};
+// stray ending tags should just be ignored in non-strict mode.
+// https://github.com/isaacs/sax-js/issues/32
+require(__dirname).test
+  ( { xml :
+      "<a><b></c></b></a>"
+    , expect :
+      [ [ "opentag", { name: "A", attributes: {}, isSelfClosing: false } ]
+      , [ "opentag", { name: "B", attributes: {}, isSelfClosing: false } ]
+      , [ "text", "</c>" ]
+      , [ "closetag", "B" ]
+      , [ "closetag", "A" ]
+      ]
+    , strict : false
+    , opt : {}
+    }
+  )
+
+
+},
+'node_modules/xml2js/node_modules/sax/test/trailing-attribute-no-value.js': function(exports, __require, module) {
+var require = function(name) {return __require(name, 'node_modules/xml2js/node_modules/sax/test/trailing-attribute-no-value.js');};
+var __filename = 'node_modules/xml2js/node_modules/sax/test/trailing-attribute-no-value.js';
+var __dirname = 'node_modules/xml2js/node_modules/sax/test';
+var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/xml2js/node_modules/sax/test/trailing-attribute-no-value.js'], env: {}};
+
+require(__dirname).test({
+  xml :
+  "<root attrib>",
+  expect : [
+    ["attribute", {name:"ATTRIB", value:"attrib"}],
+    ["opentag", {name:"ROOT", attributes:{"ATTRIB":"attrib"}, isSelfClosing: false}]
+  ],
+  opt : { trim : true }
+});
+
+},
+'node_modules/xml2js/node_modules/sax/test/trailing-non-whitespace.js': function(exports, __require, module) {
+var require = function(name) {return __require(name, 'node_modules/xml2js/node_modules/sax/test/trailing-non-whitespace.js');};
+var __filename = 'node_modules/xml2js/node_modules/sax/test/trailing-non-whitespace.js';
+var __dirname = 'node_modules/xml2js/node_modules/sax/test';
+var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/xml2js/node_modules/sax/test/trailing-non-whitespace.js'], env: {}};
+
+require(__dirname).test({
+  xml : "<span>Welcome,</span> to monkey land",
+  expect : [
+    ["opentag", {
+     "name": "SPAN",
+     "attributes": {},
+     isSelfClosing: false
+    }],
+    ["text", "Welcome,"],
+    ["closetag", "SPAN"],
+    ["text", " to monkey land"],
+    ["end"],
+    ["ready"]
+  ],
+  strict : false,
+  opt : {}
+});
+
+},
+'node_modules/xml2js/node_modules/sax/test/unclosed-root.js': function(exports, __require, module) {
+var require = function(name) {return __require(name, 'node_modules/xml2js/node_modules/sax/test/unclosed-root.js');};
+var __filename = 'node_modules/xml2js/node_modules/sax/test/unclosed-root.js';
+var __dirname = 'node_modules/xml2js/node_modules/sax/test';
+var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/xml2js/node_modules/sax/test/unclosed-root.js'], env: {}};
+require(__dirname).test
+  ( { xml : "<root>"
+
+    , expect :
+      [ [ "opentag", { name: "root", attributes: {}, isSelfClosing: false } ]
+      , [ "error", "Unclosed root tag\nLine: 0\nColumn: 6\nChar: " ]
+      ]
+    , strict : true
+    , opt : {}
+    }
+  )
+
+},
+'node_modules/xml2js/node_modules/sax/test/unquoted.js': function(exports, __require, module) {
+var require = function(name) {return __require(name, 'node_modules/xml2js/node_modules/sax/test/unquoted.js');};
+var __filename = 'node_modules/xml2js/node_modules/sax/test/unquoted.js';
+var __dirname = 'node_modules/xml2js/node_modules/sax/test';
+var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/xml2js/node_modules/sax/test/unquoted.js'], env: {}};
+// unquoted attributes should be ok in non-strict mode
+// https://github.com/isaacs/sax-js/issues/31
+require(__dirname).test
+  ( { xml :
+      "<span class=test hello=world></span>"
+    , expect :
+      [ [ "attribute", { name: "CLASS", value: "test" } ]
+      , [ "attribute", { name: "HELLO", value: "world" } ]
+      , [ "opentag", { name: "SPAN",
+                       attributes: { CLASS: "test", HELLO: "world" },
+                       isSelfClosing: false } ]
+      , [ "closetag", "SPAN" ]
+      ]
+    , strict : false
+    , opt : {}
+    }
+  )
+
+
+},
+'node_modules/xml2js/node_modules/sax/test/xmlns-issue-41.js': function(exports, __require, module) {
+var require = function(name) {return __require(name, 'node_modules/xml2js/node_modules/sax/test/xmlns-issue-41.js');};
+var __filename = 'node_modules/xml2js/node_modules/sax/test/xmlns-issue-41.js';
+var __dirname = 'node_modules/xml2js/node_modules/sax/test';
+var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/xml2js/node_modules/sax/test/xmlns-issue-41.js'], env: {}};
+var t = require(__dirname)
+
+  , xmls = // should be the same both ways.
+    [ "<parent xmlns:a='http://ATTRIBUTE' a:attr='value' />"
+    , "<parent a:attr='value' xmlns:a='http://ATTRIBUTE' />" ]
+
+  , ex1 =
+    [ [ "opennamespace"
+      , { prefix: "a"
+        , uri: "http://ATTRIBUTE"
+        }
+      ]
+    , [ "attribute"
+      , { name: "xmlns:a"
+        , value: "http://ATTRIBUTE"
+        , prefix: "xmlns"
+        , local: "a"
+        , uri: "http://www.w3.org/2000/xmlns/"
+        }
+      ]
+    , [ "attribute"
+      , { name: "a:attr"
+        , local: "attr"
+        , prefix: "a"
+        , uri: "http://ATTRIBUTE"
+        , value: "value"
+        }
+      ]
+    , [ "opentag"
+      , { name: "parent"
+        , uri: ""
+        , prefix: ""
+        , local: "parent"
+        , attributes:
+          { "a:attr":
+            { name: "a:attr"
+            , local: "attr"
+            , prefix: "a"
+            , uri: "http://ATTRIBUTE"
+            , value: "value"
+            }
+          , "xmlns:a":
+            { name: "xmlns:a"
+            , local: "a"
+            , prefix: "xmlns"
+            , uri: "http://www.w3.org/2000/xmlns/"
+            , value: "http://ATTRIBUTE"
+            }
+          }
+        , ns: {"a": "http://ATTRIBUTE"}
+        , isSelfClosing: true
+        }
+      ]
+    , ["closetag", "parent"]
+    , ["closenamespace", { prefix: "a", uri: "http://ATTRIBUTE" }]
+    ]
+
+  // swap the order of elements 2 and 1
+  , ex2 = [ex1[0], ex1[2], ex1[1]].concat(ex1.slice(3))
+  , expected = [ex1, ex2]
+
+xmls.forEach(function (x, i) {
+  t.test({ xml: x
+         , expect: expected[i]
+         , strict: true
+         , opt: { xmlns: true }
+         })
+})
+
+},
+'node_modules/xml2js/node_modules/sax/test/xmlns-rebinding.js': function(exports, __require, module) {
+var require = function(name) {return __require(name, 'node_modules/xml2js/node_modules/sax/test/xmlns-rebinding.js');};
+var __filename = 'node_modules/xml2js/node_modules/sax/test/xmlns-rebinding.js';
+var __dirname = 'node_modules/xml2js/node_modules/sax/test';
+var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/xml2js/node_modules/sax/test/xmlns-rebinding.js'], env: {}};
+
+require(__dirname).test
+  ( { xml :
+      "<root xmlns:x='x1' xmlns:y='y1' x:a='x1' y:a='y1'>"+
+        "<rebind xmlns:x='x2'>"+
+          "<check x:a='x2' y:a='y1'/>"+
+        "</rebind>"+
+        "<check x:a='x1' y:a='y1'/>"+
+      "</root>"
+
+    , expect :
+      [ [ "opennamespace", { prefix: "x", uri: "x1" } ]
+      , [ "opennamespace", { prefix: "y", uri: "y1" } ]
+      , [ "attribute", { name: "xmlns:x", value: "x1", uri: "http://www.w3.org/2000/xmlns/", prefix: "xmlns", local: "x" } ]
+      , [ "attribute", { name: "xmlns:y", value: "y1", uri: "http://www.w3.org/2000/xmlns/", prefix: "xmlns", local: "y" } ]
+      , [ "attribute", { name: "x:a", value: "x1", uri: "x1", prefix: "x", local: "a" } ]
+      , [ "attribute", { name: "y:a", value: "y1", uri: "y1", prefix: "y", local: "a" } ]
+      , [ "opentag", { name: "root", uri: "", prefix: "", local: "root",
+            attributes: { "xmlns:x": { name: "xmlns:x", value: "x1", uri: "http://www.w3.org/2000/xmlns/", prefix: "xmlns", local: "x" }
+                        , "xmlns:y": { name: "xmlns:y", value: "y1", uri: "http://www.w3.org/2000/xmlns/", prefix: "xmlns", local: "y" }
+                        , "x:a": { name: "x:a", value: "x1", uri: "x1", prefix: "x", local: "a" }
+                        , "y:a": { name: "y:a", value: "y1", uri: "y1", prefix: "y", local: "a" } },
+            ns: { x: 'x1', y: 'y1' },
+            isSelfClosing: false } ]
+
+      , [ "opennamespace", { prefix: "x", uri: "x2" } ]
+      , [ "attribute", { name: "xmlns:x", value: "x2", uri: "http://www.w3.org/2000/xmlns/", prefix: "xmlns", local: "x" } ]
+      , [ "opentag", { name: "rebind", uri: "", prefix: "", local: "rebind",
+            attributes: { "xmlns:x": { name: "xmlns:x", value: "x2", uri: "http://www.w3.org/2000/xmlns/", prefix: "xmlns", local: "x" } },
+            ns: { x: 'x2' },
+            isSelfClosing: false } ]
+
+      , [ "attribute", { name: "x:a", value: "x2", uri: "x2", prefix: "x", local: "a" } ]
+      , [ "attribute", { name: "y:a", value: "y1", uri: "y1", prefix: "y", local: "a" } ]
+      , [ "opentag", { name: "check", uri: "", prefix: "", local: "check",
+            attributes: { "x:a": { name: "x:a", value: "x2", uri: "x2", prefix: "x", local: "a" }
+                        , "y:a": { name: "y:a", value: "y1", uri: "y1", prefix: "y", local: "a" } },
+            ns: { x: 'x2' },
+            isSelfClosing: true } ]
+
+      , [ "closetag", "check" ]
+
+      , [ "closetag", "rebind" ]
+      , [ "closenamespace", { prefix: "x", uri: "x2" } ]
+
+      , [ "attribute", { name: "x:a", value: "x1", uri: "x1", prefix: "x", local: "a" } ]
+      , [ "attribute", { name: "y:a", value: "y1", uri: "y1", prefix: "y", local: "a" } ]
+      , [ "opentag", { name: "check", uri: "", prefix: "", local: "check",
+            attributes: { "x:a": { name: "x:a", value: "x1", uri: "x1", prefix: "x", local: "a" }
+                        , "y:a": { name: "y:a", value: "y1", uri: "y1", prefix: "y", local: "a" } },
+            ns: { x: 'x1', y: 'y1' },
+            isSelfClosing: true } ]
+      , [ "closetag", "check" ]
+
+      , [ "closetag", "root" ]
+      , [ "closenamespace", { prefix: "x", uri: "x1" } ]
+      , [ "closenamespace", { prefix: "y", uri: "y1" } ]
+      ]
+    , strict : true
+    , opt : { xmlns: true }
+    }
+  )
+
+
+},
+'node_modules/xml2js/node_modules/sax/test/xmlns-strict.js': function(exports, __require, module) {
+var require = function(name) {return __require(name, 'node_modules/xml2js/node_modules/sax/test/xmlns-strict.js');};
+var __filename = 'node_modules/xml2js/node_modules/sax/test/xmlns-strict.js';
+var __dirname = 'node_modules/xml2js/node_modules/sax/test';
+var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/xml2js/node_modules/sax/test/xmlns-strict.js'], env: {}};
+
+require(__dirname).test
+  ( { xml :
+      "<root>"+
+        "<plain attr='normal'/>"+
+        "<ns1 xmlns='uri:default'>"+
+          "<plain attr='normal'/>"+
+        "</ns1>"+
+        "<ns2 xmlns:a='uri:nsa'>"+
+          "<plain attr='normal'/>"+
+          "<a:ns a:attr='namespaced'/>"+
+        "</ns2>"+
+      "</root>"
+
+    , expect :
+      [ [ "opentag", { name: "root", prefix: "", local: "root", uri: "",
+            attributes: {}, ns: {}, isSelfClosing: false } ]
+
+      , [ "attribute", { name: "attr", value: "normal", prefix: "", local: "attr", uri: "" } ]
+      , [ "opentag", { name: "plain", prefix: "", local: "plain", uri: "",
+            attributes: { "attr": { name: "attr", value: "normal", uri: "", prefix: "", local: "attr", uri: "" } },
+            ns: {}, isSelfClosing: true } ]
+      , [ "closetag", "plain" ]
+
+      , [ "opennamespace", { prefix: "", uri: "uri:default" } ]
+
+      , [ "attribute", { name: "xmlns", value: "uri:default", prefix: "xmlns", local: "", uri: "http://www.w3.org/2000/xmlns/" } ]
+      , [ "opentag", { name: "ns1", prefix: "", local: "ns1", uri: "uri:default",
+            attributes: { "xmlns": { name: "xmlns", value: "uri:default", prefix: "xmlns", local: "", uri: "http://www.w3.org/2000/xmlns/" } },
+            ns: { "": "uri:default" }, isSelfClosing: false } ]
+
+      , [ "attribute", { name: "attr", value: "normal", prefix: "", local: "attr", uri: "" } ]
+      , [ "opentag", { name: "plain", prefix: "", local: "plain", uri: "uri:default", ns: { '': 'uri:default' },
+            attributes: { "attr": { name: "attr", value: "normal", prefix: "", local: "attr", uri: "" } },
+            isSelfClosing: true } ]
+      , [ "closetag", "plain" ]
+
+      , [ "closetag", "ns1" ]
+
+      , [ "closenamespace", { prefix: "", uri: "uri:default" } ]
+
+      , [ "opennamespace", { prefix: "a", uri: "uri:nsa" } ]
+
+      , [ "attribute", { name: "xmlns:a", value: "uri:nsa", prefix: "xmlns", local: "a", uri: "http://www.w3.org/2000/xmlns/" } ]
+
+      , [ "opentag", { name: "ns2", prefix: "", local: "ns2", uri: "",
+            attributes: { "xmlns:a": { name: "xmlns:a", value: "uri:nsa", prefix: "xmlns", local: "a", uri: "http://www.w3.org/2000/xmlns/" } },
+            ns: { a: "uri:nsa" }, isSelfClosing: false } ]
+
+      , [ "attribute", { name: "attr", value: "normal", prefix: "", local: "attr", uri: "" } ]
+      , [ "opentag", { name: "plain", prefix: "", local: "plain", uri: "",
+            attributes: { "attr": { name: "attr", value: "normal", prefix: "", local: "attr", uri: "" } },
+            ns: { a: 'uri:nsa' },
+            isSelfClosing: true } ]
+      , [ "closetag", "plain" ]
+
+      , [ "attribute", { name: "a:attr", value: "namespaced", prefix: "a", local: "attr", uri: "uri:nsa" } ]
+      , [ "opentag", { name: "a:ns", prefix: "a", local: "ns", uri: "uri:nsa",
+            attributes: { "a:attr": { name: "a:attr", value: "namespaced", prefix: "a", local: "attr", uri: "uri:nsa" } },
+            ns: { a: 'uri:nsa' },
+            isSelfClosing: true } ]
+      , [ "closetag", "a:ns" ]
+
+      , [ "closetag", "ns2" ]
+
+      , [ "closenamespace", { prefix: "a", uri: "uri:nsa" } ]
+
+      , [ "closetag", "root" ]
+      ]
+    , strict : true
+    , opt : { xmlns: true }
+    }
+  )
+
+
+},
+'node_modules/xml2js/node_modules/sax/test/xmlns-unbound-element.js': function(exports, __require, module) {
+var require = function(name) {return __require(name, 'node_modules/xml2js/node_modules/sax/test/xmlns-unbound-element.js');};
+var __filename = 'node_modules/xml2js/node_modules/sax/test/xmlns-unbound-element.js';
+var __dirname = 'node_modules/xml2js/node_modules/sax/test';
+var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/xml2js/node_modules/sax/test/xmlns-unbound-element.js'], env: {}};
+require(__dirname).test(
+  { strict : true
+  , opt : { xmlns: true }
+  , expect :
+    [ [ "error", "Unbound namespace prefix: \"unbound:root\"\nLine: 0\nColumn: 15\nChar: >"]
+    , [ "opentag", { name: "unbound:root", uri: "unbound", prefix: "unbound", local: "root"
+        , attributes: {}, ns: {}, isSelfClosing: true } ]
+    , [ "closetag", "unbound:root" ]
+    ]
+  }
+).write("<unbound:root/>");
+
+require(__dirname).test(
+  { strict : true
+  , opt : { xmlns: true }
+  , expect :
+    [ [ "opennamespace", { prefix: "unbound", uri: "someuri" } ]
+    , [ "attribute", { name: 'xmlns:unbound', value: 'someuri'
+      , prefix: 'xmlns', local: 'unbound'
+      , uri: 'http://www.w3.org/2000/xmlns/' } ]
+    , [ "opentag", { name: "unbound:root", uri: "someuri", prefix: "unbound", local: "root"
+          , attributes: { 'xmlns:unbound': {
+              name: 'xmlns:unbound'
+            , value: 'someuri'
+            , prefix: 'xmlns'
+            , local: 'unbound'
+            , uri: 'http://www.w3.org/2000/xmlns/' } }
+      , ns: { "unbound": "someuri" }, isSelfClosing: true } ]
+    , [ "closetag", "unbound:root" ]
+    , [ "closenamespace", { prefix: 'unbound', uri: 'someuri' }]
+    ]
+  }
+).write("<unbound:root xmlns:unbound=\"someuri\"/>");
+
+},
+'node_modules/xml2js/node_modules/sax/test/xmlns-unbound.js': function(exports, __require, module) {
+var require = function(name) {return __require(name, 'node_modules/xml2js/node_modules/sax/test/xmlns-unbound.js');};
+var __filename = 'node_modules/xml2js/node_modules/sax/test/xmlns-unbound.js';
+var __dirname = 'node_modules/xml2js/node_modules/sax/test';
+var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/xml2js/node_modules/sax/test/xmlns-unbound.js'], env: {}};
+
+require(__dirname).test(
+  { strict : true
+  , opt : { xmlns: true }
+  , expect :
+    [ ["error", "Unbound namespace prefix: \"unbound\"\nLine: 0\nColumn: 28\nChar: >"]
+
+    , [ "attribute", { name: "unbound:attr", value: "value", uri: "unbound", prefix: "unbound", local: "attr" } ]
+    , [ "opentag", { name: "root", uri: "", prefix: "", local: "root",
+          attributes: { "unbound:attr": { name: "unbound:attr", value: "value", uri: "unbound", prefix: "unbound", local: "attr" } },
+          ns: {}, isSelfClosing: true } ]
+    , [ "closetag", "root" ]
+    ]
+  }
+).write("<root unbound:attr='value'/>")
+
+},
+'node_modules/xml2js/node_modules/sax/test/xmlns-xml-default-ns.js': function(exports, __require, module) {
+var require = function(name) {return __require(name, 'node_modules/xml2js/node_modules/sax/test/xmlns-xml-default-ns.js');};
+var __filename = 'node_modules/xml2js/node_modules/sax/test/xmlns-xml-default-ns.js';
+var __dirname = 'node_modules/xml2js/node_modules/sax/test';
+var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/xml2js/node_modules/sax/test/xmlns-xml-default-ns.js'], env: {}};
+var xmlns_attr =
+{
+    name: "xmlns", value: "http://foo", prefix: "xmlns",
+    local: "", uri : "http://www.w3.org/2000/xmlns/"
+};
+
+var attr_attr =
+{
+    name: "attr", value: "bar", prefix: "",
+    local : "attr",  uri : ""
+};
+
+
+require(__dirname).test
+  ( { xml :
+      "<elm xmlns='http://foo' attr='bar'/>"
+    , expect :
+      [ [ "opennamespace", { prefix: "", uri: "http://foo" } ]
+      , [ "attribute", xmlns_attr ]
+      , [ "attribute", attr_attr ]
+      , [ "opentag", { name: "elm", prefix: "", local: "elm", uri : "http://foo",
+                       ns : { "" : "http://foo" },
+                       attributes: { xmlns: xmlns_attr, attr: attr_attr },
+                       isSelfClosing: true } ]
+      , [ "closetag", "elm" ]
+      , [ "closenamespace", { prefix: "", uri: "http://foo"} ]
+      ]
+    , strict : true
+    , opt : {xmlns: true}
+    }
+  )
+
+},
+'node_modules/xml2js/node_modules/sax/test/xmlns-xml-default-prefix-attribute.js': function(exports, __require, module) {
+var require = function(name) {return __require(name, 'node_modules/xml2js/node_modules/sax/test/xmlns-xml-default-prefix-attribute.js');};
+var __filename = 'node_modules/xml2js/node_modules/sax/test/xmlns-xml-default-prefix-attribute.js';
+var __dirname = 'node_modules/xml2js/node_modules/sax/test';
+var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/xml2js/node_modules/sax/test/xmlns-xml-default-prefix-attribute.js'], env: {}};
+require(__dirname).test(
+  { xml : "<root xml:lang='en'/>"
+  , expect :
+    [ [ "attribute"
+      , { name: "xml:lang"
+        , local: "lang"
+        , prefix: "xml"
+        , uri: "http://www.w3.org/XML/1998/namespace"
+        , value: "en"
+        }
+      ]
+    , [ "opentag"
+      , { name: "root"
+        , uri: ""
+        , prefix: ""
+        , local: "root"
+        , attributes:
+          { "xml:lang":
+            { name: "xml:lang"
+            , local: "lang"
+            , prefix: "xml"
+            , uri: "http://www.w3.org/XML/1998/namespace"
+            , value: "en"
+            }
+          }
+        , ns: {}
+        , isSelfClosing: true
+        }
+      ]
+    , ["closetag", "root"]
+    ]
+  , strict : true
+  , opt : { xmlns: true }
+  }
+)
+
+
+},
+'node_modules/xml2js/node_modules/sax/test/xmlns-xml-default-prefix.js': function(exports, __require, module) {
+var require = function(name) {return __require(name, 'node_modules/xml2js/node_modules/sax/test/xmlns-xml-default-prefix.js');};
+var __filename = 'node_modules/xml2js/node_modules/sax/test/xmlns-xml-default-prefix.js';
+var __dirname = 'node_modules/xml2js/node_modules/sax/test';
+var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/xml2js/node_modules/sax/test/xmlns-xml-default-prefix.js'], env: {}};
+require(__dirname).test(
+  { xml : "<xml:root/>"
+  , expect :
+    [
+      [ "opentag"
+      , { name: "xml:root"
+        , uri: "http://www.w3.org/XML/1998/namespace"
+        , prefix: "xml"
+        , local: "root"
+        , attributes: {}
+        , ns: {}
+        , isSelfClosing: true
+        }
+      ]
+    , ["closetag", "xml:root"]
+    ]
+  , strict : true
+  , opt : { xmlns: true }
+  }
+)
+
+
+},
+'node_modules/xml2js/node_modules/sax/test/xmlns-xml-default-redefine.js': function(exports, __require, module) {
+var require = function(name) {return __require(name, 'node_modules/xml2js/node_modules/sax/test/xmlns-xml-default-redefine.js');};
+var __filename = 'node_modules/xml2js/node_modules/sax/test/xmlns-xml-default-redefine.js';
+var __dirname = 'node_modules/xml2js/node_modules/sax/test';
+var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/xml2js/node_modules/sax/test/xmlns-xml-default-redefine.js'], env: {}};
+require(__dirname).test(
+  { xml : "<xml:root xmlns:xml='ERROR'/>"
+  , expect :
+    [ ["error"
+      , "xml: prefix must be bound to http://www.w3.org/XML/1998/namespace\n"
+                        + "Actual: ERROR\n"
+      + "Line: 0\nColumn: 27\nChar: '"
+      ]
+    , [ "attribute"
+      , { name: "xmlns:xml"
+        , local: "xml"
+        , prefix: "xmlns"
+        , uri: "http://www.w3.org/2000/xmlns/"
+        , value: "ERROR"
+        }
+      ]
+    , [ "opentag"
+      , { name: "xml:root"
+        , uri: "http://www.w3.org/XML/1998/namespace"
+        , prefix: "xml"
+        , local: "root"
+        , attributes:
+          { "xmlns:xml":
+            { name: "xmlns:xml"
+            , local: "xml"
+            , prefix: "xmlns"
+            , uri: "http://www.w3.org/2000/xmlns/"
+            , value: "ERROR"
+            }
+          }
+        , ns: {}
+        , isSelfClosing: true
+        }
+      ]
+    , ["closetag", "xml:root"]
+    ]
+  , strict : true
+  , opt : { xmlns: true }
+  }
+)
+
+
+},
+'node_modules/xml2js/package.json': function(exports, __require, module) {
+var require = function(name) {return __require(name, 'node_modules/xml2js/package.json');};
+var __filename = 'node_modules/xml2js/package.json';
+var __dirname = 'node_modules/xml2js';
+var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/xml2js/package.json'], env: {}};
+module.exports = (function() {
+return {
+  "name": "xml2js",
+  "description": "Simple XML to JavaScript object converter.",
+  "keywords": [
+    "xml",
+    "json"
+  ],
+  "homepage": "https://github.com/Leonidas-from-XIV/node-xml2js",
+  "version": "0.2.8",
+  "author": {
+    "name": "Marek Kubica",
+    "email": "marek@xivilization.net",
+    "url": "http://xivilization.net"
+  },
+  "contributors": [
+    {
+      "name": "maqr",
+      "email": "maqr.lollerskates@gmail.com",
+      "url": "https://github.com/maqr"
+    },
+    {
+      "name": "Ben Weaver",
+      "url": "http://benweaver.com/"
+    },
+    {
+      "name": "Jae Kwon",
+      "url": "https://github.com/jaekwon"
+    },
+    {
+      "name": "Jim Robert"
+    },
+    {
+      "name": "Ștefan Rusu",
+      "url": "http://www.saltwaterc.eu/"
+    },
+    {
+      "name": "Carter Cole",
+      "email": "carter.cole@cartercole.com",
+      "url": "http://cartercole.com/"
+    },
+    {
+      "name": "Kurt Raschke",
+      "email": "kurt@kurtraschke.com",
+      "url": "http://www.kurtraschke.com/"
+    },
+    {
+      "name": "Contra",
+      "email": "contra@australia.edu",
+      "url": "https://github.com/Contra"
+    },
+    {
+      "name": "Marcelo Diniz",
+      "email": "marudiniz@gmail.com",
+      "url": "https://github.com/mdiniz"
+    },
+    {
+      "name": "Michael Hart",
+      "url": "https://github.com/mhart"
+    },
+    {
+      "name": "Zachary Scott",
+      "email": "zachary@zacharyscott.net",
+      "url": "http://zacharyscott.net/"
+    },
+    {
+      "name": "Raoul Millais",
+      "url": "https://github.com/raoulmillais"
+    },
+    {
+      "name": "Salsita Software",
+      "url": "http://www.salsitasoft.com/"
+    },
+    {
+      "name": "Mike Schilling",
+      "email": "mike@emotive.com",
+      "url": "http://www.emotive.com/"
+    },
+    {
+      "name": "Jackson Tian",
+      "email": "shyvo1987@gmail.com",
+      "url": "http://weibo.com/shyvo"
+    },
+    {
+      "name": "Mikhail Zyatin",
+      "email": "mikhail.zyatin@gmail.com",
+      "url": "https://github.com/Sitin"
+    },
+    {
+      "name": "Chris Tavares",
+      "email": "ctavares@microsoft.com",
+      "url": "https://github.com/christav"
+    },
+    {
+      "name": "Frank Xu",
+      "email": "yyfrankyy@gmail.com",
+      "url": "http://f2e.us/"
+    }
+  ],
+  "main": "./lib/xml2js",
+  "directories": {
+    "lib": "./lib"
+  },
+  "scripts": {
+    "test": "zap"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Leonidas-from-XIV/node-xml2js.git"
+  },
+  "dependencies": {
+    "sax": "0.5.x"
+  },
+  "devDependencies": {
+    "coffee-script": ">=1.6.3",
+    "zap": ">=0.2.5",
+    "docco": ">=0.6.2"
+  },
+  "readme": "node-xml2js\n===========\n\nEver had the urge to parse XML? And wanted to access the data in some sane,\neasy way? Don't want to compile a C parser, for whatever reason? Then xml2js is\nwhat you're looking for!\n\nDescription\n===========\n\nSimple XML to JavaScript object converter. Uses\n[sax-js](https://github.com/isaacs/sax-js/).\n\nNote: If you're looking for a full DOM parser, you probably want\n[JSDom](https://github.com/tmpvar/jsdom).\n\nInstallation\n============\n\nSimplest way to install `xml2js` is to use [npm](http://npmjs.org), just `npm\ninstall xml2js` which will download xml2js and all dependencies.\n\nUsage\n=====\n\nNo extensive tutorials required because you are a smart developer! The task of\nparsing XML should be an easy one, so let's make it so! Here's some examples.\n\nShoot-and-forget usage\n----------------------\n\nYou want to parse XML as simple and easy as possible? It's dangerous to go\nalone, take this:\n\n```javascript\nvar parseString = require('xml2js').parseString;\nvar xml = \"<root>Hello xml2js!</root>\"\nparseString(xml, function (err, result) {\n    console.dir(result);\n});\n```\n\nCan't get easier than this, right? This works starting with `xml2js` 0.2.3.\nWith CoffeeScript it looks like this:\n\n```coffeescript\nparseString = require('xml2js').parseString\nxml = \"<root>Hello xml2js!</root>\"\nparseString xml, (err, result) ->\n    console.dir result\n```\n\nIf you need some special options, fear not, `xml2js` supports a number of\noptions (see below), you can specify these as second argument:\n\n```javascript\nparseString(xml, {trim: true}, function (err, result) {\n});\n```\n\nSimple as pie usage\n-------------------\n\nThat's right, if you have been using xml-simple or a home-grown\nwrapper, this is was added in 0.1.11 just for you:\n\n```javascript\nvar fs = require('fs'),\n    xml2js = require('xml2js');\n\nvar parser = new xml2js.Parser();\nfs.readFile(__dirname + '/foo.xml', function(err, data) {\n    parser.parseString(data, function (err, result) {\n        console.dir(result);\n        console.log('Done');\n    });\n});\n```\n\nLook ma, no event listeners!\n\nYou can also use `xml2js` from\n[CoffeeScript](http://jashkenas.github.com/coffee-script/), further reducing\nthe clutter:\n\n```coffeescript\nfs = require 'fs',\nxml2js = require 'xml2js'\n\nparser = new xml2js.Parser()\nfs.readFile __dirname + '/foo.xml', (err, data) ->\n  parser.parseString data, (err, result) ->\n    console.dir result\n    console.log 'Done.'\n```\n\nBut what happens if you forget the `new` keyword to create a new `Parser`? In\nthe middle of a nightly coding session, it might get lost, after all. Worry\nnot, we got you covered! Starting with 0.2.8 you can also leave it out, in\nwhich case `xml2js` will helpfully add it for you, no bad surprises and\ninexplicable bugs!\n\n\"Traditional\" usage\n-------------------\n\nAlternatively you can still use the traditional `addListener` variant that was\nsupported since forever:\n\n```javascript\nvar fs = require('fs'),\n    xml2js = require('xml2js');\n\nvar parser = new xml2js.Parser();\nparser.addListener('end', function(result) {\n    console.dir(result);\n    console.log('Done.');\n});\nfs.readFile(__dirname + '/foo.xml', function(err, data) {\n    parser.parseString(data);\n});\n```\n\nIf you want to parse multiple files, you have multiple possibilites:\n\n  * You can create one `xml2js.Parser` per file. That's the recommended one\n    and is promised to always *just work*.\n  * You can call `reset()` on your parser object.\n  * You can hope everything goes well anyway. This behaviour is not\n    guaranteed work always, if ever. Use option #1 if possible. Thanks!\n\nSo you wanna some JSON?\n-----------------------\n\nJust wrap the `result` object in a call to `JSON.stringify` like this\n`JSON.stringify(result)`. You get a string containing the JSON representation\nof the parsed object that you can feed to JSON-hungry consumers.\n\nDisplaying results\n------------------\n\nYou might wonder why, using `console.dir` or `console.log` the output at some\nlevel is only `[Object]`. Don't worry, this is not because xml2js got lazy.\nThat's because Node uses `util.inspect` to convert the object into strings and\nthat function stops after `depth=2` which is a bit low for most XML.\n\nTo display the whole deal, you can use `console.log(util.inspect(result, false,\nnull))`, which displays the whole result.\n\nSo much for that, but what if you use\n[eyes](https://github.com/cloudhead/eyes.js) for nice colored output and it\ntruncates the output with `…`? Don't fear, there's also a solution for that,\nyou just need to increase the `maxLength` limit by creating a custom inspector\n`var inspect = require('eyes').inspector({maxLength: false})` and then you can\neasily `inspect(result)`.\n\nOptions\n=======\n\nApart from the default settings, there is a number of options that can be\nspecified for the parser. Options are specified by ``new Parser({optionName:\nvalue})``. Possible options are:\n\n  * `attrkey` (default: `$`): Prefix that is used to access the attributes.\n    Version 0.1 default was `@`.\n  * `charkey` (default: `_`): Prefix that is used to access the character\n    content. Version 0.1 default was `#`.\n  * `explicitCharkey` (default: `false`)\n  * `trim` (default: `false`): Trim the whitespace at the beginning and end of\n    text nodes.\n  * `normalizeTags` (default: `false`): Normalize all tag names to lowercase.\n  * `normalize` (default: `false`): Trim whitespaces inside text nodes.\n  * `explicitRoot` (default: `true`): Set this if you want to get the root\n    node in the resulting object.\n  * `emptyTag` (default: `undefined`): what will the value of empty nodes be.\n    Default is `{}`.\n  * `explicitArray` (default: `true`): Always put child nodes in an array if\n    true; otherwise an array is created only if there is more than one.\n  * `ignoreAttrs` (default: `false`): Ignore all XML attributes and only create\n    text nodes.\n  * `mergeAttrs` (default: `false`): Merge attributes and child elements as\n    properties of the parent, instead of keying attributes off a child\n    attribute object. This option is ignored if `ignoreAttrs` is `false`.\n  * `validator` (default `null`): You can specify a callable that validates\n    the resulting structure somehow, however you want. See unit tests\n    for an example.\n  * `xmlns` (default `false`): Give each element a field usually called '$ns'\n    (the first character is the same as attrkey) that contains its local name\n    and namespace URI.\n  * `explicitChildren` (default `false`): Put child elements to separate\n    property. Doesn't work with `mergeAttrs = true`. If element has no children\n    then \"children\" won't be created. Added in 0.2.5.\n  * `childkey` (default `$$`): Prefix that is used to access child elements if\n    `explicitChildren` is set to `true`. Added in 0.2.5.\n  * `charsAsChildren` (default `false`): Determines whether chars should be\n    considered children if `explicitChildren` is on. Added in 0.2.5.\n  * `async` (default `false`): Should the callbacks be async? This *might* be\n    an incompatible change if your code depends on sync execution of callbacks.\n    xml2js 0.3 might change this default, so the recommendation is to not\n    depend on sync execution anyway. Added in 0.2.6.\n  * `strict` (default `true`): Set sax-js to strict or non-strict parsing mode.\n    Defaults to `true` which is *highly* recommended, since parsing HTML which\n    is not well-formed XML might yield just about anything. Added in 0.2.7.\n\nUpdating to new version\n=======================\n\nVersion 0.2 changed the default parsing settings, but version 0.1.14 introduced\nthe default settings for version 0.2, so these settings can be tried before the\nmigration.\n\n```javascript\nvar xml2js = require('xml2js');\nvar parser = new xml2js.Parser(xml2js.defaults[\"0.2\"]);\n```\n\nTo get the 0.1 defaults in version 0.2 you can just use\n`xml2js.defaults[\"0.1\"]` in the same place. This provides you with enough time\nto migrate to the saner way of parsing in xml2js 0.2. We try to make the\nmigration as simple and gentle as possible, but some breakage cannot be\navoided.\n\nSo, what exactly did change and why? In 0.2 we changed some defaults to parse\nthe XML in a more universal and sane way. So we disabled `normalize` and `trim`\nso xml2js does not cut out any text content. You can reenable this at will of\ncourse. A more important change is that we return the root tag in the resulting\nJavaScript structure via the `explicitRoot` setting, so you need to access the\nfirst element. This is useful for anybody who wants to know what the root node\nis and preserves more information. The last major change was to enable\n`explicitArray`, so everytime it is possible that one might embed more than one\nsub-tag into a tag, xml2js >= 0.2 returns an array even if the array just\nincludes one element. This is useful when dealing with APIs that return\nvariable amounts of subtags.\n\nRunning tests, development\n==========================\n\n[![Build Status](https://secure.travis-ci.org/Leonidas-from-XIV/node-xml2js.png?branch=master)](https://travis-ci.org/Leonidas-from-XIV/node-xml2js)\n\nThe development requirements are handled by npm, you just need to install them.\nWe also have a number of unit tests, they can be run using `npm test` directly\nfrom the project root. This runs zap to discover all the tests and execute\nthem.\n\nIf you like to contribute, keep in mind that xml2js is written in CoffeeScript,\nso don't develop on the JavaScript files that are checked into the repository\nfor convenience reasons. Also, please write some unit test to check your\nbehaviour and if it is some user-facing thing, add some documentation to this\nREADME, so people will know it exists. Thanks in advance!\n",
+  "readmeFilename": "README.md",
+  "bugs": {
+    "url": "https://github.com/Leonidas-from-XIV/node-xml2js/issues"
+  },
+  "_id": "xml2js@0.2.8",
+  "dist": {
+    "shasum": "0be6706bec90c5d1b8984015733c6bc2d7797da8"
+  },
+  "_from": "xml2js@0.2.8",
+  "_resolved": "https://registry.npmjs.org/xml2js/-/xml2js-0.2.8.tgz"
+}
+
+}).call(this);
+
+},
+'node_modules/browser-http/Extensions/Forms.js': function(exports, __require, module) {
+var require = function(name) {return __require(name, 'node_modules/browser-http/Extensions/Forms.js');};
+var __filename = 'node_modules/browser-http/Extensions/Forms.js';
+var __dirname = 'node_modules/browser-http/Extensions';
+var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/browser-http/Extensions/Forms.js'], env: {}};
+module.exports = require('../lib/Extensions/Forms');
+},
+'node_modules/browser-http/lib/Extensions/Forms.js': function(exports, __require, module) {
+var require = function(name) {return __require(name, 'node_modules/browser-http/lib/Extensions/Forms.js');};
+var __filename = 'node_modules/browser-http/lib/Extensions/Forms.js';
+var __dirname = 'node_modules/browser-http/lib/Extensions';
+var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/browser-http/lib/Extensions/Forms.js'], env: {}};
+// Generated by CoffeeScript 1.6.3
+(function() {
+  var Forms, Http, e, jquery,
+    __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
+
+  Http = require('../Http');
+
+  try {
+    jquery = require('jquery');
+  } catch (_error) {
+    e = _error;
+    jquery = window.jQuery;
+  }
+
+  Forms = (function() {
+    function Forms() {
+      this.onFormSubmitted = __bind(this.onFormSubmitted, this);
+      jquery(document).on('submit', 'form.ajax:not(.not-ajax)', this.onFormSubmitted);
+      jquery(document).on('click', 'form.ajax:not(.not-ajax) :submit', this.onFormSubmitted);
+    }
+
+    Forms.prototype.onFormSubmitted = function(e) {
+      var el, form, i, name, options, sendValues, val, value, values, _i, _len;
+      e.preventDefault();
+      el = jquery(e.target);
+      sendValues = {};
+      if (el.is(':submit')) {
+        form = el.closest('form');
+        sendValues[el.attr('name')] = el.val() || '';
+      } else if (el.is('form')) {
+        form = el;
+      } else {
+        return null;
+      }
+      if (form.get(0).onsubmit && form.get(0).onsubmit() === false) {
+        return null;
+      }
+      values = form.serializeArray();
+      for (i = _i = 0, _len = values.length; _i < _len; i = ++_i) {
+        value = values[i];
+        name = value.name;
+        if (typeof sendValues[name] === 'undefined') {
+          sendValues[name] = value.value;
+        } else {
+          val = sendValues[name];
+          if (Object.prototype.toString.call(val) !== '[object Array]') {
+            val = [val];
+          }
+          val.push(value.value);
+          sendValues[name] = val;
+        }
+      }
+      options = {
+        data: sendValues,
+        type: form.attr('method') || 'GET'
+      };
+      return Http.request(form.attr('action'), options);
+    };
+
+    return Forms;
+
+  })();
+
+  module.exports = Forms;
+
+}).call(this);
+
+},
+'node_modules/browser-http/lib/Http.js': function(exports, __require, module) {
+var require = function(name) {return __require(name, 'node_modules/browser-http/lib/Http.js');};
+var __filename = 'node_modules/browser-http/lib/Http.js';
+var __dirname = 'node_modules/browser-http/lib';
+var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/browser-http/lib/Http.js'], env: {}};
+// Generated by CoffeeScript 1.6.3
+(function() {
+  var Http, Q, Request;
+
+  Request = require('./Request');
+
+  Q = require('q');
+
+  Http = (function() {
+    function Http() {}
+
+    Http.events = {
+      send: [],
+      complete: [],
+      error: [],
+      success: []
+    };
+
+    Http.extensions = {};
+
+    Http.request = function(url, options) {
+      if (options == null) {
+        options = {};
+      }
+      if (!options.type) {
+        options.type = 'GET';
+      }
+      if (!options.data) {
+        options.data = null;
+      }
+      return (new Request(url, options.type, options.data)).send();
+    };
+
+    Http.get = function(url, options) {
+      if (options == null) {
+        options = {};
+      }
+      options.type = 'GET';
+      return this.request(url, options);
+    };
+
+    Http.post = function(url, options) {
+      if (options == null) {
+        options = {};
+      }
+      options.type = 'POST';
+      return this.request(url, options);
+    };
+
+    Http.put = function(url, options) {
+      if (options == null) {
+        options = {};
+      }
+      options.type = 'PUT';
+      return this.request(url, options);
+    };
+
+    Http["delete"] = function(url, options) {
+      if (options == null) {
+        options = {};
+      }
+      options.type = 'DELETE';
+      return this.request(url, options);
+    };
+
+    Http.getJson = function(url, options) {
+      if (options == null) {
+        options = {};
+      }
+      return this.request(url, options).then(function(response) {
+        if (typeof response.data === 'string') {
+          response.data = JSON.parse(response.data);
+        }
+        return Q.resolve(response);
+      });
+    };
+
+    Http.postJson = function(url, options) {
+      if (options == null) {
+        options = {};
+      }
+      options.type = 'POST';
+      return this.request(url, options).then(function(response) {
+        if (typeof response.data === 'string') {
+          response.data = JSON.parse(response.data);
+        }
+        return Q.resolve(response);
+      });
+    };
+
+    Http.urlencode = function(param) {
+      param = (param + '').toString();
+      return encodeURIComponent(param).replace(/!/g, '%21').replace(/'/g, '%27').replace(/\(/g, '%28').replace(/\)/g, '%29').replace(/\*/g, '%2A').replace(/\~/g, '%7E').replace(/%20/g, '+');
+    };
+
+    Http.buildQuery = function(params) {
+      var add, buildParams, key, result, value, _i, _len;
+      result = [];
+      add = function(key, value) {
+        value = typeof value === 'function' ? value() : (value === null ? '' : value);
+        return result.push(encodeURIComponent(key) + '=' + encodeURIComponent(value));
+      };
+      buildParams = function(key, value) {
+        var i, k, v, _i, _len, _results, _results1;
+        if (Object.prototype.toString.call(value) === '[object Array]') {
+          _results = [];
+          for (i = _i = 0, _len = value.length; _i < _len; i = ++_i) {
+            v = value[i];
+            if (/\[\]$/.test(key) === true) {
+              _results.push(add(key, v));
+            } else {
+              _results.push(buildParams(key + '[' + (typeof v === 'object' ? i : '') + ']', v));
+            }
+          }
+          return _results;
+        } else if (Object.prototype.toString.call(value) === '[object Object]') {
+          _results1 = [];
+          for (k in value) {
+            v = value[k];
+            _results1.push(buildParams(key + '[' + k + ']', v));
+          }
+          return _results1;
+        } else {
+          return add(key, value);
+        }
+      };
+      if (Object.prototype.toString.call(params) === '[object Array]') {
+        for (key = _i = 0, _len = params.length; _i < _len; key = ++_i) {
+          value = params[key];
+          add(key, value);
+        }
+      } else {
+        for (key in params) {
+          value = params[key];
+          buildParams(key, value);
+        }
+      }
+      return result.join('&').replace(/%20/g, '+');
+    };
+
+    Http.isHistoryApiSupported = function() {
+      return window.history && window.history.pushState && window.history.replaceState && !navigator.userAgent.match(/((iPod|iPhone|iPad).+\bOS\s+[1-4]|WebApps\/.+CFNetwork)/);
+    };
+
+    Http.addExtension = function(name, fns) {
+      this.extensions[name] = fns;
+      return this;
+    };
+
+    Http.removeExtension = function(name) {
+      if (typeof this.extensions[name] === 'undefined') {
+        throw new Error('Extension ' + name + ' does not exists');
+      }
+      delete this.extensions[name];
+      return this;
+    };
+
+    Http.onSend = function(fn) {
+      return this.events.send.push(fn);
+    };
+
+    Http.onComplete = function(fn) {
+      return this.events.complete.push(fn);
+    };
+
+    Http.onError = function(fn) {
+      return this.events.error.push(fn);
+    };
+
+    Http.onSuccess = function(fn) {
+      return this.events.success.push(fn);
+    };
+
+    return Http;
+
+  })();
+
+  module.exports = Http;
+
+}).call(this);
+
+},
+'node_modules/browser-http/lib/Request.js': function(exports, __require, module) {
+var require = function(name) {return __require(name, 'node_modules/browser-http/lib/Request.js');};
+var __filename = 'node_modules/browser-http/lib/Request.js';
+var __dirname = 'node_modules/browser-http/lib';
+var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/browser-http/lib/Request.js'], env: {}};
+// Generated by CoffeeScript 1.6.3
+(function() {
+  var Q, Request, Response;
+
+  Q = require('q');
+
+  Response = require('./Response');
+
+  Request = (function() {
+    Request.Http = null;
+
+    Request.prototype.url = null;
+
+    Request.prototype.type = 'GET';
+
+    Request.prototype.data = null;
+
+    Request.prototype._data = null;
+
+    Request.prototype.xhr = null;
+
+    Request.prototype.response = null;
+
+    Request.prototype.complete = null;
+
+    Request.prototype.success = null;
+
+    Request.prototype.error = null;
+
+    function Request(url, type, data) {
+      var _ref,
+        _this = this;
+      this.url = url;
+      this.type = type != null ? type : 'GET';
+      this.data = data != null ? data : null;
+      url = this.url;
+      this.type = this.type.toUpperCase();
+      if ((_ref = this.type) !== 'GET' && _ref !== 'POST' && _ref !== 'PUT' && _ref !== 'DELETE') {
+        throw new Error('Http request: type must be GET, POST, PUT or DELETE, ' + this.type + ' given');
+      }
+      if (this.data !== null) {
+        this._data = Request.getHttp().buildQuery(this.data);
+        if (this.type !== 'POST') {
+          url = this.url.indexOf('?') !== -1 ? this.url + '&' + this._data : this.url + '?' + this._data;
+        }
+      }
+      this.xhr = Request.createRequestObject();
+      this.xhr.open(this.type, url, true);
+      if (url.match(/^(http)s?\:\/\//) === null) {
+        this.setHeader('X-Requested-With', 'XMLHttpRequest');
+      }
+      if (this.type === 'POST') {
+        this.setHeader('Content-type', 'application/x-www-form-urlencoded');
+      }
+      this.response = new Response;
+      this.xhr.onreadystatechange = function() {
+        var error;
+        _this.response.state = _this.xhr.readyState;
+        if (_this.response.state === 4) {
+          _this.response.status = _this.xhr.status;
+          _this.response.statusText = _this.xhr.statusText;
+          _this.response.rawData = _this.xhr.responseText;
+          _this.response.xml = _this.xhr.responseXML;
+          _this.response.data = _this.xhr.responseText;
+          if (_this.getHeader('content-type').match(/application\/json/) !== null) {
+            _this.response.data = JSON.parse(_this.response.data);
+          }
+          if (_this.response.status === 200) {
+            if (_this.success !== null) {
+              _this.success(_this.response);
+            }
+            Request.callHttpEvent(_this.response, _this, 'success');
+          } else {
+            error = new Error('Can not load ' + url + ' address');
+            if (_this.error !== null) {
+              _this.error(error);
+            }
+            Request.callHttpEvent(_this.response, _this, 'error', [error]);
+          }
+          if (_this.complete !== null) {
+            _this.complete(_this.response);
+          }
+          return Request.callHttpEvent(_this.response, _this, 'complete');
+        }
+      };
+    }
+
+    Request.prototype.setHeader = function(name, value) {
+      this.xhr.setRequestHeader(name, value);
+      return this;
+    };
+
+    Request.prototype.send = function() {
+      var deferred,
+        _this = this;
+      deferred = Q.defer();
+      Request.callHttpEvent(this.response, this, 'send');
+      this.complete = function(response) {
+        return deferred.resolve(response);
+      };
+      this.success = function(response) {
+        return deferred.resolve(response);
+      };
+      this.error = function(e) {
+        return deferred.reject(e);
+      };
+      this.xhr.send(this._data);
+      return deferred.promise;
+    };
+
+    Request.prototype.abort = function() {
+      this.xhr.abort();
+      return this;
+    };
+
+    Request.prototype.getHeaders = function() {
+      return this.xhr.getAllResponseHeaders();
+    };
+
+    Request.prototype.getHeader = function(name) {
+      return this.xhr.getResponseHeader(name);
+    };
+
+    Request.prototype.setHeader = function(name, value) {
+      this.xhr.setRequestHeader(name, value);
+      return this;
+    };
+
+    Request.prototype.setMimeType = function(mime) {
+      this.xhr.overrideMimeType(mime);
+      return this;
+    };
+
+    Request.createRequestObject = function() {
+      if (window.XMLHttpRequest) {
+        return new window.XMLHttpRequest;
+      } else {
+        return new ActiveXObject("Microsoft.XMLHTTP");
+      }
+    };
+
+    Request.getHttp = function() {
+      if (this.Http === null) {
+        this.Http = require('./Http');
+      }
+      return this.Http;
+    };
+
+    Request.callHttpEvent = function(response, request, event, args) {
+      var ext, fn, name, _i, _len, _ref, _ref1, _results;
+      if (args == null) {
+        args = [];
+      }
+      this.getHttp();
+      args.push(response);
+      args.push(request);
+      _ref = this.Http.events[event];
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        fn = _ref[_i];
+        fn.apply(response, args);
+      }
+      _ref1 = this.Http.extensions;
+      _results = [];
+      for (name in _ref1) {
+        ext = _ref1[name];
+        if (typeof ext[event] !== 'undefined') {
+          _results.push(ext[event].apply(response, args));
+        } else {
+          _results.push(void 0);
+        }
+      }
+      return _results;
+    };
+
+    return Request;
+
+  })();
+
+  module.exports = Request;
+
+}).call(this);
+
+},
+'node_modules/browser-http/lib/Response.js': function(exports, __require, module) {
+var require = function(name) {return __require(name, 'node_modules/browser-http/lib/Response.js');};
+var __filename = 'node_modules/browser-http/lib/Response.js';
+var __dirname = 'node_modules/browser-http/lib';
+var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/browser-http/lib/Response.js'], env: {}};
+// Generated by CoffeeScript 1.6.3
+(function() {
+  var Response;
+
+  Response = (function() {
+    function Response() {}
+
+    Response.prototype.state = 0;
+
+    Response.prototype.status = null;
+
+    Response.prototype.statusText = null;
+
+    Response.prototype.rawData = null;
+
+    Response.prototype.data = null;
+
+    Response.prototype.xml = null;
+
+    return Response;
+
+  })();
+
+  module.exports = Response;
+
+}).call(this);
+
+},
+'node_modules/browser-http/Extensions/Links.js': function(exports, __require, module) {
+var require = function(name) {return __require(name, 'node_modules/browser-http/Extensions/Links.js');};
+var __filename = 'node_modules/browser-http/Extensions/Links.js';
+var __dirname = 'node_modules/browser-http/Extensions';
+var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/browser-http/Extensions/Links.js'], env: {}};
+module.exports = require('../lib/Extensions/Links');
+},
+'node_modules/browser-http/lib/Extensions/Links.js': function(exports, __require, module) {
+var require = function(name) {return __require(name, 'node_modules/browser-http/lib/Extensions/Links.js');};
+var __filename = 'node_modules/browser-http/lib/Extensions/Links.js';
+var __dirname = 'node_modules/browser-http/lib/Extensions';
+var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/browser-http/lib/Extensions/Links.js'], env: {}};
+// Generated by CoffeeScript 1.6.3
+(function() {
+  var Http, Links, e, jquery;
+
+  Http = require('../Http');
+
+  try {
+    jquery = require('jquery');
+  } catch (_error) {
+    e = _error;
+    jquery = window.jQuery;
+  }
+
+  Links = (function() {
+    function Links() {
+      var historyApi;
+      historyApi = false;
+      jquery(document).on('click', 'a.ajax:not(.not-ajax)', function(e) {
+        var a, link;
+        e.preventDefault();
+        a = e.target.nodeName.toLowerCase() === 'a' ? jquery(e.target) : jquery(e.target).closest('a');
+        link = a.attr('href');
+        if (historyApi) {
+          window.history.pushState({}, null, link);
+        }
+        return Http.get(link);
+      });
+    }
+
+    return Links;
+
+  })();
+
+  module.exports = Links;
+
+}).call(this);
+
+},
+'node_modules/browser-http/Extensions/Loading.js': function(exports, __require, module) {
+var require = function(name) {return __require(name, 'node_modules/browser-http/Extensions/Loading.js');};
+var __filename = 'node_modules/browser-http/Extensions/Loading.js';
+var __dirname = 'node_modules/browser-http/Extensions';
+var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/browser-http/Extensions/Loading.js'], env: {}};
+module.exports = require('../lib/Extensions/Loading');
+},
+'node_modules/browser-http/lib/Extensions/Loading.js': function(exports, __require, module) {
+var require = function(name) {return __require(name, 'node_modules/browser-http/lib/Extensions/Loading.js');};
+var __filename = 'node_modules/browser-http/lib/Extensions/Loading.js';
+var __dirname = 'node_modules/browser-http/lib/Extensions';
+var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/browser-http/lib/Extensions/Loading.js'], env: {}};
+// Generated by CoffeeScript 1.6.3
+(function() {
+  var Http, Loading,
+    __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
+
+  Http = require('../Http');
+
+  Loading = (function() {
+    function Loading() {
+      this.onComplete = __bind(this.onComplete, this);
+      this.onSend = __bind(this.onSend, this);
+      Http.addExtension('loading', {
+        send: this.onSend,
+        complete: this.onComplete
+      });
+    }
+
+    Loading.prototype.onSend = function(response, request) {
+      return document.body.style.cursor = 'progress';
+    };
+
+    Loading.prototype.onComplete = function(response, request) {
+      return document.body.style.cursor = 'auto';
+    };
+
+    return Loading;
+
+  })();
+
+  module.exports = Loading;
+
+}).call(this);
+
+},
+'node_modules/browser-http/Extensions/Redirect.js': function(exports, __require, module) {
+var require = function(name) {return __require(name, 'node_modules/browser-http/Extensions/Redirect.js');};
+var __filename = 'node_modules/browser-http/Extensions/Redirect.js';
+var __dirname = 'node_modules/browser-http/Extensions';
+var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/browser-http/Extensions/Redirect.js'], env: {}};
+module.exports = require('../lib/Extensions/Redirect');
+},
+'node_modules/browser-http/lib/Extensions/Redirect.js': function(exports, __require, module) {
+var require = function(name) {return __require(name, 'node_modules/browser-http/lib/Extensions/Redirect.js');};
+var __filename = 'node_modules/browser-http/lib/Extensions/Redirect.js';
+var __dirname = 'node_modules/browser-http/lib/Extensions';
+var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/browser-http/lib/Extensions/Redirect.js'], env: {}};
+// Generated by CoffeeScript 1.6.3
+(function() {
+  var Http, Redirect;
+
+  Http = require('../Http');
+
+  Redirect = (function() {
+    function Redirect() {
+      Http.addExtension('redirect', {
+        success: this.onSuccess
+      });
+    }
+
+    Redirect.prototype.onSuccess = function(response, request) {
+      if (typeof response.data.redirect !== 'undefined') {
+        return window.location.href = response.data.redirect;
+      }
+    };
+
+    return Redirect;
+
+  })();
+
+  module.exports = Redirect;
+
+}).call(this);
+
+},
+'node_modules/browser-http/Extensions/Snippets.js': function(exports, __require, module) {
+var require = function(name) {return __require(name, 'node_modules/browser-http/Extensions/Snippets.js');};
+var __filename = 'node_modules/browser-http/Extensions/Snippets.js';
+var __dirname = 'node_modules/browser-http/Extensions';
+var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/browser-http/Extensions/Snippets.js'], env: {}};
+module.exports = require('../lib/Extensions/Snippets');
+},
+'node_modules/browser-http/lib/Extensions/Snippets.js': function(exports, __require, module) {
+var require = function(name) {return __require(name, 'node_modules/browser-http/lib/Extensions/Snippets.js');};
+var __filename = 'node_modules/browser-http/lib/Extensions/Snippets.js';
+var __dirname = 'node_modules/browser-http/lib/Extensions';
+var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/browser-http/lib/Extensions/Snippets.js'], env: {}};
+// Generated by CoffeeScript 1.6.3
+(function() {
+  var Http, Snippets, e, jquery,
+    __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
+
+  Http = require('../Http');
+
+  try {
+    jquery = require('jquery');
+  } catch (_error) {
+    e = _error;
+    jquery = window.jQuery;
+  }
+
+  Snippets = (function() {
+    function Snippets() {
+      this.onSuccess = __bind(this.onSuccess, this);
+      Http.addExtension('snippets', {
+        success: this.onSuccess
+      });
+    }
+
+    Snippets.prototype.onSuccess = function(response, request) {
+      var html, id, _ref, _results;
+      if (typeof response.data.snippets !== 'undefined') {
+        _ref = response.data.snippets;
+        _results = [];
+        for (id in _ref) {
+          html = _ref[id];
+          _results.push(this.updateSnippet(id, html));
+        }
+        return _results;
+      }
+    };
+
+    Snippets.prototype.updateSnippet = function(id, html) {
+      var el;
+      el = jquery("#" + id);
+      return el.html(html);
+    };
+
+    return Snippets;
+
+  })();
+
+  module.exports = Snippets;
+
+}).call(this);
+
+},
+'node_modules/browser-http/package.json': function(exports, __require, module) {
+var require = function(name) {return __require(name, 'node_modules/browser-http/package.json');};
+var __filename = 'node_modules/browser-http/package.json';
+var __dirname = 'node_modules/browser-http';
+var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/browser-http/package.json'], env: {}};
+module.exports = (function() {
+return {
+  "name": "browser-http",
+  "description": "Simple HTTP for browser",
+  "version": "1.6.4",
+  "author": {
+    "name": "David Kudera",
+    "email": "sakren@gmail.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:sakren/node-browser-http.git"
+  },
+  "license": "MIT",
+  "keywords": [
+    "http",
+    "client",
+    "browser",
+    "ajax",
+    "url"
+  ],
+  "engines": {
+    "node": "*"
+  },
+  "main": "./lib/Http.js",
+  "dependencies": {
+    "q": "0.9.6"
+  },
+  "devDependencies": {
+    "should": "1.2.2"
+  },
+  "scripts": {
+    "test": "cd ./test; mocha ./index.js --reporter spec;"
+  },
+  "readme": "# http-browser\n\nSome simple classes for working with http in browser.\n\nNow it is really simple and more functions will be added.\n\nhttp-browser uses [q](https://npmjs.org/package/q) promise pattern.\n\n## Changelog\n\nChangelog is in the bottom of this readme.\n\n## Usage\n\n```\nvar http = require('browser-http');\n\nhttp.request('http://www.google.com', {type: 'GET'}).then(function(response) {\n\tconsole.log(response.text);\n}, function(e) {\n\tthrow e;\t\t// some error ocured\n});\n```\n\nIn then function, you will get response object with data from server.\n\n## Shorthands\n\n```\nvar http = require('browser-http');\n\nhttp.get('http://www.google.com');\nhttp.post('http://www.google.com');\nhttp.put('http://www.google.com');\nhttp.delete('http://www.google.com');\n```\n\n## Options\n\nIn every http function, you can set other options. Now it is just type and data.\n\n* type: GET, POST, PUT or DELETE\n* data: literal object of data which needs to be send to server\n\n## Response object\n\nBasically it is just wrapper for some data from XMLHttpRequest.\n\n* state\n* status\n* statusText\n* rawData: same like responseText\n* data: same like responseText or literal object (json)\n* xml: same like responseXML\n\n## Load JSON\n\nIf content-type in response header is `application/json` then your data will be automatically transformed into js object.\n\nIf you can not set this header on your server, than you can use `*Json` methods.\n\n```\nhttp.getJson('http://www.google.com/some.json').then(function(response) {\n\tconsole.log(response.data);\t\t// output will be object\n});\n\nhttp.postJson('http://www.google.com/some.json');\n```\n\n## Events\n\nYou can listen for all http events with your own functions.\n\n```\nhttp.onSend(function(response, request) {\n\tconsole.log('In any moment, new http request will be send to server');\n});\n\nhttp.onComplete(function(response, request) {\n\tconsole.log('I just finished some request, but there may be some errors');\n});\n\nhttp.onSuccess(function(response, request) {\n\tconsole.log('I have got response from server without any error :-)');\n});\n\nhttp.onError(function(err, response, request) {\n\tconsole.log('Sorry, there was some error with this response');\n});\n```\n\n## Extensions\n\nSometimes it will be better to register whole group of events and this group is called extension.\n\n```\nhttp.addExtension('nameOfMyExtension', {\n\tsend: function(response, request) {},\n\tcomplete: function(response, request) {},\n\tsuccess: function(response, request) {},\n\terror: function(err, response, request) {},\n});\n```\n\nYou can also remove other extensions.\n\n```\nhttp.removeExtension('nameOfMyExtension');\n```\n\n### Build in extensions\n\nbrowser-http already comes with few extensions. Originally they were created for project build on [Nette](http://nette.org/en/)\nframework, but can be used on any other project.\n\n#### Loading cursor\n\n```\nnew (require('browser-http/Extensions/Loading'));\n```\n\nEvery time new request is send, your cursor is changed into `progress` cursor. After receiving response from server, cursor\nis changed into `auto`.\n\n#### Redirect\n\n```\nnew (require('browser-http/Extensions/Redirect'));\n```\n\nIf your server sends json data with `redirect` variable, then you will be redirected to address in this variable.\n\n#### Snippets\n\n```\nnew (require('browser-http/Extensions/Snippets'));\n```\n\nIf in response data is `snippets` object with html id and content pairs, then browser-http will iterate throw this object,\nfind element in page with given id and change content of this element into the one from given data.\n\nThis extension depends on jquery.\n\n#### Ajax links\n\n```\nnew (require('browser-http/Extensions/Links'));\n```\n\nThis is not true extension for browser-http. It listen for all click events on `a` links with class `ajax` but not with\nclass `not-ajax` and after this click, it creates ajax request.\n\nDepends on jquery.\n\n#### Ajax forms\n\nThis is the same like the previous one, but apply for all forms with `ajax` class.\nThis extension can not handle forms with file uploads.\nDepends on jquery.\n\n## Changelog\n\n* 1.6.4\n\t+ Optimizations + bug with sending data\n\n* 1.6.3\n\t+ Bug with `buildQuery` - replaced with the real one from jQuery\n\n* 1.6.2\n\t+ Just removed some useless code\n\n* 1.6.1\n\t+ Forgot to add Extensions/Links shortcut\n\n* 1.6.0\n\t+ `buildQuery` should got the same output like jQuery.param\n\t+ Added some extensions\n\n* 1.5.2\n\t+ Bug with sending data via POST method\n\n* 1.5.1\n\t+ Bug with X-Requested-With header\n\n* 1.5.0\n\t+ Added method isHistoryApiSupported\n\n* 1.4.0\n\t+ Sending X-Requested-With header\n\n* 1.3.1 - 1.3.5\n\t+ Bugs\n\n* 1.3.0\n\t+ Added `urlencode` and `buildQuery` methods\n\t+ Prepared changelog\n\t+ Added some tests\n\t+ Some bugs and optimizations\n\t+ Transforming response data into json if mime type is application/json",
+  "readmeFilename": "README.md",
+  "bugs": {
+    "url": "https://github.com/sakren/node-browser-http/issues"
+  },
+  "_id": "browser-http@1.6.4",
+  "_from": "browser-http@latest"
+}
+
+}).call(this);
+
+},
+'node_modules/browser-http/test/Http.js': function(exports, __require, module) {
+var require = function(name) {return __require(name, 'node_modules/browser-http/test/Http.js');};
+var __filename = 'node_modules/browser-http/test/Http.js';
+var __dirname = 'node_modules/browser-http/test';
+var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/browser-http/test/Http.js'], env: {}};
+// Generated by CoffeeScript 1.6.3
+(function() {
+  var Url, should;
+
+  should = require('should');
+
+  Url = require('../lib/Http');
+
+  describe('Url', function() {
+    describe('#urlencode()', function() {
+      return it('should return encoded strings like in PHP', function() {
+        Url.urlencode('Kevin van Zonneveld!').should.be.equal('Kevin+van+Zonneveld%21');
+        return Url.urlencode('http://kevin.vanzonneveld.net/').should.be.equal('http%3A%2F%2Fkevin.vanzonneveld.net%2F');
+      });
+    });
+    return describe('#buildQuery()', function() {
+      return it('should return prepared params like from http_build_query in PHP', function() {
+        return Url.buildQuery({
+          foo: 'bar',
+          php: 'hypertext processor',
+          baz: 'boom',
+          cow: 'milk'
+        }).should.be.equal('foo=bar&php=hypertext+processor&baz=boom&cow=milk');
+      });
+    });
+  });
+
+}).call(this);
+
+},
+'node_modules/browser-http/test/index.js': function(exports, __require, module) {
+var require = function(name) {return __require(name, 'node_modules/browser-http/test/index.js');};
+var __filename = 'node_modules/browser-http/test/index.js';
+var __dirname = 'node_modules/browser-http/test';
+var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/browser-http/test/index.js'], env: {}};
+// Generated by CoffeeScript 1.6.3
+(function() {
+  require('./Http');
+
+}).call(this);
+
+},
+'ares-data': 'src/Ares',
+'ares-data/Validators': 'src/Validators',
+'events': function(exports, __require, module) {
+var require = function(name) {return __require(name, 'events');};
+var __filename = 'events';
+var __dirname = '.';
+var process = {cwd: function() {return '/';}, argv: ['node', 'events'], env: {}};
+// Copyright Joyent, Inc. and other Node contributors.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit
+// persons to whom the Software is furnished to do so, subject to the
+// following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+// USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+var domain;
+
+exports.usingDomains = false;
+
+function EventEmitter() {
+  this.domain = null;
+  if (exports.usingDomains) {
+    // if there is an active domain, then attach to it.
+    domain = domain || require('domain');
+    if (domain.active && !(this instanceof domain.Domain)) {
+      this.domain = domain.active;
+    }
+  }
+  this._events = this._events || {};
+  this._maxListeners = this._maxListeners || defaultMaxListeners;
+}
+exports.EventEmitter = EventEmitter;
+
+// By default EventEmitters will print a warning if more than
+// 10 listeners are added to it. This is a useful default which
+// helps finding memory leaks.
+//
+// Obviously not all Emitters should be limited to 10. This function allows
+// that to be increased. Set to zero for unlimited.
+var defaultMaxListeners = 10;
+EventEmitter.prototype.setMaxListeners = function(n) {
+  if (typeof n !== 'number' || n < 0)
+    throw TypeError('n must be a positive number');
+  this._maxListeners = n;
+};
+
+EventEmitter.prototype.emit = function(type) {
+  var er, handler, len, args, i, listeners;
+
+  if (!this._events)
+    this._events = {};
+
+  // If there is no 'error' event listener then throw.
+  if (type === 'error') {
+    if (!this._events.error ||
+        (typeof this._events.error === 'object' &&
+         !this._events.error.length)) {
+      er = arguments[1];
+      if (this.domain) {
+        if (!er) er = new TypeError('Uncaught, unspecified "error" event.');
+        er.domainEmitter = this;
+        er.domain = this.domain;
+        er.domainThrown = false;
+        this.domain.emit('error', er);
+      } else if (er instanceof Error) {
+        throw er; // Unhandled 'error' event
+      } else {
+        throw TypeError('Uncaught, unspecified "error" event.');
+      }
+      return false;
+    }
+  }
+
+  handler = this._events[type];
+
+  if (typeof handler === 'undefined')
+    return false;
+
+  if (this.domain && this !== process)
+    this.domain.enter();
+
+  if (typeof handler === 'function') {
+    switch (arguments.length) {
+      // fast cases
+      case 1:
+        handler.call(this);
+        break;
+      case 2:
+        handler.call(this, arguments[1]);
+        break;
+      case 3:
+        handler.call(this, arguments[1], arguments[2]);
+        break;
+      // slower
+      default:
+        len = arguments.length;
+        args = new Array(len - 1);
+        for (i = 1; i < len; i++)
+          args[i - 1] = arguments[i];
+        handler.apply(this, args);
+    }
+  } else if (typeof handler === 'object') {
+    len = arguments.length;
+    args = new Array(len - 1);
+    for (i = 1; i < len; i++)
+      args[i - 1] = arguments[i];
+
+    listeners = handler.slice();
+    len = listeners.length;
+    for (i = 0; i < len; i++)
+      listeners[i].apply(this, args);
+  }
+
+  if (this.domain && this !== process)
+    this.domain.exit();
+
+  return true;
+};
+
+EventEmitter.prototype.addListener = function(type, listener) {
+  var m;
+
+  if (typeof listener !== 'function')
+    throw TypeError('listener must be a function');
+
+  if (!this._events)
+    this._events = {};
+
+  // To avoid recursion in the case that type === "newListener"! Before
+  // adding it to the listeners, first emit "newListener".
+  if (this._events.newListener)
+    this.emit('newListener', type, typeof listener.listener === 'function' ?
+              listener.listener : listener);
+
+  if (!this._events[type])
+    // Optimize the case of one listener. Don't need the extra array object.
+    this._events[type] = listener;
+  else if (typeof this._events[type] === 'object')
+    // If we've already got an array, just append.
+    this._events[type].push(listener);
+  else
+    // Adding the second element, need to change to array.
+    this._events[type] = [this._events[type], listener];
+
+  // Check for listener leak
+  if (typeof this._events[type] === 'object' && !this._events[type].warned) {
+    m = this._maxListeners;
+    if (m && m > 0 && this._events[type].length > m) {
+      this._events[type].warned = true;
+      console.error('(node) warning: possible EventEmitter memory ' +
+                    'leak detected. %d listeners added. ' +
+                    'Use emitter.setMaxListeners() to increase limit.',
+                    this._events[type].length);
+      console.trace();
+    }
+  }
+
+  return this;
+};
+
+EventEmitter.prototype.on = EventEmitter.prototype.addListener;
+
+EventEmitter.prototype.once = function(type, listener) {
+  if (typeof listener !== 'function')
+    throw TypeError('listener must be a function');
+
+  function g() {
+    this.removeListener(type, g);
+    listener.apply(this, arguments);
+  }
+
+  g.listener = listener;
+  this.on(type, g);
+
+  return this;
+};
+
+// emits a 'removeListener' event iff the listener was removed
+EventEmitter.prototype.removeListener = function(type, listener) {
+  var list, position, length, i;
+
+  if (typeof listener !== 'function')
+    throw TypeError('listener must be a function');
+
+  if (!this._events || !this._events[type])
+    return this;
+
+  list = this._events[type];
+  length = list.length;
+  position = -1;
+
+  if (list === listener ||
+      (typeof list.listener === 'function' && list.listener === listener)) {
+    delete this._events[type];
+    if (this._events.removeListener)
+      this.emit('removeListener', type, listener);
+
+  } else if (typeof list === 'object') {
+    for (i = length; i-- > 0;) {
+      if (list[i] === listener ||
+          (list[i].listener && list[i].listener === listener)) {
+        position = i;
+        break;
+      }
+    }
+
+    if (position < 0)
+      return this;
+
+    if (list.length === 1) {
+      list.length = 0;
+      delete this._events[type];
+    } else {
+      list.splice(position, 1);
+    }
+
+    if (this._events.removeListener)
+      this.emit('removeListener', type, listener);
+  }
+
+  return this;
+};
+
+EventEmitter.prototype.removeAllListeners = function(type) {
+  var key, listeners;
+
+  if (!this._events)
+    return this;
+
+  // not listening for removeListener, no need to emit
+  if (!this._events.removeListener) {
+    if (arguments.length === 0)
+      this._events = {};
+    else if (this._events[type])
+      delete this._events[type];
+    return this;
+  }
+
+  // emit removeListener for all listeners on all events
+  if (arguments.length === 0) {
+    for (key in this._events) {
+      if (key === 'removeListener') continue;
+      this.removeAllListeners(key);
+    }
+    this.removeAllListeners('removeListener');
+    this._events = {};
+    return this;
+  }
+
+  listeners = this._events[type];
+
+  if (typeof listeners === 'function') {
+    this.removeListener(type, listeners);
+  } else {
+    // LIFO order
+    while (listeners.length)
+      this.removeListener(type, listeners[listeners.length - 1]);
+  }
+  delete this._events[type];
+
+  return this;
+};
+
+EventEmitter.prototype.listeners = function(type) {
+  var ret;
+  if (!this._events || !this._events[type])
+    ret = [];
+  else if (typeof this._events[type] === 'function')
+    ret = [this._events[type]];
+  else
+    ret = this._events[type].slice();
+  return ret;
+};
+
+EventEmitter.listenerCount = function(emitter, type) {
+  var ret;
+  if (!emitter._events || !emitter._events[type])
+    ret = 0;
+  else if (typeof emitter._events[type] === 'function')
+    ret = 1;
+  else
+    ret = emitter._events[type].length;
+  return ret;
+};
+
+}
+});
+
+require._setMeta({"ares-data":{"base":"","path":"lib/Ares.js"},"moment":{"base":"node_modules/moment","path":"node_modules/moment/moment.js"},"q":{"base":"node_modules/q","path":"node_modules/q/q.js"},"xml2js":{"base":"node_modules/xml2js","path":"node_modules/xml2js/lib/xml2js.js"},"sax":{"base":"node_modules/xml2js/node_modules/sax","path":"node_modules/xml2js/node_modules/sax/lib/sax.js"},"browser-http":{"base":"node_modules/browser-http","path":"node_modules/browser-http/lib/Http.js"}});
+
+
+require('test/browser/Validators');
+
+require('test/browser/Ares');

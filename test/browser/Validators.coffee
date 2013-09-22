@@ -1,6 +1,5 @@
-expect = require('chai').expect
 
-Validators = require '../../lib/Validators'
+Validators = require 'ares-data/Validators'
 
 describe 'Validators', ->
 

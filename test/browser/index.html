@@ -9,6 +9,7 @@
 		<script src="../../node_modules/chai/chai.js"></script>
 		<script>
 			mocha.ui('bdd');
+			mocha.timeout(120000);
 			mocha.reporter('html');
 			var expect = chai.expect;
 		</script>

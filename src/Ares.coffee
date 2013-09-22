@@ -1,9 +1,12 @@
 Validators = require './Validators'
 Q = require 'q'
 xml = require 'xml2js'
-http = require 'http'
-browserHttp = require 'browser-http'
 moment = require 'moment'
+browserHttp = require 'browser-http'
+
+isWindow = typeof window != 'undefined'
+if !isWindow
+	http = require 'http'
 
 class Ares
 
@@ -55,18 +58,25 @@ class Ares
 		url = @getUrl(options)
 		deferred = Q.defer()
 
-		http.get(url, (res) ->
-			data = []
-			res.setEncoding('utf8')
-			res.on('data', (chunk) ->
-				data.push(chunk)
+		if isWindow
+			browserHttp.get(url).then( (res) ->
+				deferred.resolve(res.data)
+			).fail( (err) ->
+				deferred.reject(err)
 			)
-			res.on('end', ->
-				deferred.resolve(data.join(''))
+		else
+			http.get(url, (res) ->
+				data = []
+				res.setEncoding('utf8')
+				res.on('data', (chunk) ->
+					data.push(chunk)
+				)
+				res.on('end', ->
+					deferred.resolve(data.join(''))
+				)
+			).on('error', (err) ->
+				deferred.reject(err)
 			)
-		).on('error', (err) ->
-			deferred.reject(err)
-		)
 
 		return deferred.promise
 
