@@ -2,9 +2,16 @@
 
 Load information about employers from Czech ares service.
 
-## Changelog
+Documentation of Ares: [documentation](http://wwwinfo.mfcr.cz/ares/ares.html.cz)
 
-Changelog is in the bottom of this readme.
+This module uses [q](https://npmjs.org/package/q) promise library. You can also use this module in browser (for example
+with [simq](https://npmjs.org/package/simq)).
+
+## Installation
+
+```
+$ npm install ares-data
+```
 
 ## Information
 
@@ -32,6 +39,26 @@ ares.findByCompanyName('some company name').then(function(data) {
 });
 ```
 
+## In browser
+
+Ares unfortunately does not support any possibility to load data directly from browser (cross domain request), so you have
+to create some kind of bridge on your server. This will load ares XML API page (http://wwwinfo.mfcr.cz/cgi-bin/ares/darv_std.cgi)
+with given `get` parameters and send it back to the browser (without any transformations).
+
+Second step is to set new url for loading data.
+
+```
+var Ares = require('ares-data');
+var ares = new Ares('http://localhost/ares.php/');
+```
+
+or globally:
+
+```
+var Ares = require('ares-data');
+Ares.URL = 'http://localhost/ares.php/';
+```
+
 ## Original data
 
 This package automatically changing loaded data. If you want to get original data (transformed and simplify to json), you
@@ -47,6 +74,7 @@ ares.findByCompanyName('some company name').then(function(data) {
 
 * 1.1.0
 	+ Ability to change source url
+	+ Added support for browsers
 
 * 1.0.3
 	+ Building url query with [browser-http](https://npmjs.org/package/browser-http) package
