@@ -1,7 +1,7 @@
 {
 	"name": "ares-data",
 	"description": "Load information about employers from Czech ares service.",
-	"version": "1.1.1",
+	"version": "1.1.2",
 	"author": {
 		"name": "David Kudera",
 		"email": "sakren@gmail.com"

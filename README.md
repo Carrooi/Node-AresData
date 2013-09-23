@@ -45,6 +45,8 @@ Ares unfortunately does not support any possibility to load data directly from b
 to create some kind of bridge on your server. This will load ares XML API page (http://wwwinfo.mfcr.cz/cgi-bin/ares/darv_std.cgi)
 with given `get` parameters and send it back to the browser (without any transformations).
 
+Some examples of these bridges are [here](https://gist.github.com/sakren/6668126).
+
 Second step is to set new url for loading data.
 
 ```
@@ -83,6 +85,9 @@ $ npm test
 ```
 
 ## Changelog
+
+* 1.1.2
+	+ Added some documentation
 
 * 1.1.1
 	+ Old version of browser-http
