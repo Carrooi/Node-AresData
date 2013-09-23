@@ -84,6 +84,9 @@ $ npm test
 
 ## Changelog
 
+* 1.1.1
+	+ Old version of browser-http
+
 * 1.1.0
 	+ Ability to change source url
 	+ Added support for browsers

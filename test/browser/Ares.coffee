@@ -1,6 +1,5 @@
 
 Ares = require 'ares-data'
-http = require 'browser-http'
 Q = require 'q'
 
 Q.stopUnhandledRejectionTracking()

@@ -10,7 +10,8 @@
 				"./node_modules/moment/lang/en-gb.js",
 				"./node_modules/q/q.js",
 				"./node_modules/xml2js/*.js",
-				"./node_modules/browser-http/*.js"
+				"./node_modules/browser-http/lib/*.js",
+				"./node_modules/browser-http/Helpers.js"
 			],
 			"coreModules": [
 				"events"

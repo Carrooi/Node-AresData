@@ -140,7 +140,7 @@ var __filename = 'src/Ares.coffee';
 var __dirname = 'src';
 var process = {cwd: function() {return '/';}, argv: ['node', 'src/Ares.coffee'], env: {}};
 (function() {
-  var Ares, Q, Validators, browserHttp, http, isWindow, moment, xml,
+  var Ares, Q, Validators, http, httpHelpers, isWindow, moment, xml,
     _this = this;
 
   Validators = require('./Validators');
@@ -151,12 +151,14 @@ var process = {cwd: function() {return '/';}, argv: ['node', 'src/Ares.coffee'],
 
   moment = require('moment');
 
-  browserHttp = require('browser-http');
+  httpHelpers = require('browser-http/Helpers');
 
   isWindow = typeof window !== 'undefined';
 
   if (!isWindow) {
     http = require('http');
+  } else {
+    http = require('browser-http');
   }
 
   Ares = (function() {
@@ -218,7 +220,7 @@ var process = {cwd: function() {return '/';}, argv: ['node', 'src/Ares.coffee'],
     };
 
     Ares.prototype.getUrl = function(options) {
-      options = browserHttp.buildQuery(options);
+      options = httpHelpers.buildQuery(options);
       return this.url + '?' + options;
     };
 
@@ -227,7 +229,7 @@ var process = {cwd: function() {return '/';}, argv: ['node', 'src/Ares.coffee'],
       url = this.getUrl(options);
       deferred = Q.defer();
       if (isWindow) {
-        browserHttp.get(url).then(function(res) {
+        http.get(url).then(function(res) {
           return deferred.resolve(res.data);
         }).fail(function(err) {
           return deferred.reject(err);
@@ -376,11 +378,9 @@ var __filename = 'test/browser/Ares.coffee';
 var __dirname = 'test/browser';
 var process = {cwd: function() {return '/';}, argv: ['node', 'test/browser/Ares.coffee'], env: {}};
 (function() {
-  var Ares, Q, ares, http;
+  var Ares, Q, ares;
 
   Ares = require('ares-data');
-
-  http = require('browser-http');
 
   Q = require('q');
 
@@ -456,11 +456,11 @@ var require = function(name) {return __require(name, 'node_modules/moment/moment
 var __filename = 'node_modules/moment/moment.js';
 var __dirname = 'node_modules/moment';
 var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/moment/moment.js'], env: {}};
-// moment.js
-// version : 2.1.0
-// author : Tim Wood
-// license : MIT
-// momentjs.com
+//! moment.js
+//! version : 2.2.1
+//! authors : Tim Wood, Iskren Chernev, Moment.js contributors
+//! license : MIT
+//! momentjs.com
 
 (function (undefined) {
 
@@ -469,7 +469,7 @@ var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/momen
     ************************************/
 
     var moment,
-        VERSION = "2.1.0",
+        VERSION = "2.2.1",
         round = Math.round, i,
         // internal storage for language config files
         languages = {},
@@ -479,7 +479,7 @@ var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/momen
 
         // ASP.NET json date format regex
         aspNetJsonRegex = /^\/?Date\((\-?\d+)/i,
-        aspNetTimeSpanJsonRegex = /(\-)?(\d*)?\.?(\d+)\:(\d+)\:(\d+)\.?(\d{3})?/,
+        aspNetTimeSpanJsonRegex = /(\-)?(?:(\d*)\.)?(\d+)\:(\d+)\:(\d+)\.?(\d{3})?/,
 
         // format tokens
         formattingTokens = /(\[[^\[]*\])|(\\)?(Mo|MM?M?M?|Do|DDDo|DD?D?D?|ddd?d?|do?|w[o|w]?|W[o|W]?|YYYYY|YYYY|YY|gg(ggg?)?|GG(GGG?)?|e|E|a|A|hh?|HH?|mm?|ss?|SS?S?|X|zz?|ZZ?|.)/g,
@@ -531,6 +531,7 @@ var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/momen
             h : 'hour',
             d : 'day',
             w : 'week',
+            W : 'isoweek',
             M : 'month',
             y : 'year'
         },
@@ -715,18 +716,18 @@ var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/momen
         this._input = duration;
 
         // representation for dateAddRemove
-        this._milliseconds = milliseconds +
+        this._milliseconds = +milliseconds +
             seconds * 1e3 + // 1000
             minutes * 6e4 + // 1000 * 60
             hours * 36e5; // 1000 * 60 * 60
         // Because of dateAddRemove treats 24 hours as different from a
         // day when working around DST, we need to store them separately
-        this._days = days +
+        this._days = +days +
             weeks * 7;
         // It is impossible translate months into days without knowing
         // which months you are are talking about, so we have to store
         // it separately.
-        this._months = months +
+        this._months = +months +
             years * 12;
 
         this._data = {};
@@ -773,8 +774,7 @@ var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/momen
             days = duration._days,
             months = duration._months,
             minutes,
-            hours,
-            currentDate;
+            hours;
 
         if (milliseconds) {
             mom._d.setTime(+mom._d + milliseconds * isAdding);
@@ -829,7 +829,8 @@ var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/momen
     ************************************/
 
 
-    Language.prototype = {
+    extend(Language.prototype, {
+
         set : function (config) {
             var prop, i;
             for (i in config) {
@@ -862,7 +863,7 @@ var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/momen
             for (i = 0; i < 12; i++) {
                 // make the regex if we don't have it already
                 if (!this._monthsParse[i]) {
-                    mom = moment([2000, i]);
+                    mom = moment.utc([2000, i]);
                     regex = '^' + this.months(mom, '') + '|^' + this.monthsShort(mom, '');
                     this._monthsParse[i] = new RegExp(regex.replace('.', ''), 'i');
                 }
@@ -928,7 +929,9 @@ var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/momen
         },
 
         isPM : function (input) {
-            return ((input + '').toLowerCase()[0] === 'p');
+            // IE8 Quirks Mode & IE7 Standards Mode do not allow accessing strings like arrays
+            // Using charAt should be more compatible.
+            return ((input + '').toLowerCase().charAt(0) === 'p');
         },
 
         _meridiemParse : /[ap]\.?m?\.?/i,
@@ -999,7 +1002,7 @@ var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/momen
             dow : 0, // Sunday is the first day of the week.
             doy : 6  // The week that contains Jan 1st is the first week of the year.
         }
-    };
+    });
 
     // Loads a language definition into the `languages` cache.  The function
     // takes a key and optionally values.  If not in the browser and no values
@@ -1012,6 +1015,11 @@ var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/momen
         }
         languages[key].set(values);
         return languages[key];
+    }
+
+    // Remove a language from the `languages` cache. Mostly useful in tests.
+    function unloadLang(key) {
+        delete languages[key];
     }
 
     // Determines which language definition to use and returns it.
@@ -1032,7 +1040,7 @@ var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/momen
                 return moment.fn._lang;
             }
         }
-        return languages[key];
+        return languages[key] || moment.fn._lang;
     }
 
 
@@ -1070,21 +1078,29 @@ var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/momen
 
     // format date using native date object
     function formatMoment(m, format) {
-        var i = 5;
 
-        function replaceLongDateFormatTokens(input) {
-            return m.lang().longDateFormat(input) || input;
-        }
-
-        while (i-- && localFormattingTokens.test(format)) {
-            format = format.replace(localFormattingTokens, replaceLongDateFormatTokens);
-        }
+        format = expandFormat(format, m.lang());
 
         if (!formatFunctions[format]) {
             formatFunctions[format] = makeFormatFunction(format);
         }
 
         return formatFunctions[format](m);
+    }
+
+    function expandFormat(format, lang) {
+        var i = 5;
+
+        function replaceLongDateFormatTokens(input) {
+            return lang.longDateFormat(input) || input;
+        }
+
+        while (i-- && (localFormattingTokens.lastIndex = 0,
+                    localFormattingTokens.test(format))) {
+            format = format.replace(localFormattingTokens, replaceLongDateFormatTokens);
+        }
+
+        return format;
     }
 
 
@@ -1159,7 +1175,9 @@ var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/momen
         // MONTH
         case 'M' : // fall through to MM
         case 'MM' :
-            datePartArray[1] = (input == null) ? 0 : ~~input - 1;
+            if (input != null) {
+                datePartArray[1] = ~~input - 1;
+            }
             break;
         case 'MMM' : // fall through to MMMM
         case 'MMMM' :
@@ -1172,11 +1190,17 @@ var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/momen
             }
             break;
         // DAY OF MONTH
-        case 'D' : // fall through to DDDD
-        case 'DD' : // fall through to DDDD
+        case 'D' : // fall through to DD
+        case 'DD' :
+            if (input != null) {
+                datePartArray[2] = ~~input;
+            }
+            break;
+        // DAY OF YEAR
         case 'DDD' : // fall through to DDDD
         case 'DDDD' :
             if (input != null) {
+                datePartArray[1] = 0;
                 datePartArray[2] = ~~input;
             }
             break;
@@ -1239,13 +1263,24 @@ var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/momen
     // note: all values past the year are optional and will default to the lowest possible value.
     // [year, month, day , hour, minute, second, millisecond]
     function dateFromArray(config) {
-        var i, date, input = [];
+        var i, date, input = [], currentDate;
 
         if (config._d) {
             return;
         }
 
-        for (i = 0; i < 7; i++) {
+        // Default to current date.
+        // * if no year, month, day of month are given, default to today
+        // * if day of month is given, default month and year
+        // * if month is given, default only year
+        // * if year is given, don't default anything
+        currentDate = currentDateArray(config);
+        for (i = 0; i < 3 && config._a[i] == null; ++i) {
+            config._a[i] = input[i] = currentDate[i];
+        }
+
+        // Zero out whatever was not defaulted, including time
+        for (; i < 7; i++) {
             config._a[i] = input[i] = (config._a[i] == null) ? (i === 2 ? 1 : 0) : config._a[i];
         }
 
@@ -1266,12 +1301,47 @@ var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/momen
         config._d = date;
     }
 
+    function dateFromObject(config) {
+        var o = config._i;
+
+        if (config._d) {
+            return;
+        }
+
+        config._a = [
+            o.years || o.year || o.y,
+            o.months || o.month || o.M,
+            o.days || o.day || o.d,
+            o.hours || o.hour || o.h,
+            o.minutes || o.minute || o.m,
+            o.seconds || o.second || o.s,
+            o.milliseconds || o.millisecond || o.ms
+        ];
+
+        dateFromArray(config);
+    }
+
+    function currentDateArray(config) {
+        var now = new Date();
+        if (config._useUTC) {
+            return [
+                now.getUTCFullYear(),
+                now.getUTCMonth(),
+                now.getUTCDate()
+            ];
+        } else {
+            return [now.getFullYear(), now.getMonth(), now.getDate()];
+        }
+    }
+
     // date from string and format string
     function makeDateFromStringAndFormat(config) {
         // This array is used to make a Date, either with `new Date` or `Date.UTC`
-        var tokens = config._f.match(formattingTokens),
-            string = config._i,
-            i, parsedInput;
+        var lang = getLangDefinition(config._l),
+            string = '' + config._i,
+            i, parsedInput, tokens;
+
+        tokens = expandFormat(config._f, lang).match(formattingTokens);
 
         config._a = [];
 
@@ -1373,8 +1443,12 @@ var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/momen
         } else if (isArray(input)) {
             config._a = input.slice(0);
             dateFromArray(config);
+        } else if (input instanceof Date) {
+            config._d = new Date(+input);
+        } else if (typeof(input) === 'object') {
+            dateFromObject(config);
         } else {
-            config._d = input instanceof Date ? new Date(+input) : new Date(input);
+            config._d = new Date(input);
         }
     }
 
@@ -1495,7 +1569,7 @@ var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/momen
             _l : lang,
             _i : input,
             _f : format
-        });
+        }).utc();
     };
 
     // creating with unix timestamp (in seconds)
@@ -1556,8 +1630,13 @@ var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/momen
         if (!key) {
             return moment.fn._lang._abbr;
         }
+        key = key.toLowerCase();
+        key = key.replace('_', '-');
         if (values) {
             loadLang(key, values);
+        } else if (values === null) {
+            unloadLang(key);
+            key = 'en';
         } else if (!languages[key]) {
             getLangDefinition(key);
         }
@@ -1588,7 +1667,7 @@ var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/momen
     ************************************/
 
 
-    moment.fn = Moment.prototype = {
+    extend(moment.fn = Moment.prototype, {
 
         clone : function () {
             return moment(this);
@@ -1636,6 +1715,14 @@ var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/momen
                 }
             }
             return !!this._isValid;
+        },
+
+        invalidAt: function () {
+            var i, arr1 = this._a, arr2 = (this._isUTC ? moment.utc(this._a) : moment(this._a)).toArray();
+            for (i = 6; i >= 0 && arr1[i] === arr2[i]; --i) {
+                // empty loop body
+            }
+            return i;
         },
 
         utc : function () {
@@ -1720,7 +1807,7 @@ var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/momen
         },
 
         calendar : function () {
-            var diff = this.diff(moment().startOf('day'), 'days', true),
+            var diff = this.diff(moment().zone(this.zone()).startOf('day'), 'days', true),
                 format = diff < -6 ? 'sameElse' :
                 diff < -1 ? 'lastWeek' :
                 diff < 0 ? 'lastDay' :
@@ -1757,8 +1844,7 @@ var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/momen
 
         month : function (input) {
             var utc = this._isUTC ? 'UTC' : '',
-                dayOfMonth,
-                daysInMonth;
+                dayOfMonth;
 
             if (input != null) {
                 if (typeof input === 'string') {
@@ -1792,6 +1878,7 @@ var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/momen
                 this.date(1);
                 /* falls through */
             case 'week':
+            case 'isoweek':
             case 'day':
                 this.hours(0);
                 /* falls through */
@@ -1809,13 +1896,16 @@ var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/momen
             // weeks are a special case
             if (units === 'week') {
                 this.weekday(0);
+            } else if (units === 'isoweek') {
+                this.isoWeekday(1);
             }
 
             return this;
         },
 
         endOf: function (units) {
-            return this.startOf(units).add(units, 1).subtract('ms', 1);
+            units = normalizeUnits(units);
+            return this.startOf(units).add((units === 'isoweek' ? 'week' : units), 1).subtract('ms', 1);
         },
 
         isAfter: function (input, units) {
@@ -1871,6 +1961,17 @@ var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/momen
             return this._isUTC ? "Coordinated Universal Time" : "";
         },
 
+        hasAlignedHourOffset : function (input) {
+            if (!input) {
+                input = 0;
+            }
+            else {
+                input = moment(input).zone();
+            }
+
+            return (this.zone() - input) % 60 === 0;
+        },
+
         daysInMonth : function () {
             return moment.utc([this.year(), this.month() + 1, 0]).date();
         },
@@ -1912,6 +2013,16 @@ var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/momen
             return input == null ? this.day() || 7 : this.day(this.day() % 7 ? input : input - 7);
         },
 
+        get : function (units) {
+            units = normalizeUnits(units);
+            return this[units.toLowerCase()]();
+        },
+
+        set : function (units, value) {
+            units = normalizeUnits(units);
+            this[units.toLowerCase()](value);
+        },
+
         // If passed a language key, it will set the language for this
         // instance.  Otherwise, it will return the language configuration
         // variables for this instance.
@@ -1923,7 +2034,7 @@ var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/momen
                 return this;
             }
         }
-    };
+    });
 
     // helper for adding shortcuts
     function makeGetterAndSetter(name, key) {
@@ -1961,7 +2072,8 @@ var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/momen
     ************************************/
 
 
-    moment.duration.fn = Duration.prototype = {
+    extend(moment.duration.fn = Duration.prototype, {
+
         _bubble : function () {
             var milliseconds = this._milliseconds,
                 days = this._days,
@@ -2050,7 +2162,7 @@ var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/momen
         },
 
         lang : moment.fn.lang
-    };
+    });
 
     function makeDurationGetter(name) {
         moment.duration.fn[name] = function () {
@@ -2094,6 +2206,7 @@ var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/momen
         }
     });
 
+    /* EMBED_LANGUAGES */
 
     /************************************
         Exposing Moment
@@ -2129,55 +2242,65 @@ var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/momen
 // language : great britain english (en-gb)
 // author : Chris Gedrim : https://github.com/chrisgedrim
 
-require('../moment').lang('en-gb', {
-    months : "January_February_March_April_May_June_July_August_September_October_November_December".split("_"),
-    monthsShort : "Jan_Feb_Mar_Apr_May_Jun_Jul_Aug_Sep_Oct_Nov_Dec".split("_"),
-    weekdays : "Sunday_Monday_Tuesday_Wednesday_Thursday_Friday_Saturday".split("_"),
-    weekdaysShort : "Sun_Mon_Tue_Wed_Thu_Fri_Sat".split("_"),
-    weekdaysMin : "Su_Mo_Tu_We_Th_Fr_Sa".split("_"),
-    longDateFormat : {
-        LT : "HH:mm",
-        L : "DD/MM/YYYY",
-        LL : "D MMMM YYYY",
-        LLL : "D MMMM YYYY LT",
-        LLLL : "dddd, D MMMM YYYY LT"
-    },
-    calendar : {
-        sameDay : '[Today at] LT',
-        nextDay : '[Tomorrow at] LT',
-        nextWeek : 'dddd [at] LT',
-        lastDay : '[Yesterday at] LT',
-        lastWeek : '[Last] dddd [at] LT',
-        sameElse : 'L'
-    },
-    relativeTime : {
-        future : "in %s",
-        past : "%s ago",
-        s : "a few seconds",
-        m : "a minute",
-        mm : "%d minutes",
-        h : "an hour",
-        hh : "%d hours",
-        d : "a day",
-        dd : "%d days",
-        M : "a month",
-        MM : "%d months",
-        y : "a year",
-        yy : "%d years"
-    },
-    ordinal : function (number) {
-        var b = number % 10,
-            output = (~~ (number % 100 / 10) === 1) ? 'th' :
-            (b === 1) ? 'st' :
-            (b === 2) ? 'nd' :
-            (b === 3) ? 'rd' : 'th';
-        return number + output;
-    },
-    week : {
-        dow : 1, // Monday is the first day of the week.
-        doy : 4  // The week that contains Jan 4th is the first week of the year.
+(function (factory) {
+    if (typeof define === 'function' && define.amd) {
+        define(['moment'], factory); // AMD
+    } else if (typeof exports === 'object') {
+        factory(require('../moment')); // Node
+    } else {
+        factory(window.moment); // Browser global
     }
-});
+}(function (moment) {
+    moment.lang('en-gb', {
+        months : "January_February_March_April_May_June_July_August_September_October_November_December".split("_"),
+        monthsShort : "Jan_Feb_Mar_Apr_May_Jun_Jul_Aug_Sep_Oct_Nov_Dec".split("_"),
+        weekdays : "Sunday_Monday_Tuesday_Wednesday_Thursday_Friday_Saturday".split("_"),
+        weekdaysShort : "Sun_Mon_Tue_Wed_Thu_Fri_Sat".split("_"),
+        weekdaysMin : "Su_Mo_Tu_We_Th_Fr_Sa".split("_"),
+        longDateFormat : {
+            LT : "HH:mm",
+            L : "DD/MM/YYYY",
+            LL : "D MMMM YYYY",
+            LLL : "D MMMM YYYY LT",
+            LLLL : "dddd, D MMMM YYYY LT"
+        },
+        calendar : {
+            sameDay : '[Today at] LT',
+            nextDay : '[Tomorrow at] LT',
+            nextWeek : 'dddd [at] LT',
+            lastDay : '[Yesterday at] LT',
+            lastWeek : '[Last] dddd [at] LT',
+            sameElse : 'L'
+        },
+        relativeTime : {
+            future : "in %s",
+            past : "%s ago",
+            s : "a few seconds",
+            m : "a minute",
+            mm : "%d minutes",
+            h : "an hour",
+            hh : "%d hours",
+            d : "a day",
+            dd : "%d days",
+            M : "a month",
+            MM : "%d months",
+            y : "a year",
+            yy : "%d years"
+        },
+        ordinal : function (number) {
+            var b = number % 10,
+                output = (~~ (number % 100 / 10) === 1) ? 'th' :
+                (b === 1) ? 'st' :
+                (b === 2) ? 'nd' :
+                (b === 3) ? 'rd' : 'th';
+            return number + output;
+        },
+        week : {
+            dow : 1, // Monday is the first day of the week.
+            doy : 4  // The week that contains Jan 4th is the first week of the year.
+        }
+    });
+}));
 
 },
 'node_modules/q/q.js': function(exports, __require, module) {
@@ -2278,6 +2401,8 @@ var nextTick =(function () {
     var isNodeJS = false;
 
     function flush() {
+        /* jshint loopfunc: true */
+
         while (head.next) {
             head = head.next;
             var task = head.task;
@@ -2300,9 +2425,13 @@ var nextTick =(function () {
                     // Ensure continuation if the uncaught exception is suppressed
                     // listening "uncaughtException" events (as domains does).
                     // Continue in next event to avoid tick recursion.
-                    domain && domain.exit();
+                    if (domain) {
+                        domain.exit();
+                    }
                     setTimeout(flush, 0);
-                    domain && domain.enter();
+                    if (domain) {
+                        domain.enter();
+                    }
 
                     throw e;
 
@@ -2359,9 +2488,21 @@ var nextTick =(function () {
         // modern browsers
         // http://www.nonblocking.io/2011/06/windownexttick.html
         var channel = new MessageChannel();
-        channel.port1.onmessage = flush;
-        requestTick = function () {
+        // At least Safari Version 6.0.5 (8536.30.1) intermittently cannot create
+        // working message ports the first time a page loads.
+        channel.port1.onmessage = function () {
+            requestTick = requestPortTick;
+            channel.port1.onmessage = flush;
+            flush();
+        };
+        var requestPortTick = function () {
+            // Opera requires us to provide a message payload, regardless of
+            // whether we use it.
             channel.port2.postMessage(0);
+        };
+        requestTick = function () {
+            setTimeout(flush, 0);
+            requestPortTick();
         };
 
     } else {
@@ -2385,8 +2526,8 @@ var nextTick =(function () {
 // hard-to-minify characters.
 // See Mark Miller’s explanation of what this does.
 // http://wiki.ecmascript.org/doku.php?id=conventions:safe_meta_programming
+var call = Function.call;
 function uncurryThis(f) {
-    var call = Function.call;
     return function () {
         return call.apply(f, arguments);
     };
@@ -2628,13 +2769,26 @@ function deprecate(callback, name, alternative) {
 // beginning of real work
 
 /**
- * Creates fulfilled promises from non-thenables,
- * Passes Q promises through,
- * Coerces other thenables to Q promises.
+ * Constructs a promise for an immediate reference, passes promises through, or
+ * coerces promises from different systems.
+ * @param value immediate reference or promise
  */
 function Q(value) {
-    return resolve(value);
+    // If the object is already a Promise, return it directly.  This enables
+    // the resolve function to both be used to created references from objects,
+    // but to tolerably coerce non-promises to promises.
+    if (isPromise(value)) {
+        return value;
+    }
+
+    // assimilate thenables
+    if (isPromiseAlike(value)) {
+        return coerce(value);
+    } else {
+        return fulfill(value);
+    }
 }
+Q.resolve = Q;
 
 /**
  * Performs a task in a future turn of the event loop.
@@ -2741,7 +2895,7 @@ function defer() {
             return;
         }
 
-        become(resolve(value));
+        become(Q(value));
     };
 
     deferred.fulfill = function (value) {
@@ -2802,16 +2956,76 @@ function promise(resolver) {
     if (typeof resolver !== "function") {
         throw new TypeError("resolver must be a function.");
     }
-
     var deferred = defer();
-    fcall(
-        resolver,
-        deferred.resolve,
-        deferred.reject,
-        deferred.notify
-    ).fail(deferred.reject);
+    try {
+        resolver(deferred.resolve, deferred.reject, deferred.notify);
+    } catch (reason) {
+        deferred.reject(reason);
+    }
     return deferred.promise;
 }
+
+// XXX experimental.  This method is a way to denote that a local value is
+// serializable and should be immediately dispatched to a remote upon request,
+// instead of passing a reference.
+Q.passByCopy = function (object) {
+    //freeze(object);
+    //passByCopies.set(object, true);
+    return object;
+};
+
+Promise.prototype.passByCopy = function () {
+    //freeze(object);
+    //passByCopies.set(object, true);
+    return this;
+};
+
+/**
+ * If two promises eventually fulfill to the same value, promises that value,
+ * but otherwise rejects.
+ * @param x {Any*}
+ * @param y {Any*}
+ * @returns {Any*} a promise for x and y if they are the same, but a rejection
+ * otherwise.
+ *
+ */
+Q.join = function (x, y) {
+    return Q(x).join(y);
+};
+
+Promise.prototype.join = function (that) {
+    return Q([this, that]).spread(function (x, y) {
+        if (x === y) {
+            // TODO: "===" should be Object.is or equiv
+            return x;
+        } else {
+            throw new Error("Can't join: not the same: " + x + " " + y);
+        }
+    });
+};
+
+/**
+ * Returns a promise for the first of an array of promises to become fulfilled.
+ * @param answers {Array[Any*]} promises to race
+ * @returns {Any*} the first promise to be fulfilled
+ */
+Q.race = race;
+function race(answerPs) {
+    return promise(function(resolve, reject) {
+        // Switch to this once we can assume at least ES5
+        // answerPs.forEach(function(answerP) {
+        //     Q(answerP).then(resolve, reject);
+        // });
+        // Use this in the meantime
+        for (var i = 0, len = answerPs.length; i < len; i++) {
+            Q(answerPs[i]).then(resolve, reject);
+        }
+    });
+}
+
+Promise.prototype.race = function () {
+    return this.then(Q.race);
+};
 
 /**
  * Constructs a Promise with a promise descriptor object and optional fallback
@@ -2878,6 +3092,10 @@ function Promise(descriptor, fallback, inspect) {
 
     return promise;
 }
+
+Promise.prototype.toString = function () {
+    return "[object Promise]";
+};
 
 Promise.prototype.then = function (fulfilled, rejected, progressed) {
     var self = this;
@@ -2950,48 +3168,41 @@ Promise.prototype.then = function (fulfilled, rejected, progressed) {
     return deferred.promise;
 };
 
+/**
+ * Registers an observer on a promise.
+ *
+ * Guarantees:
+ *
+ * 1. that fulfilled and rejected will be called only once.
+ * 2. that either the fulfilled callback or the rejected callback will be
+ *    called, but not both.
+ * 3. that fulfilled and rejected will not be called in this turn.
+ *
+ * @param value      promise or immediate reference to observe
+ * @param fulfilled  function to be called with the fulfilled value
+ * @param rejected   function to be called with the rejection exception
+ * @param progressed function to be called on any progress notifications
+ * @return promise for the return value from the invoked callback
+ */
+Q.when = when;
+function when(value, fulfilled, rejected, progressed) {
+    return Q(value).then(fulfilled, rejected, progressed);
+}
+
 Promise.prototype.thenResolve = function (value) {
-    return when(this, function () { return value; });
+    return this.then(function () { return value; });
+};
+
+Q.thenResolve = function (promise, value) {
+    return Q(promise).thenResolve(value);
 };
 
 Promise.prototype.thenReject = function (reason) {
-    return when(this, function () { throw reason; });
+    return this.then(function () { throw reason; });
 };
 
-// Chainable methods
-array_reduce(
-    [
-        "isFulfilled", "isRejected", "isPending",
-        "dispatch",
-        "when", "spread",
-        "get", "set", "del", "delete",
-        "post", "send", "mapply", "invoke", "mcall",
-        "keys",
-        "fapply", "fcall", "fbind",
-        "all", "allResolved",
-        "timeout", "delay",
-        "catch", "finally", "fail", "fin", "progress", "done",
-        "nfcall", "nfapply", "nfbind", "denodeify", "nbind",
-        "npost", "nsend", "nmapply", "ninvoke", "nmcall",
-        "nodeify"
-    ],
-    function (undefined, name) {
-        Promise.prototype[name] = function () {
-            return Q[name].apply(
-                Q,
-                [this].concat(array_slice(arguments))
-            );
-        };
-    },
-    void 0
-);
-
-Promise.prototype.toSource = function () {
-    return this.toString();
-};
-
-Promise.prototype.toString = function () {
-    return "[object Promise]";
+Q.thenReject = function (promise, reason) {
+    return Q(promise).thenReject(reason);
 };
 
 /**
@@ -3041,6 +3252,10 @@ function isPending(object) {
     return isPromise(object) && object.inspect().state === "pending";
 }
 
+Promise.prototype.isPending = function () {
+    return this.inspect().state === "pending";
+};
+
 /**
  * @returns whether the given object is a value or fulfilled
  * promise.
@@ -3050,6 +3265,10 @@ function isFulfilled(object) {
     return !isPromise(object) || object.inspect().state === "fulfilled";
 }
 
+Promise.prototype.isFulfilled = function () {
+    return this.inspect().state === "fulfilled";
+};
+
 /**
  * @returns whether the given object is a rejected promise.
  */
@@ -3057,6 +3276,10 @@ Q.isRejected = isRejected;
 function isRejected(object) {
     return isPromise(object) && object.inspect().state === "rejected";
 }
+
+Promise.prototype.isRejected = function () {
+    return this.inspect().state === "rejected";
+};
 
 //// BEGIN UNHANDLED REJECTION TRACKING
 
@@ -3085,11 +3308,7 @@ function displayUnhandledReasons() {
 function logUnhandledReasons() {
     for (var i = 0; i < unhandledReasons.length; i++) {
         var reason = unhandledReasons[i];
-        if (reason && typeof reason.stack !== "undefined") {
-            console.warn("Unhandled rejection reason:", reason.stack);
-        } else {
-            console.warn("Unhandled rejection reason (no stack):", reason);
-        }
+        console.warn("Unhandled rejection reason:", reason);
     }
 }
 
@@ -3116,7 +3335,11 @@ function trackRejection(promise, reason) {
     }
 
     unhandledRejections.push(promise);
-    unhandledReasons.push(reason);
+    if (reason && typeof reason.stack !== "undefined") {
+        unhandledReasons.push(reason.stack);
+    } else {
+        unhandledReasons.push("(no stack) " + reason);
+    }
     displayUnhandledReasons();
 }
 
@@ -3205,8 +3428,8 @@ function fulfill(value) {
                 return value[name].apply(value, args);
             }
         },
-        "apply": function (thisP, args) {
-            return value.apply(thisP, args);
+        "apply": function (thisp, args) {
+            return value.apply(thisp, args);
         },
         "keys": function () {
             return object_keys(value);
@@ -3214,28 +3437,6 @@ function fulfill(value) {
     }, void 0, function inspect() {
         return { state: "fulfilled", value: value };
     });
-}
-
-/**
- * Constructs a promise for an immediate reference, passes promises through, or
- * coerces promises from different systems.
- * @param value immediate reference or promise
- */
-Q.resolve = resolve;
-function resolve(value) {
-    // If the object is already a Promise, return it directly.  This enables
-    // the resolve function to both be used to created references from objects,
-    // but to tolerably coerce non-promises to promises.
-    if (isPromise(value)) {
-        return value;
-    }
-
-    // assimilate thenables
-    if (isPromiseAlike(value)) {
-        return coerce(value);
-    } else {
-        return fulfill(value);
-    }
 }
 
 /**
@@ -3271,29 +3472,8 @@ function master(object) {
     }, function fallback(op, args) {
         return dispatch(object, op, args);
     }, function () {
-        return resolve(object).inspect();
+        return Q(object).inspect();
     });
-}
-
-/**
- * Registers an observer on a promise.
- *
- * Guarantees:
- *
- * 1. that fulfilled and rejected will be called only once.
- * 2. that either the fulfilled callback or the rejected callback will be
- *    called, but not both.
- * 3. that fulfilled and rejected will not be called in this turn.
- *
- * @param value      promise or immediate reference to observe
- * @param fulfilled  function to be called with the fulfilled value
- * @param rejected   function to be called with the rejection exception
- * @param progressed function to be called on any progress notifications
- * @return promise for the return value from the invoked callback
- */
-Q.when = when;
-function when(value, fulfilled, rejected, progressed) {
-    return Q(value).then(fulfilled, rejected, progressed);
 }
 
 /**
@@ -3307,13 +3487,15 @@ function when(value, fulfilled, rejected, progressed) {
  * either callback.
  */
 Q.spread = spread;
-function spread(promise, fulfilled, rejected) {
-    return when(promise, function (valuesOrPromises) {
-        return all(valuesOrPromises).then(function (values) {
-            return fulfilled.apply(void 0, values);
-        }, rejected);
-    }, rejected);
+function spread(value, fulfilled, rejected) {
+    return Q(value).spread(fulfilled, rejected);
 }
+
+Promise.prototype.spread = function (fulfilled, rejected) {
+    return this.all().then(function (array) {
+        return fulfilled.apply(void 0, array);
+    }, rejected);
+};
 
 /**
  * The async function is a decorator for generator functions, turning
@@ -3374,7 +3556,7 @@ function async(makeGenerator) {
             }
         }
         var generator = makeGenerator.apply(this, arguments);
-        var callback = continuer.bind(continuer, "send");
+        var callback = continuer.bind(continuer, "next");
         var errback = continuer.bind(continuer, "throw");
         return callback();
     };
@@ -3432,7 +3614,7 @@ function _return(value) {
  * var add = Q.promised(function (a, b) {
  *     return a + b;
  * });
- * add(Q.resolve(a), Q.resolve(B));
+ * add(Q(a), Q(B));
  *
  * @param {function} callback The function to decorate
  * @returns {function} a function that has been decorated.
@@ -3455,26 +3637,17 @@ function promised(callback) {
  */
 Q.dispatch = dispatch;
 function dispatch(object, op, args) {
-    var deferred = defer();
-    nextTick(function () {
-        resolve(object).promiseDispatch(deferred.resolve, op, args);
-    });
-    return deferred.promise;
+    return Q(object).dispatch(op, args);
 }
 
-/**
- * Constructs a promise method that can be used to safely observe resolution of
- * a promise for an arbitrarily named method like "propfind" in a future turn.
- *
- * "dispatcher" constructs methods like "get(promise, name)" and "set(promise)".
- */
-Q.dispatcher = dispatcher;
-function dispatcher(op) {
-    return function (object) {
-        var args = array_slice(arguments, 1);
-        return dispatch(object, op, args);
-    };
-}
+Promise.prototype.dispatch = function (op, args) {
+    var self = this;
+    var deferred = defer();
+    nextTick(function () {
+        self.promiseDispatch(deferred.resolve, op, args);
+    });
+    return deferred.promise;
+};
 
 /**
  * Gets the value of a property in a future turn.
@@ -3482,7 +3655,13 @@ function dispatcher(op) {
  * @param name      name of property to get
  * @return promise for the property value
  */
-Q.get = dispatcher("get");
+Q.get = function (object, key) {
+    return Q(object).dispatch("get", [key]);
+};
+
+Promise.prototype.get = function (key) {
+    return this.dispatch("get", [key]);
+};
 
 /**
  * Sets the value of a property in a future turn.
@@ -3491,7 +3670,13 @@ Q.get = dispatcher("get");
  * @param value     new value of property
  * @return promise for the return value
  */
-Q.set = dispatcher("set");
+Q.set = function (object, key, value) {
+    return Q(object).dispatch("set", [key, value]);
+};
+
+Promise.prototype.set = function (key, value) {
+    return this.dispatch("set", [key, value]);
+};
 
 /**
  * Deletes a property in a future turn.
@@ -3499,8 +3684,15 @@ Q.set = dispatcher("set");
  * @param name      name of property to delete
  * @return promise for the return value
  */
-Q["delete"] = // XXX experimental
-Q.del = dispatcher("delete");
+Q.del = // XXX legacy
+Q["delete"] = function (object, key) {
+    return Q(object).dispatch("delete", [key]);
+};
+
+Promise.prototype.del = // XXX legacy
+Promise.prototype["delete"] = function (key) {
+    return this.dispatch("delete", [key]);
+};
 
 /**
  * Invokes a method in a future turn.
@@ -3515,8 +3707,15 @@ Q.del = dispatcher("delete");
  * @return promise for the return value
  */
 // bound locally because it is used by other methods
-var post = Q.post = dispatcher("post");
-Q.mapply = post; // experimental
+Q.mapply = // XXX As proposed by "Redsandro"
+Q.post = function (object, name, args) {
+    return Q(object).dispatch("post", [name, args]);
+};
+
+Promise.prototype.mapply = // XXX As proposed by "Redsandro"
+Promise.prototype.post = function (name, args) {
+    return this.dispatch("post", [name, args]);
+};
 
 /**
  * Invokes a method in a future turn.
@@ -3525,35 +3724,44 @@ Q.mapply = post; // experimental
  * @param ...args   array of invocation arguments
  * @return promise for the return value
  */
-Q.send = send;
-Q.invoke = send; // synonyms
-Q.mcall = send; // experimental
-function send(value, name) {
-    var args = array_slice(arguments, 2);
-    return post(value, name, args);
-}
+Q.send = // XXX Mark Miller's proposed parlance
+Q.mcall = // XXX As proposed by "Redsandro"
+Q.invoke = function (object, name /*...args*/) {
+    return Q(object).dispatch("post", [name, array_slice(arguments, 2)]);
+};
+
+Promise.prototype.send = // XXX Mark Miller's proposed parlance
+Promise.prototype.mcall = // XXX As proposed by "Redsandro"
+Promise.prototype.invoke = function (name /*...args*/) {
+    return this.dispatch("post", [name, array_slice(arguments, 1)]);
+};
 
 /**
  * Applies the promised function in a future turn.
  * @param object    promise or immediate reference for target function
  * @param args      array of application arguments
  */
-Q.fapply = fapply;
-function fapply(value, args) {
-    return dispatch(value, "apply", [void 0, args]);
-}
+Q.fapply = function (object, args) {
+    return Q(object).dispatch("apply", [void 0, args]);
+};
+
+Promise.prototype.fapply = function (args) {
+    return this.dispatch("apply", [void 0, args]);
+};
 
 /**
  * Calls the promised function in a future turn.
  * @param object    promise or immediate reference for target function
  * @param ...args   array of application arguments
  */
-Q["try"] = fcall; // XXX experimental
-Q.fcall = fcall;
-function fcall(value) {
-    var args = array_slice(arguments, 1);
-    return fapply(value, args);
-}
+Q["try"] =
+Q.fcall = function (object /* ...args*/) {
+    return Q(object).dispatch("apply", [void 0, array_slice(arguments, 1)]);
+};
+
+Promise.prototype.fcall = function (/*...args*/) {
+    return this.dispatch("apply", [void 0, array_slice(arguments)]);
+};
 
 /**
  * Binds the promised function, transforming return values into a fulfilled
@@ -3561,14 +3769,26 @@ function fcall(value) {
  * @param object    promise or immediate reference for target function
  * @param ...args   array of application arguments
  */
-Q.fbind = fbind;
-function fbind(value) {
+Q.fbind = function (object /*...args*/) {
+    var promise = Q(object);
     var args = array_slice(arguments, 1);
     return function fbound() {
-        var allArgs = args.concat(array_slice(arguments));
-        return dispatch(value, "apply", [this, allArgs]);
+        return promise.dispatch("apply", [
+            this,
+            args.concat(array_slice(arguments))
+        ]);
     };
-}
+};
+Promise.prototype.fbind = function (/*...args*/) {
+    var promise = this;
+    var args = array_slice(arguments);
+    return function fbound() {
+        return promise.dispatch("apply", [
+            this,
+            args.concat(array_slice(arguments))
+        ]);
+    };
+};
 
 /**
  * Requests the names of the owned properties of a promised
@@ -3576,7 +3796,13 @@ function fbind(value) {
  * @param object    promise or immediate reference for target object
  * @return promise for the keys of the eventually settled object
  */
-Q.keys = dispatcher("keys");
+Q.keys = function (object) {
+    return Q(object).dispatch("keys", []);
+};
+
+Promise.prototype.keys = function () {
+    return this.dispatch("keys", []);
+};
 
 /**
  * Turns an array of promises into a promise for an array.  If any of
@@ -3601,12 +3827,19 @@ function all(promises) {
                 promises[index] = snapshot.value;
             } else {
                 ++countDown;
-                when(promise, function (value) {
-                    promises[index] = value;
-                    if (--countDown === 0) {
-                        deferred.resolve(promises);
+                when(
+                    promise,
+                    function (value) {
+                        promises[index] = value;
+                        if (--countDown === 0) {
+                            deferred.resolve(promises);
+                        }
+                    },
+                    deferred.reject,
+                    function (progress) {
+                        deferred.notify({ index: index, value: progress });
                     }
-                }, deferred.reject);
+                );
             }
         }, void 0);
         if (countDown === 0) {
@@ -3615,6 +3848,10 @@ function all(promises) {
         return deferred.promise;
     });
 }
+
+Promise.prototype.all = function () {
+    return all(this);
+};
 
 /**
  * Waits for all promises to be settled, either fulfilled or
@@ -3628,7 +3865,7 @@ function all(promises) {
 Q.allResolved = deprecate(allResolved, "allResolved", "allSettled");
 function allResolved(promises) {
     return when(promises, function (promises) {
-        promises = array_map(promises, resolve);
+        promises = array_map(promises, Q);
         return when(all(array_map(promises, function (promise) {
             return when(promise, noop, noop);
         })), function () {
@@ -3637,24 +3874,36 @@ function allResolved(promises) {
     });
 }
 
+Promise.prototype.allResolved = function () {
+    return allResolved(this);
+};
+
+/**
+ * @see Promise#allSettled
+ */
 Q.allSettled = allSettled;
-function allSettled(values) {
-    return when(values, function (values) {
-        return all(array_map(values, function (value, i) {
-            return when(
-                value,
-                function (fulfillmentValue) {
-                    values[i] = { state: "fulfilled", value: fulfillmentValue };
-                    return values[i];
-                },
-                function (reason) {
-                    values[i] = { state: "rejected", reason: reason };
-                    return values[i];
-                }
-            );
-        })).thenResolve(values);
-    });
+function allSettled(promises) {
+    return Q(promises).allSettled();
 }
+
+/**
+ * Turns an array of promises into a promise for an array of their states (as
+ * returned by `inspect`) when they have all settled.
+ * @param {Array[Any*]} values an array (or promise for an array) of values (or
+ * promises for values)
+ * @returns {Array[State]} an array of states for the respective values.
+ */
+Promise.prototype.allSettled = function () {
+    return this.then(function (promises) {
+        return all(array_map(promises, function (promise) {
+            promise = Q(promise);
+            function regardless() {
+                return promise.inspect();
+            }
+            return promise.then(regardless, regardless);
+        }));
+    });
+};
 
 /**
  * Captures the failure of a promise, giving an oportunity to recover
@@ -3665,11 +3914,15 @@ function allSettled(values) {
  * given promise is rejected
  * @returns a promise for the return value of the callback
  */
-Q["catch"] = // XXX experimental
-Q.fail = fail;
-function fail(promise, rejected) {
-    return when(promise, void 0, rejected);
-}
+Q.fail = // XXX legacy
+Q["catch"] = function (object, rejected) {
+    return Q(object).then(void 0, rejected);
+};
+
+Promise.prototype.fail = // XXX legacy
+Promise.prototype["catch"] = function (rejected) {
+    return this.then(void 0, rejected);
+};
 
 /**
  * Attaches a listener that can respond to progress notifications from a
@@ -3680,9 +3933,13 @@ function fail(promise, rejected) {
  * @returns the given promise, unchanged
  */
 Q.progress = progress;
-function progress(promise, progressed) {
-    return when(promise, void 0, void 0, progressed);
+function progress(object, progressed) {
+    return Q(object).then(void 0, void 0, progressed);
 }
+
+Promise.prototype.progress = function (progressed) {
+    return this.then(void 0, void 0, progressed);
+};
 
 /**
  * Provides an opportunity to observe the settling of a promise,
@@ -3695,19 +3952,25 @@ function progress(promise, progressed) {
  * @returns a promise for the resolution of the given promise when
  * ``fin`` is done.
  */
-Q["finally"] = // XXX experimental
-Q.fin = fin;
-function fin(promise, callback) {
-    return when(promise, function (value) {
-        return when(callback(), function () {
+Q.fin = // XXX legacy
+Q["finally"] = function (object, callback) {
+    return Q(object)["finally"](callback);
+};
+
+Promise.prototype.fin = // XXX legacy
+Promise.prototype["finally"] = function (callback) {
+    callback = Q(callback);
+    return this.then(function (value) {
+        return callback.fcall().then(function () {
             return value;
         });
-    }, function (exception) {
-        return when(callback(), function () {
-            return reject(exception);
+    }, function (reason) {
+        // TODO attempt to recycle the rejection with "this".
+        return callback.fcall().then(function () {
+            throw reason;
         });
     });
-}
+};
 
 /**
  * Terminates a chain of promises, forcing rejections to be
@@ -3715,14 +3978,16 @@ function fin(promise, callback) {
  * @param {Any*} promise at the end of a chain of promises
  * @returns nothing
  */
-Q.done = done;
-function done(promise, fulfilled, rejected, progress) {
+Q.done = function (object, fulfilled, rejected, progress) {
+    return Q(object).done(fulfilled, rejected, progress);
+};
+
+Promise.prototype.done = function (fulfilled, rejected, progress) {
     var onUnhandledError = function (error) {
         // forward to a future turn so that ``when``
         // does not catch it and turn it into a rejection.
         nextTick(function () {
             makeStackTraceLong(error, promise);
-
             if (Q.onerror) {
                 Q.onerror(error);
             } else {
@@ -3732,15 +3997,16 @@ function done(promise, fulfilled, rejected, progress) {
     };
 
     // Avoid unnecessary `nextTick`ing via an unnecessary `when`.
-    var promiseToHandle = fulfilled || rejected || progress ?
-        when(promise, fulfilled, rejected, progress) :
-        promise;
+    var promise = fulfilled || rejected || progress ?
+        this.then(fulfilled, rejected, progress) :
+        this;
 
     if (typeof process === "object" && process && process.domain) {
         onUnhandledError = process.domain.bind(onUnhandledError);
     }
-    fail(promiseToHandle, onUnhandledError);
-}
+
+    promise.then(void 0, onUnhandledError);
+};
 
 /**
  * Causes a promise to be rejected if it does not get fulfilled before
@@ -3751,14 +4017,17 @@ function done(promise, fulfilled, rejected, progress) {
  * @returns a promise for the resolution of the given promise if it is
  * fulfilled before the timeout, otherwise rejected.
  */
-Q.timeout = timeout;
-function timeout(promise, ms, msg) {
+Q.timeout = function (object, ms, message) {
+    return Q(object).timeout(ms, message);
+};
+
+Promise.prototype.timeout = function (ms, message) {
     var deferred = defer();
     var timeoutId = setTimeout(function () {
-        deferred.reject(new Error(msg || "Timed out after " + ms + " ms"));
+        deferred.reject(new Error(message || "Timed out after " + ms + " ms"));
     }, ms);
 
-    when(promise, function (value) {
+    this.then(function (value) {
         clearTimeout(timeoutId);
         deferred.resolve(value);
     }, function (exception) {
@@ -3767,32 +4036,34 @@ function timeout(promise, ms, msg) {
     }, deferred.notify);
 
     return deferred.promise;
-}
+};
 
 /**
- * Returns a promise for the given value (or promised value) after some
- * milliseconds.
+ * Returns a promise for the given value (or promised value), some
+ * milliseconds after it resolved. Passes rejections immediately.
  * @param {Any*} promise
  * @param {Number} milliseconds
- * @returns a promise for the resolution of the given promise after some
- * time has elapsed.
+ * @returns a promise for the resolution of the given promise after milliseconds
+ * time has elapsed since the resolution of the given promise.
+ * If the given promise rejects, that is passed immediately.
  */
-Q.delay = delay;
-function delay(promise, timeout) {
+Q.delay = function (object, timeout) {
     if (timeout === void 0) {
-        timeout = promise;
-        promise = void 0;
+        timeout = object;
+        object = void 0;
     }
+    return Q(object).delay(timeout);
+};
 
-    var deferred = defer();
-
-    when(promise, undefined, undefined, deferred.notify);
-    setTimeout(function () {
-        deferred.resolve(promise);
-    }, timeout);
-
-    return deferred.promise;
-}
+Promise.prototype.delay = function (timeout) {
+    return this.then(function (value) {
+        var deferred = defer();
+        setTimeout(function () {
+            deferred.resolve(value);
+        }, timeout);
+        return deferred.promise;
+    });
+};
 
 /**
  * Passes a continuation to a Node function, which is called with the given
@@ -3803,74 +4074,86 @@ function delay(promise, timeout) {
  *      })
  *
  */
-Q.nfapply = nfapply;
-function nfapply(callback, args) {
-    var nodeArgs = array_slice(args);
-    var deferred = defer();
-    nodeArgs.push(deferred.makeNodeResolver());
+Q.nfapply = function (callback, args) {
+    return Q(callback).nfapply(args);
+};
 
-    fapply(callback, nodeArgs).fail(deferred.reject);
+Promise.prototype.nfapply = function (args) {
+    var deferred = defer();
+    var nodeArgs = array_slice(args);
+    nodeArgs.push(deferred.makeNodeResolver());
+    this.fapply(nodeArgs).fail(deferred.reject);
     return deferred.promise;
-}
+};
 
 /**
  * Passes a continuation to a Node function, which is called with the given
  * arguments provided individually, and returns a promise.
- *
- *      Q.nfcall(FS.readFile, __filename)
- *      .then(function (content) {
- *      })
+ * @example
+ * Q.nfcall(FS.readFile, __filename)
+ * .then(function (content) {
+ * })
  *
  */
-Q.nfcall = nfcall;
-function nfcall(callback/*, ...args */) {
-    var nodeArgs = array_slice(arguments, 1);
+Q.nfcall = function (callback /*...args*/) {
+    var args = array_slice(arguments, 1);
+    return Q(callback).nfapply(args);
+};
+
+Promise.prototype.nfcall = function (/*...args*/) {
+    var nodeArgs = array_slice(arguments);
     var deferred = defer();
     nodeArgs.push(deferred.makeNodeResolver());
-
-    fapply(callback, nodeArgs).fail(deferred.reject);
+    this.fapply(nodeArgs).fail(deferred.reject);
     return deferred.promise;
-}
+};
 
 /**
  * Wraps a NodeJS continuation passing function and returns an equivalent
  * version that returns a promise.
- *
- *      Q.nfbind(FS.readFile, __filename)("utf-8")
- *      .then(console.log)
- *      .done()
- *
+ * @example
+ * Q.nfbind(FS.readFile, __filename)("utf-8")
+ * .then(console.log)
+ * .done()
  */
-Q.nfbind = nfbind;
-Q.denodeify = Q.nfbind; // synonyms
-function nfbind(callback/*, ...args */) {
+Q.nfbind =
+Q.denodeify = function (callback /*...args*/) {
     var baseArgs = array_slice(arguments, 1);
     return function () {
         var nodeArgs = baseArgs.concat(array_slice(arguments));
         var deferred = defer();
         nodeArgs.push(deferred.makeNodeResolver());
-
-        fapply(callback, nodeArgs).fail(deferred.reject);
+        Q(callback).fapply(nodeArgs).fail(deferred.reject);
         return deferred.promise;
     };
-}
+};
 
-Q.nbind = nbind;
-function nbind(callback, thisArg /*, ... args*/) {
+Promise.prototype.nfbind =
+Promise.prototype.denodeify = function (/*...args*/) {
+    var args = array_slice(arguments);
+    args.unshift(this);
+    return Q.denodeify.apply(void 0, args);
+};
+
+Q.nbind = function (callback, thisp /*...args*/) {
     var baseArgs = array_slice(arguments, 2);
     return function () {
         var nodeArgs = baseArgs.concat(array_slice(arguments));
         var deferred = defer();
         nodeArgs.push(deferred.makeNodeResolver());
-
         function bound() {
-            return callback.apply(thisArg, arguments);
+            return callback.apply(thisp, arguments);
         }
-
-        fapply(bound, nodeArgs).fail(deferred.reject);
+        Q(bound).fapply(nodeArgs).fail(deferred.reject);
         return deferred.promise;
     };
-}
+};
+
+Promise.prototype.nbind = function (/*thisp, ...args*/) {
+    var args = array_slice(arguments, 0);
+    args.unshift(this);
+    return Q.nbind.apply(void 0, args);
+};
 
 /**
  * Calls a method of a Node-style object that accepts a Node-style
@@ -3881,16 +4164,19 @@ function nbind(callback, thisArg /*, ... args*/) {
  * will be provided by Q and appended to these arguments.
  * @returns a promise for the value or error
  */
-Q.npost = npost;
-Q.nmapply = npost; // synonyms
-function npost(object, name, args) {
+Q.nmapply = // XXX As proposed by "Redsandro"
+Q.npost = function (object, name, args) {
+    return Q(object).npost(name, args);
+};
+
+Promise.prototype.nmapply = // XXX As proposed by "Redsandro"
+Promise.prototype.npost = function (name, args) {
     var nodeArgs = array_slice(args || []);
     var deferred = defer();
     nodeArgs.push(deferred.makeNodeResolver());
-
-    post(object, name, nodeArgs).fail(deferred.reject);
+    this.dispatch("post", [name, nodeArgs]).fail(deferred.reject);
     return deferred.promise;
-}
+};
 
 /**
  * Calls a method of a Node-style object that accepts a Node-style
@@ -3902,21 +4188,44 @@ function npost(object, name, args) {
  * be provided by Q and appended to these arguments.
  * @returns a promise for the value or error
  */
-Q.nsend = nsend;
-Q.ninvoke = Q.nsend; // synonyms
-Q.nmcall = Q.nsend; // synonyms
-function nsend(object, name /*, ...args*/) {
+Q.nsend = // XXX Based on Mark Miller's proposed "send"
+Q.nmcall = // XXX Based on "Redsandro's" proposal
+Q.ninvoke = function (object, name /*...args*/) {
     var nodeArgs = array_slice(arguments, 2);
     var deferred = defer();
     nodeArgs.push(deferred.makeNodeResolver());
-    post(object, name, nodeArgs).fail(deferred.reject);
+    Q(object).dispatch("post", [name, nodeArgs]).fail(deferred.reject);
     return deferred.promise;
+};
+
+Promise.prototype.nsend = // XXX Based on Mark Miller's proposed "send"
+Promise.prototype.nmcall = // XXX Based on "Redsandro's" proposal
+Promise.prototype.ninvoke = function (name /*...args*/) {
+    var nodeArgs = array_slice(arguments, 1);
+    var deferred = defer();
+    nodeArgs.push(deferred.makeNodeResolver());
+    this.dispatch("post", [name, nodeArgs]).fail(deferred.reject);
+    return deferred.promise;
+};
+
+/**
+ * If a function would like to support both Node continuation-passing-style and
+ * promise-returning-style, it can end its internal promise chain with
+ * `nodeify(nodeback)`, forwarding the optional nodeback argument.  If the user
+ * elects to use a nodeback, the result will be sent there.  If they do not
+ * pass a nodeback, they will receive the result promise.
+ * @param object a result (or a promise for a result)
+ * @param {Function} nodeback a Node.js-style callback
+ * @returns either the promise or nothing
+ */
+Q.nodeify = nodeify;
+function nodeify(object, nodeback) {
+    return Q(object).nodeify(nodeback);
 }
 
-Q.nodeify = nodeify;
-function nodeify(promise, nodeback) {
+Promise.prototype.nodeify = function (nodeback) {
     if (nodeback) {
-        promise.then(function (value) {
+        this.then(function (value) {
             nextTick(function () {
                 nodeback(null, value);
             });
@@ -3926,9 +4235,9 @@ function nodeify(promise, nodeback) {
             });
         });
     } else {
-        return promise;
+        return this;
     }
-}
+};
 
 // All code before this point will be filtered from stack traces.
 var qEndingLine = captureLine();
@@ -4430,6 +4739,8 @@ function SAXStream (strict, opt) {
     me._parser.error = null
   }
 
+  this._decoder = null;
+
   streamWraps.forEach(function (ev) {
     Object.defineProperty(me, "on" + ev, {
       get: function () { return me._parser["on" + ev] },
@@ -4450,13 +4761,24 @@ SAXStream.prototype = Object.create(Stream.prototype,
   { constructor: { value: SAXStream } })
 
 SAXStream.prototype.write = function (data) {
+  if (typeof Buffer === 'function' &&
+      typeof Buffer.isBuffer === 'function' &&
+      Buffer.isBuffer(data)) {
+    if (!this._decoder) {
+      var SD = require('string_decoder').StringDecoder
+      this._decoder = new SD('utf8')
+    }
+    data = this._decoder.write(data);
+  }
+
   this._parser.write(data.toString())
   this.emit("data", data)
   return true
 }
 
 SAXStream.prototype.end = function (chunk) {
-  if (chunk && chunk.length) this._parser.write(chunk.toString())
+  if (chunk && chunk.length) this.write(chunk)
+  else if (this.leftovers) this._parser.write(this.leftovers.toString())
   this._parser.end()
   return true
 }
@@ -5796,7 +6118,7 @@ return {
     "email": "i@izs.me",
     "url": "http://blog.izs.me/"
   },
-  "version": "0.5.4",
+  "version": "0.5.5",
   "main": "lib/sax.js",
   "license": "BSD",
   "scripts": {
@@ -5849,7 +6171,7 @@ return {
   "bugs": {
     "url": "https://github.com/isaacs/sax-js/issues"
   },
-  "_id": "sax@0.5.4",
+  "_id": "sax@0.5.5",
   "_from": "sax@0.5.x"
 }
 
@@ -6763,6 +7085,45 @@ require(__dirname).test
 
 
 },
+'node_modules/xml2js/node_modules/sax/test/utf8-split.js': function(exports, __require, module) {
+var require = function(name) {return __require(name, 'node_modules/xml2js/node_modules/sax/test/utf8-split.js');};
+var __filename = 'node_modules/xml2js/node_modules/sax/test/utf8-split.js';
+var __dirname = 'node_modules/xml2js/node_modules/sax/test';
+var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/xml2js/node_modules/sax/test/utf8-split.js'], env: {}};
+var assert = require('assert')
+var saxStream = require('../lib/sax').createStream()
+
+var b = new Buffer('误')
+
+saxStream.on('text', function(text) {
+  assert.equal(text, b.toString())
+})
+
+saxStream.write(new Buffer('<test><a>'))
+saxStream.write(b.slice(0, 1))
+saxStream.write(b.slice(1))
+saxStream.write(new Buffer('</a><b>'))
+saxStream.write(b.slice(0, 2))
+saxStream.write(b.slice(2))
+saxStream.write(new Buffer('</b><c>'))
+saxStream.write(b)
+saxStream.write(new Buffer('</c>'))
+saxStream.write(Buffer.concat([new Buffer('<d>'), b.slice(0, 1)]))
+saxStream.end(Buffer.concat([b.slice(1), new Buffer('</d></test>')]))
+
+var saxStream2 = require('../lib/sax').createStream()
+
+saxStream2.on('text', function(text) {
+  assert.equal(text, '�')
+});
+
+saxStream2.write(new Buffer('<e>'));
+saxStream2.write(new Buffer([0xC0]));
+saxStream2.write(new Buffer('</e>'));
+saxStream2.write(Buffer.concat([new Buffer('<f>'), b.slice(0,1)]));
+saxStream2.end();
+
+},
 'node_modules/xml2js/node_modules/sax/test/xmlns-issue-41.js': function(exports, __require, module) {
 var require = function(name) {return __require(name, 'node_modules/xml2js/node_modules/sax/test/xmlns-issue-41.js');};
 var __filename = 'node_modules/xml2js/node_modules/sax/test/xmlns-issue-41.js';
@@ -7337,22 +7698,11 @@ return {
     "url": "https://github.com/Leonidas-from-XIV/node-xml2js/issues"
   },
   "_id": "xml2js@0.2.8",
-  "dist": {
-    "shasum": "0be6706bec90c5d1b8984015733c6bc2d7797da8"
-  },
-  "_from": "xml2js@0.2.8",
-  "_resolved": "https://registry.npmjs.org/xml2js/-/xml2js-0.2.8.tgz"
+  "_from": "xml2js@latest"
 }
 
 }).call(this);
 
-},
-'node_modules/browser-http/Extensions/Forms.js': function(exports, __require, module) {
-var require = function(name) {return __require(name, 'node_modules/browser-http/Extensions/Forms.js');};
-var __filename = 'node_modules/browser-http/Extensions/Forms.js';
-var __dirname = 'node_modules/browser-http/Extensions';
-var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/browser-http/Extensions/Forms.js'], env: {}};
-module.exports = require('../lib/Extensions/Forms');
 },
 'node_modules/browser-http/lib/Extensions/Forms.js': function(exports, __require, module) {
 var require = function(name) {return __require(name, 'node_modules/browser-http/lib/Extensions/Forms.js');};
@@ -7434,38 +7784,105 @@ var __dirname = 'node_modules/browser-http/lib';
 var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/browser-http/lib/Http.js'], env: {}};
 // Generated by CoffeeScript 1.6.3
 (function() {
-  var Http, Q, Request;
+  var EventEmitter, Http, Q, Queue, Request,
+    __hasProp = {}.hasOwnProperty,
+    __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
+    __slice = [].slice;
 
   Request = require('./Request');
 
+  Queue = require('./Queue');
+
   Q = require('q');
 
-  Http = (function() {
-    function Http() {}
+  EventEmitter = require('events').EventEmitter;
 
-    Http.events = {
-      send: [],
-      complete: [],
-      error: [],
-      success: []
-    };
+  Http = (function(_super) {
+    __extends(Http, _super);
 
-    Http.extensions = {};
+    Http.requests = [];
 
-    Http.request = function(url, options) {
+    Http.prototype.extensions = null;
+
+    Http.prototype.queue = null;
+
+    Http.prototype.useQueue = true;
+
+    function Http() {
+      var _this = this;
+      Http.__super__.constructor.apply(this, arguments);
+      this.extensions = {};
+      this.queue = new Queue;
+      this.on('send', function() {
+        var args;
+        args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+        return _this.callExtensions('send', args);
+      });
+      this.on('complete', function() {
+        var args;
+        args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+        return _this.callExtensions('complete', args);
+      });
+      this.on('error', function() {
+        var args;
+        args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+        return _this.callExtensions('error', args);
+      });
+      this.on('success', function() {
+        var args;
+        args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+        return _this.callExtensions('success', args);
+      });
+    }
+
+    Http.prototype.request = function(url, options) {
+      var deferred, request,
+        _this = this;
       if (options == null) {
         options = {};
       }
-      if (!options.type) {
+      if (typeof options.type === 'undefined') {
         options.type = 'GET';
       }
-      if (!options.data) {
+      if (typeof options.data === 'undefined') {
         options.data = null;
       }
-      return (new Request(url, options.type, options.data)).send();
+      if (typeof options.jsonp === 'undefined') {
+        options.jsonp = false;
+      }
+      request = new Request(url, options.type, options.data, options.jsonp, Http.requests.length);
+      request.on('send', function(response, request) {
+        return _this.emit('send', response, request);
+      });
+      request.on('success', function(response, request) {
+        return _this.emit('success', response, request);
+      });
+      request.on('error', function(error, response, request) {
+        return _this.emit('error', response, request);
+      });
+      request.on('complete', function(response, request) {
+        return _this.emit('complete', response, request);
+      });
+      Http.requests.push(request);
+      if (this.useQueue) {
+        deferred = Q.defer();
+        this.queue.add(request, function() {
+          return request.send().then(function(response) {
+            _this.queue.next();
+            return deferred.resolve(response);
+          }).fail(function(err) {
+            _this.queue.next();
+            return deferred.reject(err);
+          });
+        });
+        this.queue.run();
+        return deferred.promise;
+      } else {
+        return request.send();
+      }
     };
 
-    Http.get = function(url, options) {
+    Http.prototype.get = function(url, options) {
       if (options == null) {
         options = {};
       }
@@ -7473,7 +7890,7 @@ var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/brows
       return this.request(url, options);
     };
 
-    Http.post = function(url, options) {
+    Http.prototype.post = function(url, options) {
       if (options == null) {
         options = {};
       }
@@ -7481,7 +7898,7 @@ var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/brows
       return this.request(url, options);
     };
 
-    Http.put = function(url, options) {
+    Http.prototype.put = function(url, options) {
       if (options == null) {
         options = {};
       }
@@ -7489,7 +7906,7 @@ var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/brows
       return this.request(url, options);
     };
 
-    Http["delete"] = function(url, options) {
+    Http.prototype["delete"] = function(url, options) {
       if (options == null) {
         options = {};
       }
@@ -7497,7 +7914,7 @@ var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/brows
       return this.request(url, options);
     };
 
-    Http.getJson = function(url, options) {
+    Http.prototype.getJson = function(url, options) {
       if (options == null) {
         options = {};
       }
@@ -7509,7 +7926,7 @@ var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/brows
       });
     };
 
-    Http.postJson = function(url, options) {
+    Http.prototype.postJson = function(url, options) {
       if (options == null) {
         options = {};
       }
@@ -7522,12 +7939,275 @@ var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/brows
       });
     };
 
-    Http.urlencode = function(param) {
+    Http.prototype.jsonp = function(url, options) {
+      if (options == null) {
+        options = {};
+      }
+      if (typeof options.jsonp === 'undefined') {
+        options.jsonp = true;
+      }
+      return this.get(url, options);
+    };
+
+    Http.prototype.isHistoryApiSupported = function() {
+      return window.history && window.history.pushState && window.history.replaceState && !navigator.userAgent.match(/((iPod|iPhone|iPad).+\bOS\s+[1-4]|WebApps\/.+CFNetwork)/);
+    };
+
+    Http.prototype.addExtension = function(name, fns) {
+      this.extensions[name] = fns;
+      return this;
+    };
+
+    Http.prototype.removeExtension = function(name) {
+      if (typeof this.extensions[name] === 'undefined') {
+        throw new Error('Extension ' + name + ' does not exists');
+      }
+      delete this.extensions[name];
+      return this;
+    };
+
+    Http.prototype.callExtensions = function(event, args) {
+      var ext, name, _ref, _results;
+      _ref = this.extensions;
+      _results = [];
+      for (name in _ref) {
+        ext = _ref[name];
+        if (typeof ext[event] !== 'undefined') {
+          _results.push(ext[event].apply(ext[event], args));
+        } else {
+          _results.push(void 0);
+        }
+      }
+      return _results;
+    };
+
+    return Http;
+
+  })(EventEmitter);
+
+  module.exports = new Http;
+
+}).call(this);
+
+},
+'node_modules/browser-http/lib/Request.js': function(exports, __require, module) {
+var require = function(name) {return __require(name, 'node_modules/browser-http/lib/Request.js');};
+var __filename = 'node_modules/browser-http/lib/Request.js';
+var __dirname = 'node_modules/browser-http/lib';
+var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/browser-http/lib/Request.js'], env: {}};
+// Generated by CoffeeScript 1.6.3
+(function() {
+  var EventEmitter, Helpers, Q, Request, Response,
+    __hasProp = {}.hasOwnProperty,
+    __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
+  Q = require('q');
+
+  Response = require('./Response');
+
+  Helpers = require('./Helpers');
+
+  EventEmitter = require('events').EventEmitter;
+
+  Request = (function(_super) {
+    __extends(Request, _super);
+
+    Request.JSONP_METHOD_PREFIX = '__browser_http_jsonp_callback_';
+
+    Request.prototype.id = null;
+
+    Request.prototype.url = null;
+
+    Request.prototype.type = 'GET';
+
+    Request.prototype.jsonp = null;
+
+    Request.prototype.data = null;
+
+    Request.prototype._data = null;
+
+    Request.prototype.xhr = null;
+
+    Request.prototype.response = null;
+
+    function Request(url, type, data, jsonp, id) {
+      var method, _ref,
+        _this = this;
+      this.url = url;
+      this.type = type != null ? type : 'GET';
+      this.data = data != null ? data : null;
+      this.jsonp = jsonp != null ? jsonp : false;
+      this.id = id;
+      Request.__super__.constructor.apply(this, arguments);
+      url = this.url;
+      this.type = this.type.toUpperCase();
+      if ((_ref = this.type) !== 'GET' && _ref !== 'POST' && _ref !== 'PUT' && _ref !== 'DELETE') {
+        throw new Error('Http request: type must be GET, POST, PUT or DELETE, ' + this.type + ' given');
+      }
+      if (this.jsonp !== false) {
+        if (this.jsonp === true) {
+          this.jsonp = 'callback';
+        }
+        method = Request.JSONP_METHOD_PREFIX + this.id;
+        url += url.indexOf('?') !== -1 ? '&' : '?';
+        url += this.jsonp + '=' + method;
+        window[method] = function(data) {
+          return _this.response.data = data;
+        };
+      }
+      if (this.data !== null) {
+        this._data = Helpers.buildQuery(this.data);
+        if (this.type !== 'POST') {
+          url += url.indexOf('?') !== -1 ? '&' : '?';
+          url += this._data;
+        }
+      }
+      this.xhr = Request.createRequestObject();
+      this.xhr.open(this.type, url, true);
+      if (url.match(/^(http)s?\:\/\//) === null) {
+        this.setHeader('X-Requested-With', 'XMLHttpRequest');
+      }
+      if (this.type === 'POST') {
+        this.setHeader('Content-type', 'application/x-www-form-urlencoded');
+      }
+      this.response = new Response;
+      this.xhr.onreadystatechange = function() {
+        var contentType, error;
+        _this.response.state = _this.xhr.readyState;
+        if (_this.response.state === 4) {
+          _this.response.status = _this.xhr.status;
+          _this.response.statusText = _this.xhr.statusText;
+          _this.response.rawData = _this.xhr.responseText;
+          _this.response.xml = _this.xhr.responseXML;
+          _this.response.data = _this.xhr.responseText;
+          contentType = _this.getHeader('content-type');
+          if (contentType !== null && contentType.match(/application\/json/) !== null) {
+            _this.response.data = JSON.parse(_this.response.data);
+          }
+          if (contentType !== null && contentType.match(/text\/javascript/) !== null && _this.jsonp) {
+            eval(_this.response.data);
+          }
+          if (_this.response.status === 200) {
+            _this.emit('success', _this.response, _this);
+          } else {
+            error = new Error('Can not load ' + url + ' address');
+            _this.emit('error', error, _this.response, _this);
+          }
+          return _this.emit('complete', _this.response, _this);
+        }
+      };
+    }
+
+    Request.prototype.setHeader = function(name, value) {
+      this.xhr.setRequestHeader(name, value);
+      return this;
+    };
+
+    Request.prototype.send = function() {
+      var deferred;
+      deferred = Q.defer();
+      this.emit('send', this.response, this);
+      this.on('success', function(response) {
+        return deferred.resolve(response);
+      });
+      this.on('error', function(error) {
+        return deferred.reject(error);
+      });
+      this.xhr.send(this._data);
+      return deferred.promise;
+    };
+
+    Request.prototype.abort = function() {
+      this.xhr.abort();
+      return this;
+    };
+
+    Request.prototype.getHeaders = function() {
+      return this.xhr.getAllResponseHeaders();
+    };
+
+    Request.prototype.getHeader = function(name) {
+      return this.xhr.getResponseHeader(name);
+    };
+
+    Request.prototype.setHeader = function(name, value) {
+      this.xhr.setRequestHeader(name, value);
+      return this;
+    };
+
+    Request.prototype.setMimeType = function(mime) {
+      this.xhr.overrideMimeType(mime);
+      return this;
+    };
+
+    Request.createRequestObject = function() {
+      if (window.XMLHttpRequest) {
+        return new window.XMLHttpRequest;
+      } else {
+        return new ActiveXObject("Microsoft.XMLHTTP");
+      }
+    };
+
+    return Request;
+
+  })(EventEmitter);
+
+  module.exports = Request;
+
+}).call(this);
+
+},
+'node_modules/browser-http/lib/Response.js': function(exports, __require, module) {
+var require = function(name) {return __require(name, 'node_modules/browser-http/lib/Response.js');};
+var __filename = 'node_modules/browser-http/lib/Response.js';
+var __dirname = 'node_modules/browser-http/lib';
+var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/browser-http/lib/Response.js'], env: {}};
+// Generated by CoffeeScript 1.6.3
+(function() {
+  var Response;
+
+  Response = (function() {
+    function Response() {}
+
+    Response.prototype.state = 0;
+
+    Response.prototype.status = null;
+
+    Response.prototype.statusText = null;
+
+    Response.prototype.rawData = null;
+
+    Response.prototype.data = null;
+
+    Response.prototype.xml = null;
+
+    return Response;
+
+  })();
+
+  module.exports = Response;
+
+}).call(this);
+
+},
+'node_modules/browser-http/lib/Helpers.js': function(exports, __require, module) {
+var require = function(name) {return __require(name, 'node_modules/browser-http/lib/Helpers.js');};
+var __filename = 'node_modules/browser-http/lib/Helpers.js';
+var __dirname = 'node_modules/browser-http/lib';
+var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/browser-http/lib/Helpers.js'], env: {}};
+// Generated by CoffeeScript 1.6.3
+(function() {
+  var Helpers;
+
+  Helpers = (function() {
+    function Helpers() {}
+
+    Helpers.urlencode = function(param) {
       param = (param + '').toString();
       return encodeURIComponent(param).replace(/!/g, '%21').replace(/'/g, '%27').replace(/\(/g, '%28').replace(/\)/g, '%29').replace(/\*/g, '%2A').replace(/\~/g, '%7E').replace(/%20/g, '+');
     };
 
-    Http.buildQuery = function(params) {
+    Helpers.buildQuery = function(params) {
       var add, buildParams, key, result, value, _i, _len;
       result = [];
       add = function(key, value) {
@@ -7572,275 +8252,62 @@ var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/brows
       return result.join('&').replace(/%20/g, '+');
     };
 
-    Http.isHistoryApiSupported = function() {
-      return window.history && window.history.pushState && window.history.replaceState && !navigator.userAgent.match(/((iPod|iPhone|iPad).+\bOS\s+[1-4]|WebApps\/.+CFNetwork)/);
-    };
-
-    Http.addExtension = function(name, fns) {
-      this.extensions[name] = fns;
-      return this;
-    };
-
-    Http.removeExtension = function(name) {
-      if (typeof this.extensions[name] === 'undefined') {
-        throw new Error('Extension ' + name + ' does not exists');
-      }
-      delete this.extensions[name];
-      return this;
-    };
-
-    Http.onSend = function(fn) {
-      return this.events.send.push(fn);
-    };
-
-    Http.onComplete = function(fn) {
-      return this.events.complete.push(fn);
-    };
-
-    Http.onError = function(fn) {
-      return this.events.error.push(fn);
-    };
-
-    Http.onSuccess = function(fn) {
-      return this.events.success.push(fn);
-    };
-
-    return Http;
+    return Helpers;
 
   })();
 
-  module.exports = Http;
+  module.exports = Helpers;
 
 }).call(this);
 
 },
-'node_modules/browser-http/lib/Request.js': function(exports, __require, module) {
-var require = function(name) {return __require(name, 'node_modules/browser-http/lib/Request.js');};
-var __filename = 'node_modules/browser-http/lib/Request.js';
+'node_modules/browser-http/lib/Queue.js': function(exports, __require, module) {
+var require = function(name) {return __require(name, 'node_modules/browser-http/lib/Queue.js');};
+var __filename = 'node_modules/browser-http/lib/Queue.js';
 var __dirname = 'node_modules/browser-http/lib';
-var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/browser-http/lib/Request.js'], env: {}};
+var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/browser-http/lib/Queue.js'], env: {}};
 // Generated by CoffeeScript 1.6.3
 (function() {
-  var Q, Request, Response;
+  var Queue;
 
-  Q = require('q');
+  Queue = (function() {
+    Queue.prototype.requests = null;
 
-  Response = require('./Response');
+    Queue.prototype.running = false;
 
-  Request = (function() {
-    Request.Http = null;
-
-    Request.prototype.url = null;
-
-    Request.prototype.type = 'GET';
-
-    Request.prototype.data = null;
-
-    Request.prototype._data = null;
-
-    Request.prototype.xhr = null;
-
-    Request.prototype.response = null;
-
-    Request.prototype.complete = null;
-
-    Request.prototype.success = null;
-
-    Request.prototype.error = null;
-
-    function Request(url, type, data) {
-      var _ref,
-        _this = this;
-      this.url = url;
-      this.type = type != null ? type : 'GET';
-      this.data = data != null ? data : null;
-      url = this.url;
-      this.type = this.type.toUpperCase();
-      if ((_ref = this.type) !== 'GET' && _ref !== 'POST' && _ref !== 'PUT' && _ref !== 'DELETE') {
-        throw new Error('Http request: type must be GET, POST, PUT or DELETE, ' + this.type + ' given');
-      }
-      if (this.data !== null) {
-        this._data = Request.getHttp().buildQuery(this.data);
-        if (this.type !== 'POST') {
-          url = this.url.indexOf('?') !== -1 ? this.url + '&' + this._data : this.url + '?' + this._data;
-        }
-      }
-      this.xhr = Request.createRequestObject();
-      this.xhr.open(this.type, url, true);
-      if (url.match(/^(http)s?\:\/\//) === null) {
-        this.setHeader('X-Requested-With', 'XMLHttpRequest');
-      }
-      if (this.type === 'POST') {
-        this.setHeader('Content-type', 'application/x-www-form-urlencoded');
-      }
-      this.response = new Response;
-      this.xhr.onreadystatechange = function() {
-        var error;
-        _this.response.state = _this.xhr.readyState;
-        if (_this.response.state === 4) {
-          _this.response.status = _this.xhr.status;
-          _this.response.statusText = _this.xhr.statusText;
-          _this.response.rawData = _this.xhr.responseText;
-          _this.response.xml = _this.xhr.responseXML;
-          _this.response.data = _this.xhr.responseText;
-          if (_this.getHeader('content-type').match(/application\/json/) !== null) {
-            _this.response.data = JSON.parse(_this.response.data);
-          }
-          if (_this.response.status === 200) {
-            if (_this.success !== null) {
-              _this.success(_this.response);
-            }
-            Request.callHttpEvent(_this.response, _this, 'success');
-          } else {
-            error = new Error('Can not load ' + url + ' address');
-            if (_this.error !== null) {
-              _this.error(error);
-            }
-            Request.callHttpEvent(_this.response, _this, 'error', [error]);
-          }
-          if (_this.complete !== null) {
-            _this.complete(_this.response);
-          }
-          return Request.callHttpEvent(_this.response, _this, 'complete');
-        }
-      };
+    function Queue() {
+      this.requests = [];
     }
 
-    Request.prototype.setHeader = function(name, value) {
-      this.xhr.setRequestHeader(name, value);
-      return this;
+    Queue.prototype.add = function(request, fn) {
+      return this.requests.push({
+        request: request,
+        fn: fn
+      });
     };
 
-    Request.prototype.send = function() {
-      var deferred,
-        _this = this;
-      deferred = Q.defer();
-      Request.callHttpEvent(this.response, this, 'send');
-      this.complete = function(response) {
-        return deferred.resolve(response);
-      };
-      this.success = function(response) {
-        return deferred.resolve(response);
-      };
-      this.error = function(e) {
-        return deferred.reject(e);
-      };
-      this.xhr.send(this._data);
-      return deferred.promise;
-    };
-
-    Request.prototype.abort = function() {
-      this.xhr.abort();
-      return this;
-    };
-
-    Request.prototype.getHeaders = function() {
-      return this.xhr.getAllResponseHeaders();
-    };
-
-    Request.prototype.getHeader = function(name) {
-      return this.xhr.getResponseHeader(name);
-    };
-
-    Request.prototype.setHeader = function(name, value) {
-      this.xhr.setRequestHeader(name, value);
-      return this;
-    };
-
-    Request.prototype.setMimeType = function(mime) {
-      this.xhr.overrideMimeType(mime);
-      return this;
-    };
-
-    Request.createRequestObject = function() {
-      if (window.XMLHttpRequest) {
-        return new window.XMLHttpRequest;
-      } else {
-        return new ActiveXObject("Microsoft.XMLHTTP");
+    Queue.prototype.run = function() {
+      var data;
+      if (this.running === false && this.requests.length > 0) {
+        this.running = true;
+        data = this.requests.shift();
+        return data.fn();
       }
     };
 
-    Request.getHttp = function() {
-      if (this.Http === null) {
-        this.Http = require('./Http');
-      }
-      return this.Http;
+    Queue.prototype.next = function() {
+      this.running = false;
+      return this.run();
     };
 
-    Request.callHttpEvent = function(response, request, event, args) {
-      var ext, fn, name, _i, _len, _ref, _ref1, _results;
-      if (args == null) {
-        args = [];
-      }
-      this.getHttp();
-      args.push(response);
-      args.push(request);
-      _ref = this.Http.events[event];
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        fn = _ref[_i];
-        fn.apply(response, args);
-      }
-      _ref1 = this.Http.extensions;
-      _results = [];
-      for (name in _ref1) {
-        ext = _ref1[name];
-        if (typeof ext[event] !== 'undefined') {
-          _results.push(ext[event].apply(response, args));
-        } else {
-          _results.push(void 0);
-        }
-      }
-      return _results;
-    };
-
-    return Request;
+    return Queue;
 
   })();
 
-  module.exports = Request;
+  module.exports = Queue;
 
 }).call(this);
 
-},
-'node_modules/browser-http/lib/Response.js': function(exports, __require, module) {
-var require = function(name) {return __require(name, 'node_modules/browser-http/lib/Response.js');};
-var __filename = 'node_modules/browser-http/lib/Response.js';
-var __dirname = 'node_modules/browser-http/lib';
-var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/browser-http/lib/Response.js'], env: {}};
-// Generated by CoffeeScript 1.6.3
-(function() {
-  var Response;
-
-  Response = (function() {
-    function Response() {}
-
-    Response.prototype.state = 0;
-
-    Response.prototype.status = null;
-
-    Response.prototype.statusText = null;
-
-    Response.prototype.rawData = null;
-
-    Response.prototype.data = null;
-
-    Response.prototype.xml = null;
-
-    return Response;
-
-  })();
-
-  module.exports = Response;
-
-}).call(this);
-
-},
-'node_modules/browser-http/Extensions/Links.js': function(exports, __require, module) {
-var require = function(name) {return __require(name, 'node_modules/browser-http/Extensions/Links.js');};
-var __filename = 'node_modules/browser-http/Extensions/Links.js';
-var __dirname = 'node_modules/browser-http/Extensions';
-var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/browser-http/Extensions/Links.js'], env: {}};
-module.exports = require('../lib/Extensions/Links');
 },
 'node_modules/browser-http/lib/Extensions/Links.js': function(exports, __require, module) {
 var require = function(name) {return __require(name, 'node_modules/browser-http/lib/Extensions/Links.js');};
@@ -7885,13 +8352,6 @@ var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/brows
 }).call(this);
 
 },
-'node_modules/browser-http/Extensions/Loading.js': function(exports, __require, module) {
-var require = function(name) {return __require(name, 'node_modules/browser-http/Extensions/Loading.js');};
-var __filename = 'node_modules/browser-http/Extensions/Loading.js';
-var __dirname = 'node_modules/browser-http/Extensions';
-var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/browser-http/Extensions/Loading.js'], env: {}};
-module.exports = require('../lib/Extensions/Loading');
-},
 'node_modules/browser-http/lib/Extensions/Loading.js': function(exports, __require, module) {
 var require = function(name) {return __require(name, 'node_modules/browser-http/lib/Extensions/Loading.js');};
 var __filename = 'node_modules/browser-http/lib/Extensions/Loading.js';
@@ -7931,13 +8391,6 @@ var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/brows
 }).call(this);
 
 },
-'node_modules/browser-http/Extensions/Redirect.js': function(exports, __require, module) {
-var require = function(name) {return __require(name, 'node_modules/browser-http/Extensions/Redirect.js');};
-var __filename = 'node_modules/browser-http/Extensions/Redirect.js';
-var __dirname = 'node_modules/browser-http/Extensions';
-var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/browser-http/Extensions/Redirect.js'], env: {}};
-module.exports = require('../lib/Extensions/Redirect');
-},
 'node_modules/browser-http/lib/Extensions/Redirect.js': function(exports, __require, module) {
 var require = function(name) {return __require(name, 'node_modules/browser-http/lib/Extensions/Redirect.js');};
 var __filename = 'node_modules/browser-http/lib/Extensions/Redirect.js';
@@ -7970,13 +8423,6 @@ var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/brows
 
 }).call(this);
 
-},
-'node_modules/browser-http/Extensions/Snippets.js': function(exports, __require, module) {
-var require = function(name) {return __require(name, 'node_modules/browser-http/Extensions/Snippets.js');};
-var __filename = 'node_modules/browser-http/Extensions/Snippets.js';
-var __dirname = 'node_modules/browser-http/Extensions';
-var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/browser-http/Extensions/Snippets.js'], env: {}};
-module.exports = require('../lib/Extensions/Snippets');
 },
 'node_modules/browser-http/lib/Extensions/Snippets.js': function(exports, __require, module) {
 var require = function(name) {return __require(name, 'node_modules/browser-http/lib/Extensions/Snippets.js');};
@@ -8033,103 +8479,12 @@ var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/brows
 }).call(this);
 
 },
-'node_modules/browser-http/package.json': function(exports, __require, module) {
-var require = function(name) {return __require(name, 'node_modules/browser-http/package.json');};
-var __filename = 'node_modules/browser-http/package.json';
+'node_modules/browser-http/Helpers.js': function(exports, __require, module) {
+var require = function(name) {return __require(name, 'node_modules/browser-http/Helpers.js');};
+var __filename = 'node_modules/browser-http/Helpers.js';
 var __dirname = 'node_modules/browser-http';
-var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/browser-http/package.json'], env: {}};
-module.exports = (function() {
-return {
-  "name": "browser-http",
-  "description": "Simple HTTP for browser",
-  "version": "1.6.4",
-  "author": {
-    "name": "David Kudera",
-    "email": "sakren@gmail.com"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git@github.com:sakren/node-browser-http.git"
-  },
-  "license": "MIT",
-  "keywords": [
-    "http",
-    "client",
-    "browser",
-    "ajax",
-    "url"
-  ],
-  "engines": {
-    "node": "*"
-  },
-  "main": "./lib/Http.js",
-  "dependencies": {
-    "q": "0.9.6"
-  },
-  "devDependencies": {
-    "should": "1.2.2"
-  },
-  "scripts": {
-    "test": "cd ./test; mocha ./index.js --reporter spec;"
-  },
-  "readme": "# http-browser\n\nSome simple classes for working with http in browser.\n\nNow it is really simple and more functions will be added.\n\nhttp-browser uses [q](https://npmjs.org/package/q) promise pattern.\n\n## Changelog\n\nChangelog is in the bottom of this readme.\n\n## Usage\n\n```\nvar http = require('browser-http');\n\nhttp.request('http://www.google.com', {type: 'GET'}).then(function(response) {\n\tconsole.log(response.text);\n}, function(e) {\n\tthrow e;\t\t// some error ocured\n});\n```\n\nIn then function, you will get response object with data from server.\n\n## Shorthands\n\n```\nvar http = require('browser-http');\n\nhttp.get('http://www.google.com');\nhttp.post('http://www.google.com');\nhttp.put('http://www.google.com');\nhttp.delete('http://www.google.com');\n```\n\n## Options\n\nIn every http function, you can set other options. Now it is just type and data.\n\n* type: GET, POST, PUT or DELETE\n* data: literal object of data which needs to be send to server\n\n## Response object\n\nBasically it is just wrapper for some data from XMLHttpRequest.\n\n* state\n* status\n* statusText\n* rawData: same like responseText\n* data: same like responseText or literal object (json)\n* xml: same like responseXML\n\n## Load JSON\n\nIf content-type in response header is `application/json` then your data will be automatically transformed into js object.\n\nIf you can not set this header on your server, than you can use `*Json` methods.\n\n```\nhttp.getJson('http://www.google.com/some.json').then(function(response) {\n\tconsole.log(response.data);\t\t// output will be object\n});\n\nhttp.postJson('http://www.google.com/some.json');\n```\n\n## Events\n\nYou can listen for all http events with your own functions.\n\n```\nhttp.onSend(function(response, request) {\n\tconsole.log('In any moment, new http request will be send to server');\n});\n\nhttp.onComplete(function(response, request) {\n\tconsole.log('I just finished some request, but there may be some errors');\n});\n\nhttp.onSuccess(function(response, request) {\n\tconsole.log('I have got response from server without any error :-)');\n});\n\nhttp.onError(function(err, response, request) {\n\tconsole.log('Sorry, there was some error with this response');\n});\n```\n\n## Extensions\n\nSometimes it will be better to register whole group of events and this group is called extension.\n\n```\nhttp.addExtension('nameOfMyExtension', {\n\tsend: function(response, request) {},\n\tcomplete: function(response, request) {},\n\tsuccess: function(response, request) {},\n\terror: function(err, response, request) {},\n});\n```\n\nYou can also remove other extensions.\n\n```\nhttp.removeExtension('nameOfMyExtension');\n```\n\n### Build in extensions\n\nbrowser-http already comes with few extensions. Originally they were created for project build on [Nette](http://nette.org/en/)\nframework, but can be used on any other project.\n\n#### Loading cursor\n\n```\nnew (require('browser-http/Extensions/Loading'));\n```\n\nEvery time new request is send, your cursor is changed into `progress` cursor. After receiving response from server, cursor\nis changed into `auto`.\n\n#### Redirect\n\n```\nnew (require('browser-http/Extensions/Redirect'));\n```\n\nIf your server sends json data with `redirect` variable, then you will be redirected to address in this variable.\n\n#### Snippets\n\n```\nnew (require('browser-http/Extensions/Snippets'));\n```\n\nIf in response data is `snippets` object with html id and content pairs, then browser-http will iterate throw this object,\nfind element in page with given id and change content of this element into the one from given data.\n\nThis extension depends on jquery.\n\n#### Ajax links\n\n```\nnew (require('browser-http/Extensions/Links'));\n```\n\nThis is not true extension for browser-http. It listen for all click events on `a` links with class `ajax` but not with\nclass `not-ajax` and after this click, it creates ajax request.\n\nDepends on jquery.\n\n#### Ajax forms\n\nThis is the same like the previous one, but apply for all forms with `ajax` class.\nThis extension can not handle forms with file uploads.\nDepends on jquery.\n\n## Changelog\n\n* 1.6.4\n\t+ Optimizations + bug with sending data\n\n* 1.6.3\n\t+ Bug with `buildQuery` - replaced with the real one from jQuery\n\n* 1.6.2\n\t+ Just removed some useless code\n\n* 1.6.1\n\t+ Forgot to add Extensions/Links shortcut\n\n* 1.6.0\n\t+ `buildQuery` should got the same output like jQuery.param\n\t+ Added some extensions\n\n* 1.5.2\n\t+ Bug with sending data via POST method\n\n* 1.5.1\n\t+ Bug with X-Requested-With header\n\n* 1.5.0\n\t+ Added method isHistoryApiSupported\n\n* 1.4.0\n\t+ Sending X-Requested-With header\n\n* 1.3.1 - 1.3.5\n\t+ Bugs\n\n* 1.3.0\n\t+ Added `urlencode` and `buildQuery` methods\n\t+ Prepared changelog\n\t+ Added some tests\n\t+ Some bugs and optimizations\n\t+ Transforming response data into json if mime type is application/json",
-  "readmeFilename": "README.md",
-  "bugs": {
-    "url": "https://github.com/sakren/node-browser-http/issues"
-  },
-  "_id": "browser-http@1.6.4",
-  "_from": "browser-http@latest"
-}
-
-}).call(this);
-
-},
-'node_modules/browser-http/test/Http.js': function(exports, __require, module) {
-var require = function(name) {return __require(name, 'node_modules/browser-http/test/Http.js');};
-var __filename = 'node_modules/browser-http/test/Http.js';
-var __dirname = 'node_modules/browser-http/test';
-var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/browser-http/test/Http.js'], env: {}};
-// Generated by CoffeeScript 1.6.3
-(function() {
-  var Url, should;
-
-  should = require('should');
-
-  Url = require('../lib/Http');
-
-  describe('Url', function() {
-    describe('#urlencode()', function() {
-      return it('should return encoded strings like in PHP', function() {
-        Url.urlencode('Kevin van Zonneveld!').should.be.equal('Kevin+van+Zonneveld%21');
-        return Url.urlencode('http://kevin.vanzonneveld.net/').should.be.equal('http%3A%2F%2Fkevin.vanzonneveld.net%2F');
-      });
-    });
-    return describe('#buildQuery()', function() {
-      return it('should return prepared params like from http_build_query in PHP', function() {
-        return Url.buildQuery({
-          foo: 'bar',
-          php: 'hypertext processor',
-          baz: 'boom',
-          cow: 'milk'
-        }).should.be.equal('foo=bar&php=hypertext+processor&baz=boom&cow=milk');
-      });
-    });
-  });
-
-}).call(this);
-
-},
-'node_modules/browser-http/test/index.js': function(exports, __require, module) {
-var require = function(name) {return __require(name, 'node_modules/browser-http/test/index.js');};
-var __filename = 'node_modules/browser-http/test/index.js';
-var __dirname = 'node_modules/browser-http/test';
-var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/browser-http/test/index.js'], env: {}};
-// Generated by CoffeeScript 1.6.3
-(function() {
-  require('./Http');
-
-}).call(this);
-
+var process = {cwd: function() {return '/';}, argv: ['node', 'node_modules/browser-http/Helpers.js'], env: {}};
+module.exports = require('./lib/Helpers');
 },
 'ares-data': 'src/Ares',
 'ares-data/Validators': 'src/Validators',

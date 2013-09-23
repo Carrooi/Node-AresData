@@ -2,11 +2,13 @@ Validators = require './Validators'
 Q = require 'q'
 xml = require 'xml2js'
 moment = require 'moment'
-browserHttp = require 'browser-http'
+httpHelpers = require 'browser-http/Helpers'
 
 isWindow = typeof window != 'undefined'
 if !isWindow
 	http = require 'http'
+else
+	http = require 'browser-http'
 
 class Ares
 
@@ -50,7 +52,7 @@ class Ares
 
 
 	getUrl: (options) ->
-		options = browserHttp.buildQuery(options)
+		options = httpHelpers.buildQuery(options)
 		return @url + '?' + options
 
 
@@ -59,7 +61,7 @@ class Ares
 		deferred = Q.defer()
 
 		if isWindow
-			browserHttp.get(url).then( (res) ->
+			http.get(url).then( (res) ->
 				deferred.resolve(res.data)
 			).fail( (err) ->
 				deferred.reject(err)

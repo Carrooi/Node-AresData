@@ -1,13 +1,13 @@
 var express = require('express');
 var http = require('http');
-var browserHttp = require('browser-http');
+var httpHelpers = require('browser-http/Helpers');
 
 var app = express();
 
 app.get('/', function(req, res) {
 	res.header('Access-Control-Allow-Origin', '*');
 	res.header('Content-type', 'text/xml');
-	var query = browserHttp.buildQuery(req.query);
+	var query = httpHelpers.buildQuery(req.query);
 	http.get('http://wwwinfo.mfcr.cz/cgi-bin/ares/darv_std.cgi?' + query, function(r) {
 		var result = [];
 		r.on('data', function(data) {
