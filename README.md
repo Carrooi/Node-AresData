@@ -87,7 +87,8 @@ $ npm test
 ## Changelog
 
 * 1.1.3
-	Some companies haven't got an orientation number
+	+ Some companies haven't got an orientation number
+	+ Optimized dependencies
 
 * 1.1.2
 	+ Added some documentation
