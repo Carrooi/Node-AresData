@@ -86,6 +86,9 @@ $ npm test
 
 ## Changelog
 
+* 1.1.3
+	Some companies haven't got an orientation number
+
 * 1.1.2
 	+ Added some documentation
 

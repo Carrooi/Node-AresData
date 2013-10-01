@@ -299,10 +299,12 @@ var process = {cwd: function() {return '/';}, argv: ['node', 'src/Ares.coffee'],
           city: item.Identifikace[0].Adresa_ARES[0].Nazev_obce[0],
           street: item.Identifikace[0].Adresa_ARES[0].Nazev_ulice[0],
           descriptionNumber: parseInt(item.Identifikace[0].Adresa_ARES[0].Cislo_domovni[0]),
-          orientationNumber: parseInt(item.Identifikace[0].Adresa_ARES[0].Cislo_orientacni[0]),
           zipCode: parseInt(item.Identifikace[0].Adresa_ARES[0].PSC[0])
         }
       };
+      if (typeof item.Identifikace[0].Adresa_ARES[0].Cislo_orientacni !== 'undefined') {
+        result.address.orientationNumber = parseInt(item.Identifikace[0].Adresa_ARES[0].Cislo_orientacni[0]);
+      }
       return result;
     };
 
@@ -7698,7 +7700,7 @@ return {
     "url": "https://github.com/Leonidas-from-XIV/node-xml2js/issues"
   },
   "_id": "xml2js@0.2.8",
-  "_from": "xml2js@latest"
+  "_from": "xml2js@0.2.8"
 }
 
 }).call(this);

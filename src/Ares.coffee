@@ -126,8 +126,10 @@ class Ares
 				city: item.Identifikace[0].Adresa_ARES[0].Nazev_obce[0]
 				street: item.Identifikace[0].Adresa_ARES[0].Nazev_ulice[0]
 				descriptionNumber: parseInt(item.Identifikace[0].Adresa_ARES[0].Cislo_domovni[0])
-				orientationNumber: parseInt(item.Identifikace[0].Adresa_ARES[0].Cislo_orientacni[0])
 				zipCode: parseInt(item.Identifikace[0].Adresa_ARES[0].PSC[0])
+
+		if typeof item.Identifikace[0].Adresa_ARES[0].Cislo_orientacni != 'undefined'
+			result.address.orientationNumber = parseInt(item.Identifikace[0].Adresa_ARES[0].Cislo_orientacni[0])
 
 		return result
 
