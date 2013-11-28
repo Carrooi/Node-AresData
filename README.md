@@ -78,8 +78,7 @@ ares.findByCompanyName('some company name').then(function(data) {
 ## Tests
 
 ```
-$ cd tests/browser
-$ node bridge.js
+$ npm run-script server
 ```
 
 in another terminal:
@@ -91,6 +90,8 @@ $ npm test
 
 * 1.2.0
 	+ Added [fury](https://badge.fury.io/) and [gemnasium](https://gemnasium.com/) badges.
+	+ Updated dependencies
+	+ Better tests
 
 * 1.1.3
 	+ Some companies haven't got an orientation number
