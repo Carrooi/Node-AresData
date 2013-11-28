@@ -22,17 +22,20 @@
 	},
 	"main": "./lib/Ares.js",
 	"dependencies": {
-		"q": "~0.9.7",
-		"xml2js": "~0.2.8",
-		"moment": "~2.2.1",
-		"browser-http": "~1.8.0"
+		"q": "0.9.7",
+		"xml2js": "0.2.8",
+		"moment": "2.4.0",
+		"browser-http": "1.8.0"
 	},
 	"devDependencies": {
-		"mocha": "~1.13.0",
-		"chai": "~1.8.0",
-		"express": "~3.4.0"
+		"mocha": "1.13.0",
+		"phantomjs": "1.9.2-4",
+		"mocha-phantomjs": "3.1.6",
+		"chai": "1.8.0",
+		"express": "3.4.0"
 	},
 	"scripts": {
-		"test": "cd ./test; echo \"Testing in node:\"; mocha ./node/index.js --reporter spec --timeout 120000; echo \"Testing in browser:\"; mocha-phantomjs ./browser/index.html;"
+		"test": "node ./node_modules/mocha/bin/mocha ./test/node/index.js --reporter spec --timeout 120000",
+		"posttest": "node ./node_modules/mocha-phantomjs/bin/mocha-phantomjs ./test/browser/index.html"
 	}
 }
