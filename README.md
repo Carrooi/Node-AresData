@@ -1,4 +1,5 @@
 [![NPM version](https://badge.fury.io/js/ares-data.png)](http://badge.fury.io/js/ares-data)
+[![Dependency Status](https://gemnasium.com/sakren/node-ares-data.png)](https://gemnasium.com/sakren/node-ares-data)
 
 # ares-data
 
@@ -89,7 +90,7 @@ $ npm test
 ## Changelog
 
 * 1.2.0
-	+ Added [fury](https://badge.fury.io/) badge.
+	+ Added [fury](https://badge.fury.io/) and [gemnasium](https://gemnasium.com/) badges.
 
 * 1.1.3
 	+ Some companies haven't got an orientation number
