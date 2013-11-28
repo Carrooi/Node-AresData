@@ -1,3 +1,5 @@
+[![NPM version](https://badge.fury.io/js/ares-data.png)](http://badge.fury.io/js/ares-data)
+
 # ares-data
 
 Load information about employers from Czech ares service.
@@ -85,6 +87,9 @@ $ npm test
 ```
 
 ## Changelog
+
+* 1.2.0
+	+ Added [fury](https://badge.fury.io/) badge.
 
 * 1.1.3
 	+ Some companies haven't got an orientation number
