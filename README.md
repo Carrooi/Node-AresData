@@ -78,11 +78,6 @@ ares.findByCompanyName('some company name').then(function(data) {
 ## Tests
 
 ```
-$ npm run-script server
-```
-
-in another terminal:
-```
 $ npm test
 ```
 
