@@ -84,7 +84,7 @@ $ npm test
 
 ## Changelog
 
-* 1.2.0
+* 1.2.2 (there should be 1.2.0, but I made a mistake)
 	+ Added some badges.
 	+ Updated dependencies
 	+ Better tests
