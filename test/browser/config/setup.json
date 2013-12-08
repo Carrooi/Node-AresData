@@ -2,31 +2,28 @@
 	"packages": {
 		"tests": {
 			"base": "../../",
-			"application": "./test/browser/tests.js",
+			"target": "./test/browser/application.js",
 			"modules": [
-				"./src/*.coffee",
-				"./test/browser/*.coffee",
-				"./node_modules/moment/moment.js",
-				"./node_modules/moment/lang/en-gb.js",
-				"./node_modules/q/q.js",
-				"./node_modules/xml2js/*.js",
-				"./node_modules/browser-http/lib/*.js",
-				"./node_modules/browser-http/Helpers.js"
-			],
-			"coreModules": [
+				"./lib/*.js",
+				"./test/browser/tests/*.coffee",
+				"./test/browser/responses/*.coffee",
+				"moment/moment.js",
+				"moment/lang/en-gb.js",
+				"q",
+				"xml2js/*.js",
+				"browser-http/lib/*.js",
+				"browser-http/Mocks/*.js",
+				"browser-http/Helpers.js",
 				"events"
 			],
 			"aliases": {
-				"ares-data": "src/Ares",
-				"ares-data/Validators": "src/Validators"
+				"ares-data": "/lib/Ares",
+				"ares-data/Validators": "/lib/Validators"
 			},
 			"run": [
-				"test/browser/Validators",
-				"test/browser/Ares"
+				"/test/browser/tests/Validators",
+				"/test/browser/tests/Ares"
 			]
 		}
-	},
-	"debugger": {
-		"scripts": true
 	}
 }

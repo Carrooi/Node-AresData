@@ -5,15 +5,14 @@ moment = require 'moment'
 httpHelpers = require 'browser-http/Helpers'
 
 isWindow = typeof window != 'undefined'
-if !isWindow
-	http = require 'http'
-else
-	http = require 'browser-http'
 
 class Ares
 
 
 	@URL: 'http://wwwinfo.mfcr.cz/cgi-bin/ares/darv_std.cgi'
+
+
+	http: if isWindow then require 'browser-http' else require 'http'
 
 
 	url: null
@@ -36,6 +35,9 @@ class Ares
 			typ_vyhledani: type
 
 		options[name] = value
+
+		if limit == false
+			delete options.max_pocet
 
 		return @load(options).then(@parse).then(@prepare)
 
@@ -61,13 +63,13 @@ class Ares
 		deferred = Q.defer()
 
 		if isWindow
-			http.get(url).then( (res) ->
+			@http.get(url).then( (res) ->
 				deferred.resolve(res.data)
 			).fail( (err) ->
 				deferred.reject(err)
 			)
 		else
-			http.get(url, (res) ->
+			@http.get(url, (res) ->
 				data = []
 				res.setEncoding('utf8')
 				res.on('data', (chunk) ->
