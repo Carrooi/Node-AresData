@@ -17,7 +17,7 @@ describe 'Ares', ->
 	describe '#findByIdentification()', ->
 
 		it 'should load old information about author', (done) ->
-			Http.receive(require('../responses/employer'), 'content-type': 'text/xml')
+			Http.receive(require('../../responses/employer'), 'content-type': 'text/xml')
 
 			ares.findByIdentification(88241653).then( (data) ->
 				expect(data.length).to.equal 1
@@ -27,7 +27,7 @@ describe 'Ares', ->
 			).done()
 
 		it 'should load informations about some random companies', (done) ->
-			Http.receive(require('../responses/companies'), 'content-type': 'text/xml')
+			Http.receive(require('../../responses/companies'), 'content-type': 'text/xml')
 
 			ares.findByCompanyName('IBM').then( (data) ->
 				expect(data.length).to.be.above 1
@@ -42,7 +42,7 @@ describe 'Ares', ->
 			).done()
 
 		it 'should return an error for more results than limit', (done) ->
-			Http.receive(require('../responses/limitError'), 'content-type': 'text/xml')
+			Http.receive(require('../../responses/limitError'), 'content-type': 'text/xml')
 
 			ares.findByCompanyName('europa').fail( (err) ->
 				expect(err).to.be.an.instanceof(Error)

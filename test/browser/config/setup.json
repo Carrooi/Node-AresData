@@ -6,7 +6,7 @@
 			"modules": [
 				"./lib/*.js",
 				"./test/browser/tests/*.coffee",
-				"./test/browser/responses/*.coffee",
+				"./test/responses/*.coffee",
 				"moment/moment.js",
 				"moment/lang/en-gb.js",
 				"q",
