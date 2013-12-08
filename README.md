@@ -83,7 +83,7 @@ $ npm test
 
 ## Changelog
 
-* 1.3.0
+* 1.2.1
 	+ Updated dependencies
 	+ Tests uses mocks instead of direct access to servers
 

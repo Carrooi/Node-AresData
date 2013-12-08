@@ -1,7 +1,7 @@
 {
 	"name": "ares-data",
 	"description": "Load information about employers from Czech ares service.",
-	"version": "1.3.0",
+	"version": "1.2.1",
 	"author": {
 		"name": "David Kudera",
 		"email": "sakren@gmail.com"
@@ -35,6 +35,6 @@
 	},
 	"scripts": {
 		"test": "mocha-phantomjs -p ./node_modules/phantomjs/bin/phantomjs ./test/index.html",
-		"prepare-browser": "cd ./test; simq build;"
+		"test-build": "cd ./test; simq build;"
 	}
 }
