@@ -83,14 +83,11 @@ $ npm test
 
 ## Changelog
 
-* 1.2.1
-	+ Updated dependencies
-	+ Tests uses mocks instead of direct access to servers
-
 * 1.2.0
-	+ Added [fury](https://badge.fury.io/) and [gemnasium](https://gemnasium.com/) badges.
+	+ Added some badges.
 	+ Updated dependencies
 	+ Better tests
+	+ Tests uses mocks instead of direct access to servers
 
 * 1.1.3
 	+ Some companies haven't got an orientation number
