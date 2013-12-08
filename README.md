@@ -1,5 +1,6 @@
 [![NPM version](https://badge.fury.io/js/ares-data.png)](http://badge.fury.io/js/ares-data)
 [![Dependency Status](https://gemnasium.com/sakren/node-ares-data.png)](https://gemnasium.com/sakren/node-ares-data)
+[![Build Status](https://travis-ci.org/sakren/node-ares-data.png?branch=master)](https://travis-ci.org/sakren/node-ares-data)
 
 # ares-data
 
