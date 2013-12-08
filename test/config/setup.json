@@ -1,11 +1,11 @@
 {
 	"packages": {
 		"tests": {
-			"base": "../../",
-			"target": "./test/browser/application.js",
+			"base": "../",
+			"target": "./test/application.js",
 			"modules": [
 				"./lib/*.js",
-				"./test/browser/tests/*.coffee",
+				"./test/tests/*.coffee",
 				"./test/responses/*.coffee",
 				"moment/moment.js",
 				"moment/lang/en-gb.js",
@@ -21,8 +21,8 @@
 				"ares-data/Validators": "/lib/Validators"
 			},
 			"run": [
-				"/test/browser/tests/Validators",
-				"/test/browser/tests/Ares"
+				"/test/tests/Validators",
+				"/test/tests/Ares"
 			]
 		}
 	}
