@@ -34,7 +34,7 @@
 		"chai": "1.8.1"
 	},
 	"scripts": {
-		"test": "npm run prepare-browser; npm run test-browser",
+		"test": "npm run test-browser",
 		"test-node": "mocha ./test/node/index.js --reporter spec --timeout 120000",
 		"test-browser": "mocha-phantomjs -p ./node_modules/phantomjs/bin/phantomjs ./test/browser/index.html",
 		"prepare-browser": "cd ./test/browser; simq build;"
