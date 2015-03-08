@@ -1,6 +1,8 @@
-[![NPM version](https://badge.fury.io/js/ares-data.png)](http://badge.fury.io/js/ares-data)
-[![Dependency Status](https://gemnasium.com/sakren/node-ares-data.png)](https://gemnasium.com/sakren/node-ares-data)
-[![Build Status](https://travis-ci.org/sakren/node-ares-data.png?branch=master)](https://travis-ci.org/sakren/node-ares-data)
+[![NPM version](https://img.shields.io/npm/v/ares-data.svg?style=flat-square)](https://www.npmjs.com/package/ares-data)
+[![Dependency Status](https://img.shields.io/gemnasium/sakren/node-ares-data.svg?style=flat-square)](https://gemnasium.com/sakren/node-ares-data)
+[![Build Status](https://img.shields.io/travis/sakren/node-ares-data.svg?style=flat-square)](https://travis-ci.org/sakren/node-ares-data)
+
+[![Donate](https://img.shields.io/badge/donate-PayPal-brightgreen.svg?style=flat-square)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=C5ENYV68AAT4L)
 
 # ares-data
 
