@@ -1,6 +1,6 @@
 [![NPM version](https://img.shields.io/npm/v/ares-data.svg?style=flat-square)](https://www.npmjs.com/package/ares-data)
-[![Dependency Status](https://img.shields.io/gemnasium/sakren/node-ares-data.svg?style=flat-square)](https://gemnasium.com/sakren/node-ares-data)
-[![Build Status](https://img.shields.io/travis/sakren/node-ares-data.svg?style=flat-square)](https://travis-ci.org/sakren/node-ares-data)
+[![Dependency Status](https://img.shields.io/gemnasium/Carrooi/Node-AresData.svg?style=flat-square)](https://gemnasium.com/Carrooi/Node-AresData)
+[![Build Status](https://img.shields.io/travis/Carrooi/Node-AresData.svg?style=flat-square)](https://travis-ci.org/Carrooi/Node-AresData)
 
 [![Donate](https://img.shields.io/badge/donate-PayPal-brightgreen.svg?style=flat-square)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=C5ENYV68AAT4L)
 
