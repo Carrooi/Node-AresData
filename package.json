@@ -28,13 +28,17 @@
 		"browser-http": "2.0.0"
 	},
 	"devDependencies": {
+		"gulp": "3.8.11",
+		"vinyl-source-stream": "1.1.0",
+		"browserify": "9.0.3",
+		"coffeeify": "1.0.0",
 		"mocha": "1.15.1",
 		"phantomjs": "1.9.2-5",
 		"mocha-phantomjs": "3.1.6",
 		"chai": "1.8.1"
 	},
 	"scripts": {
-		"test": "mocha-phantomjs -p ./node_modules/phantomjs/bin/phantomjs ./test/index.html",
-		"test-build": "cd ./test; simq build;"
+		"compile-tests": "gulp compile-tests",
+		"test": "mocha-phantomjs -p ./node_modules/phantomjs/bin/phantomjs ./test/index.html"
 	}
 }

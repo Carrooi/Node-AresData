@@ -1,5 +1,4 @@
-
-Validators = require 'ares-data/Validators'
+Validators = require '../../src/Validators'
 
 describe 'Validators', ->
 

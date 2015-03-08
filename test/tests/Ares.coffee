@@ -1,5 +1,4 @@
-
-Ares = require 'ares-data'
+Ares = require '../../src/Ares'
 Http = require 'browser-http/Mocks/Http'
 Q = require 'q'
 
