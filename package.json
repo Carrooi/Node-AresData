@@ -22,8 +22,8 @@
 	},
 	"main": "./lib/Ares.js",
 	"dependencies": {
-		"xml2js": "0.4.0",
-		"browser-http": "4.0.1"
+		"browser-http": "4.0.1",
+		"xml-parser": "1.2.0"
 	},
 	"devDependencies": {
 		"gulp": "3.8.11",

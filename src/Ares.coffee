@@ -1,6 +1,6 @@
 Validators = require './Validators'
 FakePromise = require './FakePromise'
-xml = require 'xml2js'
+XmlParser = require 'xml-parser'
 http = require 'browser-http'
 
 isWindow = typeof window != 'undefined'
@@ -38,24 +38,22 @@ class Ares
 		if limit == false
 			delete options.max_pocet
 
-		@load(options, (data, err) =>
+		@http.get(@getUrl(options), (response, err) =>
+			debugger
 			if err
 				fn(null, err)
 			else
-				@parse(data, (data, err) =>
-					if err
-						fn(null, err)
-					else
-						@prepare(data, (data, err) =>
-							if err
-								fn(null, err)
-							else
-								fn(data, null)
-						)
-				)
+				data = @lastOriginalData = XmlParser(response.data)
+
+				try
+					data = @parse(data)
+					fn(data, null)
+				catch err
+					fn(null, err)
 		)
 
 		return new FakePromise
+
 
 	findByIdentification: (identification, limitOrFn = 10, fn = null) ->
 		args = @normalizeArguments(limitOrFn, fn)
@@ -77,81 +75,61 @@ class Ares
 		return @url + '?' + options
 
 
-	load: (options, fn) ->
-		url = @getUrl(options)
+	parse: (data) ->
+		data = data.root.children[0].children
 
-		@http.get(url, (res, err) ->
-			if err
-				fn(null, err)
-			else
-				fn(res.data, null)
-		)
-
-		return new FakePromise
-
-
-	parse: (data, fn) =>
-		data = @simplifyXml(data)
-
-		xml.parseString(data, (err, data) =>
-			if err
-				@lastOriginalData = null
-				fn(null, err)
-			else
-				@lastOriginalData = data
-				fn(data, null)
-		)
-
-		return new FakePromise
-
-
-	prepare: (data, fn) =>
-		data = data.Ares_odpovedi.Odpoved[0]
-
-		if typeof data.Error != 'undefined'
-			fn(null, new Error data.Error[0].Error_text[0])
-			return new FakePromise
+		for child in data
+			if child.name == 'are:Error'
+				debugger
+				throw new Error child.content
 
 		result =
-			length: parseInt(data.Pocet_zaznamu[0])
+			length: 0
 			data: []
 
-		for item in data.Zaznam
-			result.data.push(@prepareItem(item))
+		for child in data
+			if child.name == 'are:Pocet_zaznamu'
+				result.length = parseInt(child.content)
 
-		fn(result, null)
-		return new FakePromise
-
-
-	prepareItem: (item) ->
-		result =
-			created: new Date(item.Datum_vzniku[0])
-			validity: new Date(item.Datum_platnosti[0])
-			name: item.Obchodni_firma[0]
-			identification: parseInt(item.ICO[0])
-			address:
-				district: item.Identifikace[0].Adresa_ARES[0].Nazev_okresu[0]
-				city: item.Identifikace[0].Adresa_ARES[0].Nazev_obce[0]
-				street: item.Identifikace[0].Adresa_ARES[0].Nazev_ulice[0]
-				descriptionNumber: parseInt(item.Identifikace[0].Adresa_ARES[0].Cislo_domovni[0])
-				zipCode: parseInt(item.Identifikace[0].Adresa_ARES[0].PSC[0])
-
-		if typeof item.Identifikace[0].Adresa_ARES[0].Cislo_orientacni != 'undefined'
-			result.address.orientationNumber = parseInt(item.Identifikace[0].Adresa_ARES[0].Cislo_orientacni[0])
+			else if child.name == 'are:Zaznam'
+				result.data.push(@parseItem(child.children))
 
 		return result
 
 
-	simplifyXml: (data) ->
-		return data.replace('<?xml version="1.0" encoding="UTF-8"?>', '').
-			replace(/(are|dtt|udt)\:/g, '').
-			replace(' xmlns:are="http://wwwinfo.mfcr.cz/ares/xml_doc/schemas/ares/ares_answer/v_1.0.1"', '').
-			replace(' xmlns:dtt="http://wwwinfo.mfcr.cz/ares/xml_doc/schemas/ares/ares_datatypes/v_1.0.4"', '').
-			replace(' xmlns:udt="http://wwwinfo.mfcr.cz/ares/xml_doc/schemas/uvis_datatypes/v_1.0.1"', '').
-			replace(' xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"', '').
-			replace(' validation_XSLT="/ares/xml_doc/schemas/ares/ares_answer/v_1.0.0/ares_answer.xsl"', '').
-			replace(' xsi:schemaLocation="http://wwwinfo.mfcr.cz/ares/xml_doc/schemas/ares/ares_answer/v_1.0.1 http://wwwinfo.mfcr.cz/ares/xml_doc/schemas/ares/ares_answer/v_1.0.1/ares_answer_v_1.0.1.xsd"', '').
-			replace(/^\s*/, '').replace(/\s*$/, '')
+	parseItem: (item) ->
+		result =
+			created: null
+			validity: null
+			name: null
+			identification: null
+			address:
+				district: null
+				city: null
+				street: null
+				descriptionNumber: null
+				orientationNumber: null
+				zipCode: null
+
+		for child in item
+			switch child.name
+				when 'are:Datum_vzniku' then result.created = new Date(child.content)
+				when 'are:Datum_platnosti' then result.validity = new Date(child.content)
+				when 'are:Obchodni_firma' then result.name = child.content
+				when 'are:ICO' then result.identification = parseInt(child.content)
+				when 'are:Identifikace'
+					for identification in child.children
+						if identification.name == 'are:Adresa_ARES'
+							for address in identification.children
+								switch address.name
+									when 'dtt:Nazev_okresu' then result.address.district = address.content
+									when 'dtt:Nazev_obce' then result.address.city = address.content
+									when 'dtt:Nazev_ulice' then result.address.street = address.content
+									when 'dtt:Cislo_domovni' then result.address.descriptionNumber = parseInt(address.content)
+									when 'dtt:Cislo_orientacni' then result.address.orientationNumber = address.content
+									when 'dtt:PSC' then result.address.zipCode = parseInt(address.content)
+
+		return result
 
 
 	normalizeArguments: (limitOrFn = 10, fn = null) ->

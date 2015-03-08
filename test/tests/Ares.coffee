@@ -44,7 +44,6 @@ describe 'Ares', ->
 			Http.receive(require('../responses/limitError'), 'content-type': 'text/xml')
 
 			ares.findByCompanyName('europa', (data, err) ->
-				debugger
 				expect(err).to.be.an.instanceof(Error)
 				done()
 			)
