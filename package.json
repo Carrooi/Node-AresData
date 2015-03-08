@@ -14,7 +14,7 @@
 	],
 	"repository": {
 		"type": "git",
-		"url": "git@github.com:sakren/node-ares-data.git"
+		"url": "git@github.com:Carrooi/Node-AresData.git"
 	},
 	"license": "MIT",
 	"engines": {

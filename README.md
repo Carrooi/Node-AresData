@@ -18,8 +18,8 @@ $ npm install ares-data
 
 or download standalone version:
 
-* [Development](https://github.com/sakren/node-ares-data/dist/ares.js)
-* [Production](https://github.com/sakren/node-ares-data/dist/ares.min.js)
+* [Development](https://raw.githubusercontent.com/Carrooi/Node-AresData/master/dist/ares.js)
+* [Production](https://raw.githubusercontent.com/Carrooi/Node-AresData/master/dist/ares.min.js)
 
 ## Information
 
