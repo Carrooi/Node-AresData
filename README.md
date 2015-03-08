@@ -8,9 +8,6 @@ Load information about employers from Czech ares service.
 
 Documentation of Ares: [documentation](http://wwwinfo.mfcr.cz/ares/ares.html.cz)
 
-This module uses [q](https://npmjs.org/package/q) promise library. You can also use this module in browser (for example
-with [simq](https://npmjs.org/package/simq)).
-
 ## Installation
 
 ```

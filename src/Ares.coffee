@@ -1,7 +1,7 @@
 Validators = require './Validators'
 FakePromise = require './FakePromise'
 xml = require 'xml2js'
-browserHttp = require 'browser-http'
+http = require 'browser-http'
 
 isWindow = typeof window != 'undefined'
 
@@ -11,7 +11,7 @@ class Ares
 	@URL: 'http://wwwinfo.mfcr.cz/cgi-bin/ares/darv_std.cgi'
 
 
-	http: if isWindow then browserHttp else require 'http'
+	http: http
 
 
 	url: null
@@ -73,33 +73,19 @@ class Ares
 
 
 	getUrl: (options) ->
-		options = browserHttp.Helpers.buildQuery(options)
+		options = http.Helpers.buildQuery(options)
 		return @url + '?' + options
 
 
 	load: (options, fn) ->
 		url = @getUrl(options)
 
-		if isWindow
-			@http.get(url, (res, err) ->
-				if err
-					fn(null, err)
-				else
-					fn(res.data, null)
-			)
-		else
-			@http.get(url, (res) ->
-				data = []
-				res.setEncoding('utf8')
-				res.on('data', (chunk) ->
-					data.push(chunk)
-				)
-				res.on('end', ->
-					fn(data.join(''), null)
-				)
-			).on('error', (err) ->
+		@http.get(url, (res, err) ->
+			if err
 				fn(null, err)
-			)
+			else
+				fn(res.data, null)
+		)
 
 		return new FakePromise
 
