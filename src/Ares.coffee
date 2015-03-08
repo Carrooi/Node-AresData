@@ -39,7 +39,6 @@ class Ares
 			delete options.max_pocet
 
 		@http.get(@getUrl(options), (response, err) =>
-			debugger
 			if err
 				fn(null, err)
 			else
@@ -80,8 +79,11 @@ class Ares
 
 		for child in data
 			if child.name == 'are:Error'
-				debugger
-				throw new Error child.content
+				for error in child.children
+					if error.name == 'dtt:Error_text'
+						throw new Error error.content
+
+				throw new Error		# just to be sure
 
 		result =
 			length: 0

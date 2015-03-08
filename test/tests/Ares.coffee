@@ -37,6 +37,7 @@ describe 'Ares', ->
 		it 'should return an error for bad company identification', (done) ->
 			ares.findByIdentification(12345678, (data, err) ->
 				expect(err).to.be.an.instanceof(Error)
+				expect(err.message).to.be.equal('Company identification is not valid')
 				done()
 			)
 
@@ -45,5 +46,6 @@ describe 'Ares', ->
 
 			ares.findByCompanyName('europa', (data, err) ->
 				expect(err).to.be.an.instanceof(Error)
+				expect(err.message).to.be.equal('Na zadaný Dotaz by se vrátilo více odpovědí, než odpovídá parametru max_pocet. POZOR! Hrozí zablokování Vaší IP adresy! Prosím čtěte http://wwwinfo.mfcr.cz/ares/ares_xml_standard.html.cz#max')
 				done()
 			)

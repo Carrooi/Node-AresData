@@ -2592,7 +2592,6 @@ Ares = (function() {
     }
     this.http.get(this.getUrl(options), (function(_this) {
       return function(response, err) {
-        debugger;
         var data;
         if (err) {
           return fn(null, err);
@@ -2645,21 +2644,27 @@ Ares = (function() {
   };
 
   Ares.prototype.parse = function(data) {
-    var child, i, j, len, len1, result;
+    var child, error, i, j, k, len, len1, len2, ref, result;
     data = data.root.children[0].children;
     for (i = 0, len = data.length; i < len; i++) {
       child = data[i];
       if (child.name === 'are:Error') {
-        debugger;
-        throw new Error(child.content);
+        ref = child.children;
+        for (j = 0, len1 = ref.length; j < len1; j++) {
+          error = ref[j];
+          if (error.name === 'dtt:Error_text') {
+            throw new Error(error.content);
+          }
+        }
+        throw new Error;
       }
     }
     result = {
       length: 0,
       data: []
     };
-    for (j = 0, len1 = data.length; j < len1; j++) {
-      child = data[j];
+    for (k = 0, len2 = data.length; k < len2; k++) {
+      child = data[k];
       if (child.name === 'are:Pocet_zaznamu') {
         result.length = parseInt(child.content);
       } else if (child.name === 'are:Zaznam') {
