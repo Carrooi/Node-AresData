@@ -6,12 +6,7 @@
 		"name": "David Kudera",
 		"email": "sakren@gmail.com"
 	},
-	"keywords": [
-		"ares",
-		"employer",
-		"company",
-		"czech"
-	],
+	"keywords": ["ares", "employer", "company", "czech"],
 	"repository": {
 		"type": "git",
 		"url": "git@github.com:Carrooi/Node-AresData.git"

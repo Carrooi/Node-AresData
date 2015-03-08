@@ -1,0 +1,14 @@
+{
+	"name": "ares-data",
+	"version": "1.2.2",
+	"keywords": ["ares", "employer", "company", "czech"],
+	"main": "./dist/ares.js",
+	"ignore": [
+		"**/.*",
+		".idea",
+		"node_modules",
+		"npm-debug.log",
+		"test",
+		"src"
+	]
+}
