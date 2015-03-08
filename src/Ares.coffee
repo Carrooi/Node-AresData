@@ -1,7 +1,6 @@
 Validators = require './Validators'
 FakePromise = require './FakePromise'
 xml = require 'xml2js'
-moment = require 'moment'
 browserHttp = require 'browser-http'
 
 isWindow = typeof window != 'undefined'
@@ -140,8 +139,8 @@ class Ares
 
 	prepareItem: (item) ->
 		result =
-			created: moment(item.Datum_vzniku[0], 'YYYY-MM-DD').toDate()
-			validity: moment(item.Datum_platnosti[0], 'YYYY-MM-DD').toDate()
+			created: new Date(item.Datum_vzniku[0])
+			validity: new Date(item.Datum_platnosti[0])
 			name: item.Obchodni_firma[0]
 			identification: parseInt(item.ICO[0])
 			address:

@@ -23,7 +23,6 @@
 	"main": "./lib/Ares.js",
 	"dependencies": {
 		"xml2js": "0.4.0",
-		"moment": "2.4.0",
 		"browser-http": "4.0.1"
 	},
 	"devDependencies": {
