@@ -38,6 +38,7 @@
 		"compile-source": "gulp compile-source",
 		"compile-tests": "gulp compile-tests",
 		"compile-standalone": "gulp compile-standalone",
-		"test": "mocha-phantomjs -p ./node_modules/phantomjs/bin/phantomjs ./test/index.html"
+		"test": "mocha-phantomjs -p ./node_modules/phantomjs/bin/phantomjs ./test/index.html",
+		"prepublish": "gulp compile-source"
 	}
 }
