@@ -17,6 +17,11 @@ with [simq](https://npmjs.org/package/simq)).
 $ npm install ares-data
 ```
 
+or download standalone version:
+
+* [Development](https://github.com/sakren/node-ares-data/dist/ares.js)
+* [Production](https://github.com/sakren/node-ares-data/dist/ares.min.js)
+
 ## Information
 
 Every find* method returns promise, which you can than use for access loaded data.

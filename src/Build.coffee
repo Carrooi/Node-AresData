@@ -1,0 +1,1 @@
+window.ares = require './Ares'
