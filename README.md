@@ -88,6 +88,16 @@ $ npm test
 
 ## Changelog
 
+* 2.0.0
+	+ Using gulp with browserify for builds
+	+ Optimized repository
+	+ Created standalone versions
+	+ Removed dependency on q (BR break)
+	+ Removed dependency on moment
+	+ Using xml-parser instead of xml2js
+	+ Moved under Carrooi organization
+	+ Added to bower
+
 * 1.2.2 (there should be 1.2.0, but I made a mistake)
 	+ Added some badges.
 	+ Updated dependencies
