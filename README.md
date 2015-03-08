@@ -32,7 +32,7 @@ Every find* method returns promise, which you can than use for access loaded dat
 var Ares = require('ares-data');
 var ares = new Ares;
 
-ares.findByIdentification(12345678).then(function(data) {
+ares.findByIdentification(12345678, (data, err) {
 	// do something with loaded data
 });
 ```
@@ -43,7 +43,7 @@ array with these data.
 ## Finding data by company name
 
 ```
-ares.findByCompanyName('some company name').then(function(data) {
+ares.findByCompanyName('some company name', function(data, err) {
 
 });
 ```
@@ -76,7 +76,7 @@ This package automatically changing loaded data. If you want to get original dat
 have to access `lastOriginalData` variable.
 
 ```
-ares.findByCompanyName('some company name').then(function(data) {
+ares.findByCompanyName('some company name', function(data, err) {
 	var original = ares.lastOriginalData;
 });
 ```

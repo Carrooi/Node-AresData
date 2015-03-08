@@ -22,10 +22,9 @@
 	},
 	"main": "./lib/Ares.js",
 	"dependencies": {
-		"q": "0.9.7",
 		"xml2js": "0.4.0",
 		"moment": "2.4.0",
-		"browser-http": "2.0.0"
+		"browser-http": "4.0.1"
 	},
 	"devDependencies": {
 		"gulp": "3.8.11",

@@ -1,8 +1,8 @@
 Validators = require './Validators'
-Q = require 'q'
+FakePromise = require './FakePromise'
 xml = require 'xml2js'
 moment = require 'moment'
-httpHelpers = require 'browser-http/Helpers'
+browserHttp = require 'browser-http'
 
 isWindow = typeof window != 'undefined'
 
@@ -12,7 +12,7 @@ class Ares
 	@URL: 'http://wwwinfo.mfcr.cz/cgi-bin/ares/darv_std.cgi'
 
 
-	http: if isWindow then require 'browser-http' else require 'http'
+	http: if isWindow then browserHttp else require 'http'
 
 
 	url: null
@@ -27,7 +27,7 @@ class Ares
 	constructor: (@url = Ares.URL) ->
 
 
-	find: (name, value, limit = 10, type = 'free') ->
+	find: (name, value, fn, limit = 10, type = 'free') ->
 		options =
 			czk: @encoding
 			aktivni: @onlyActive
@@ -39,34 +39,54 @@ class Ares
 		if limit == false
 			delete options.max_pocet
 
-		return @load(options).then(@parse).then(@prepare)
+		@load(options, (data, err) =>
+			if err
+				fn(null, err)
+			else
+				@parse(data, (data, err) =>
+					if err
+						fn(null, err)
+					else
+						@prepare(data, (data, err) =>
+							if err
+								fn(null, err)
+							else
+								fn(data, null)
+						)
+				)
+		)
 
+		return new FakePromise
 
-	findByIdentification: (identification, limit = 10) ->
+	findByIdentification: (identification, limitOrFn = 10, fn = null) ->
+		args = @normalizeArguments(limitOrFn, fn)
+
 		if Validators.companyIdentification(identification) == false
-			return Q.reject(new Error 'Company identification is not valid')
+			args.fn(null, new Error 'Company identification is not valid')
+			return new FakePromise
 
-		return @find('ico', identification, limit, 'ico')
+		return @find('ico', identification, args.fn, args.limit, 'ico')
 
 
-	findByCompanyName: (name, limit = 10) ->
-		return @find('obchodni_firma', name, limit, 'of')
+	findByCompanyName: (name, limitOrFn = 10, fn = null) ->
+		args = @normalizeArguments(limitOrFn, fn)
+		return @find('obchodni_firma', name, args.fn, args.limit, 'of')
 
 
 	getUrl: (options) ->
-		options = httpHelpers.buildQuery(options)
+		options = browserHttp.Helpers.buildQuery(options)
 		return @url + '?' + options
 
 
-	load: (options) ->
+	load: (options, fn) ->
 		url = @getUrl(options)
-		deferred = Q.defer()
 
 		if isWindow
-			@http.get(url).then( (res) ->
-				deferred.resolve(res.data)
-			).fail( (err) ->
-				deferred.reject(err)
+			@http.get(url, (res, err) ->
+				if err
+					fn(null, err)
+				else
+					fn(res.data, null)
 			)
 		else
 			@http.get(url, (res) ->
@@ -76,36 +96,36 @@ class Ares
 					data.push(chunk)
 				)
 				res.on('end', ->
-					deferred.resolve(data.join(''))
+					fn(data.join(''), null)
 				)
 			).on('error', (err) ->
-				deferred.reject(err)
+				fn(null, err)
 			)
 
-		return deferred.promise
+		return new FakePromise
 
 
-	parse: (data) =>
-		deferred = Q.defer()
+	parse: (data, fn) =>
 		data = @simplifyXml(data)
 
 		xml.parseString(data, (err, data) =>
 			if err
 				@lastOriginalData = null
-				deferred.reject(err)
+				fn(null, err)
 			else
 				@lastOriginalData = data
-				deferred.resolve(data)
+				fn(data, null)
 		)
 
-		return deferred.promise
+		return new FakePromise
 
 
-	prepare: (data) =>
+	prepare: (data, fn) =>
 		data = data.Ares_odpovedi.Odpoved[0]
 
 		if typeof data.Error != 'undefined'
-			return Q.reject(new Error data.Error[0].Error_text[0])
+			fn(null, new Error data.Error[0].Error_text[0])
+			return new FakePromise
 
 		result =
 			length: parseInt(data.Pocet_zaznamu[0])
@@ -114,7 +134,8 @@ class Ares
 		for item in data.Zaznam
 			result.data.push(@prepareItem(item))
 
-		Q.resolve(result)
+		fn(result, null)
+		return new FakePromise
 
 
 	prepareItem: (item) ->
@@ -146,6 +167,22 @@ class Ares
 			replace(' validation_XSLT="/ares/xml_doc/schemas/ares/ares_answer/v_1.0.0/ares_answer.xsl"', '').
 			replace(' xsi:schemaLocation="http://wwwinfo.mfcr.cz/ares/xml_doc/schemas/ares/ares_answer/v_1.0.1 http://wwwinfo.mfcr.cz/ares/xml_doc/schemas/ares/ares_answer/v_1.0.1/ares_answer_v_1.0.1.xsd"', '').
 			replace(/^\s*/, '').replace(/\s*$/, '')
+
+
+	normalizeArguments: (limitOrFn = 10, fn = null) ->
+		if Object.prototype.toString.call(limitOrFn) == '[object Function]'
+			fn = limitOrFn
+			limit = 10
+		else
+			limit = limitOrFn
+
+		if fn  == null
+			throw new Error 'Please, set callback'
+
+		return {
+			limit: limit
+			fn: fn
+		}
 
 
 module.exports = Ares
