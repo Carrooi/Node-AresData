@@ -31,7 +31,7 @@ Every find* method returns promise, which you can than use for access loaded dat
 var Ares = require('ares-data');
 var ares = new Ares;
 
-ares.findByIdentification(12345678, (data, err) {
+ares.findByIdentification(12345678, function(data, err) {
 	// do something with loaded data
 });
 ```
